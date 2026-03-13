@@ -6,4 +6,5 @@ bcrypt==4.1.2
 pyjwt==2.8.0
 cryptography==42.0.2
 pydantic[email]==2.5.3
+pydantic-core==2.14.6
 python-multipart==0.0.6
