@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Clarify AI SDR</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:#0a0d12;color:#e8edf5}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1c2333;border-radius:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.fade-up{animation:fadeUp .2s ease forwards}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar */
+#sidebar{width:220px;background:#0f1318;border-right:1px solid #1c2333;display:flex;flex-direction:column;padding:0 12px;flex-shrink:0}
+.logo{padding:20px 6px 24px;border-bottom:1px solid #1c2333;margin-bottom:16px}
+.logo-main{font-size:17px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.logo-main span{color:#e8581a}
+.logo-sub{font-size:10px;color:#3d4f6a;margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+nav{flex:1;display:flex;flex-direction:column;gap:2px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#8a9ab5;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:all .15s}
+.nav-btn:hover{background:#141920;color:#e8edf5}
+.nav-btn.active{background:#e8581a18;color:#e8581a}
+.nav-btn.locked{opacity:.3;cursor:not-allowed;pointer-events:none}
+.notif-badge{margin-left:auto;background:#ef4444;color:#fff;border-radius:10px;font-size:9px;font-weight:800;padding:1px 6px;min-width:18px;text-align:center}
+.sidebar-stats{border-top:1px solid #1c2333;padding:16px 6px;display:flex;flex-direction:column;gap:8px}
+.stat-row{display:flex;justify-content:space-between;align-items:center}
+.stat-label{font-size:11px;color:#8a9ab5}
+.stat-val{font-size:13px;font-weight:700}
+.powered{font-size:10px;color:#3d4f6a;margin-top:4px;letter-spacing:.04em}
+
+/* Main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{height:56px;border-bottom:1px solid #1c2333;display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.topbar-title{font-size:14px;font-weight:700}
+.contact-badge{font-size:11px;color:#3d4f6a;background:#141920;border:1px solid #1c2333;border-radius:5px;padding:2px 8px}
+.topbar-right{display:flex;gap:12px;align-items:center}
+.top-stat{display:flex;align-items:center;gap:5px}
+.top-stat-val{font-size:13px;font-weight:800}
+.top-stat-label{font-size:11px;color:#3d4f6a}
+.progress-wrap{display:flex;align-items:center;gap:8px}
+.progress-bar{width:80px;height:4px;background:#1c2333;border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:#10b981;border-radius:2px;transition:width .4s ease}
+.progress-pct{font-size:11px;color:#3d4f6a}
+
+#content{flex:1;overflow:auto;padding:28px 32px}
+.page{display:none}.page.active{display:block}
+
+/* Cards */
+.card{background:#0f1318;border:1px solid #1c2333;border-radius:12px;padding:20px;box-shadow:inset 0 1px 0 #141920}
+.card.highlight{border-color:#263047;box-shadow:0 0 0 1px #e8581a20,inset 0 1px 0 #141920}
+
+/* Section header */
+.section-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.section-header h2{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.section-subtitle{color:#8a9ab5;font-size:13px;margin-top:5px;line-height:1.5}
+
+/* Buttons */
+.btn{border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;border-radius:8px;transition:all .15s;letter-spacing:.01em;padding:10px 20px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:#e8581a;color:#fff;box-shadow:0 2px 12px #e8581a30}
+.btn-primary:hover:not(:disabled){background:#f06828}
+.btn-ghost{background:transparent;color:#8a9ab5;border:1px solid #1c2333}
+.btn-ghost:hover:not(:disabled){color:#e8edf5;border-color:#263047}
+.btn-danger{background:transparent;color:#ef4444;border:1px solid #7f1d1d}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-warn{background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40}
+
+/* Pills */
+.pill{border-radius:5px;padding:2px 9px;font-size:10px;font-weight:700;letter-spacing:.04em;white-space:nowrap;display:inline-block}
+.stage-pill{border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;display:inline-block}
+.status-pill{border-radius:5px;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:.04em;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+
+/* Form fields */
+.field-group{display:grid;gap:14px}
+.field-group.cols2{grid-template-columns:1fr 1fr}
+.field-label{font-size:11px;color:#8a9ab5;display:block;margin-bottom:6px;font-weight:600;letter-spacing:.03em}
+.field-input{background:#0a0d12;border:1px solid #1c2333;border-radius:8px;color:#e8edf5;padding:10px 13px;width:100%;font-size:13px;outline:none;font-family:inherit;transition:border-color .15s}
+.field-input:focus{border-color:#e8581a}
+.field-span2{grid-column:1/-1}
+textarea.field-input{resize:vertical;line-height:1.7}
+
+/* Drop zone */
+.drop-zone{border:1.5px dashed #1c2333;border-radius:12px;padding:40px 24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px}
+.drop-zone:hover,.drop-zone.over{border-color:#e8581a;background:#e8581a08}
+.drop-emoji{font-size:32px;margin-bottom:10px}
+.drop-title{font-size:14px;font-weight:700;color:#8a9ab5;margin-bottom:4px}
+.drop-sub{font-size:12px;color:#3d4f6a}
+input[type=file]{display:none}
+
+/* Table */
+.table-wrap{border:1px solid #1c2333;border-radius:12px;overflow:hidden;background:#0f1318}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:11px 16px;text-align:left;color:#3d4f6a;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;background:#141920;border-bottom:1px solid #1c2333}
+tbody tr{border-bottom:1px solid #1c2333;background:transparent;transition:background .1s}
+tbody tr:hover{background:#141920}
+tbody tr:last-child{border-bottom:none}
+td{padding:12px 16px}
+
+/* Alert banners */
+.alert{border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.alert-warn{background:#2d2614;border:1px solid #92400e;color:#f59e0b}
+.alert-error{background:#2d0e0e;border:1px solid #7f1d1d;color:#ef4444}
+.alert-success{background:#052e16;border:1px solid #14532d;color:#10b981}
+.alert-close{background:none;border:none;cursor:pointer;font-size:18px;line-height:1;color:inherit}
+
+/* Compose cards */
+.compose-card{background:#0f1318;border:1px solid #1c2333;border-radius:10px;padding:14px 18px;margin-bottom:8px;transition:border-color .2s}
+.compose-card.ready{border-color:#e8581a40}
+.compose-card-main{display:flex;justify-content:space-between;align-items:center}
+.contact-avatar{width:34px;height:34px;border-radius:8px;background:#141920;border:1px solid #1c2333;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#e8581a;flex-shrink:0}
+.contact-info{flex:1;min-width:0;margin-left:10px}
+.contact-name{font-weight:700;font-size:13px}
+.contact-company{color:#8a9ab5;font-weight:400}
+.contact-pills{display:flex;align-items:center;gap:6px;margin-top:4px}
+.compose-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:12px}
+.subject-preview{margin-top:12px;padding-top:12px;border-top:1px solid #1c2333;display:flex;gap:8px;align-items:flex-start}
+.subject-label{font-size:10px;color:#3d4f6a;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:1px;flex-shrink:0}
+.subject-text{font-size:12px;font-style:italic}
+
+/* Send button in table */
+.send-btn{background:#e8581a18;border:1px solid #e8581a40;color:#e8581a;padding:5px 13px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;font-size:11px;transition:all .15s}
+.send-btn:hover:not(:disabled){background:#e8581a30}
+.send-btn:disabled{opacity:.25;cursor:not-allowed}
+.cancel-btn{background:none;border:1px solid #3d4f6a;color:#3d4f6a;border-radius:5px;padding:4px 8px;cursor:pointer;font-size:10px;font-family:inherit}
+
+/* Status dot */
+.status-dot{width:8px;height:8px;border-radius:50%;transition:all .3s}
+
+/* Modal */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(4px)}
+#modal-overlay.open{display:flex}
+#modal-box{background:#0f1318;border:1px solid #263047;border-radius:16px;width:100%;max-width:660px;max-height:88vh;overflow:auto;padding:28px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+
+/* Info box */
+.info-box{margin-top:14px;padding:10px 12px;background:#0a0d12;border-radius:8px;border:1px solid #1c2333;font-size:11px;color:#3d4f6a;line-height:1.7}
+.info-box code{color:#e8581a;background:#141920;padding:1px 5px;border-radius:3px}
+.ready-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.ready-text{font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="logo">
+      <div class="logo-main"><span>Clarify</span> SDR</div>
+      <div class="logo-sub">AI Outbound Engine</div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="sidebar-stats">
+      <div class="stat-row"><span class="stat-label">In Cadence</span><span class="stat-val" id="stat-cadence" style="color:#3b82f6">0</span></div>
+      <div class="stat-row"><span class="stat-label">Follow-up Due</span><span class="stat-val" id="stat-followup" style="color:#3d4f6a">0</span></div>
+      <div class="powered">Powered by Claude</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title" id="page-title">Setup</span>
+        <span class="contact-badge" id="contact-badge" style="display:none"></span>
+      </div>
+      <div class="topbar-right">
+        <div class="top-stat"><span class="top-stat-val" id="top-ready" style="color:#e8581a">0</span><span class="top-stat-label">Ready</span></div>
+        <div class="top-stat"><span class="top-stat-val" id="top-sent" style="color:#10b981">0</span><span class="top-stat-label">Sent</span></div>
+        <div class="top-stat"><span class="top-stat-val" id="top-failed" style="color:#3d4f6a">0</span><span class="top-stat-label">Failed</span></div>
+        <div class="progress-wrap" id="progress-wrap" style="display:none">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+          <span class="progress-pct" id="progress-pct">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="content">
+      <!-- SETUP -->
+      <div class="page active" id="page-0">
+        <div style="max-width:620px">
+          <div class="section-header"><div><h2>Email Configuration</h2><p class="section-subtitle">Connect your Outlook via EmailJS to send directly from your work address.</p></div></div>
+          <div class="card highlight" style="margin-bottom:16px">
+            <div style="font-size:11px;color:#e8581a;font-weight:700;letter-spacing:.08em;margin-bottom:16px;text-transform:uppercase">EmailJS Credentials</div>
+            <div class="field-group cols2">
+              <div><label class="field-label">Service ID</label><input class="field-input" id="cfg-serviceId" placeholder="service_xxxxxxx" value="service_5fne79t"/></div>
+              <div><label class="field-label">Template ID</label><input class="field-input" id="cfg-templateId" value="template_k2un3yb"/></div>
+              <div class="field-span2"><label class="field-label">Public Key</label><input class="field-input" id="cfg-publicKey" placeholder="xxxxxxxxxxxxxxxxxxxx" value="27F3swjEIQYqM8yZT"/></div>
+            </div>
+            <div class="info-box">Template must have variables: <code>{{to_email}} {{to_name}} {{subject}} {{message}} {{from_name}} {{reply_to}}</code></div>
+          </div>
+          <div class="card" style="margin-bottom:20px">
+            <div style="font-size:11px;color:#8a9ab5;font-weight:700;letter-spacing:.08em;margin-bottom:16px;text-transform:uppercase">Sender Details</div>
+            <div class="field-group cols2">
+              <div><label class="field-label">Your Name</label><input class="field-input" id="cfg-fromName" value="Miguel Tunas"/></div>
+              <div><label class="field-label">Your Email</label><input class="field-input" id="cfg-fromEmail" value="miguelt653@gmail.com" placeholder="you@clarifyb2b.com"/></div>
+              <div class="field-span2"><label class="field-label">Your Title</label><input class="field-input" id="cfg-title" value="Sr. Account Development Representative, Clarify B2B"/></div>
+            </div>
+          </div>
+          <div class="ready-row">
+            <div class="status-dot" id="ready-dot" style="background:#3d4f6a"></div>
+            <span class="ready-text" id="ready-text" style="color:#8a9ab5">Add EmailJS credentials to enable sending</span>
+          </div>
+          <button class="btn btn-primary" onclick="goTab(1)">Continue to Contacts →</button>
+        </div>
+      </div>
+
+      <!-- CONTACTS -->
+      <div class="page" id="page-1">
+        <div style="max-width:800px">
+          <div class="section-header">
+            <div><h2>Import Contacts</h2><p class="section-subtitle">Upload from Apollo or any spreadsheet. Vertical auto-detected from company name.</p></div>
+          </div>
+          <div id="followup-banner" style="display:none;margin-bottom:20px"></div>
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleDrop(event)">
+            <div class="drop-emoji">📂</div>
+            <div class="drop-title">Drop file or click to browse</div>
+            <div class="drop-sub">.xlsx or .csv · up to 100 contacts · drag & drop supported</div>
+            <input type="file" id="file-input" accept=".csv,.xlsx,.xls" onchange="handleFileInput(event)"/>
+          </div>
+          <div id="file-error" style="display:none" class="alert alert-error"></div>
+          <div id="contacts-table-wrap" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:13px;color:#8a9ab5"><span id="contact-count" style="color:#e8edf5;font-weight:700"></span> contacts loaded</div>
+              <button class="btn btn-ghost btn-sm" onclick="clearContacts()">Clear all</button>
+            </div>
+            <div class="table-wrap" style="margin-bottom:20px">
+              <table><thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Vertical</th><th>History</th></tr></thead>
+              <tbody id="contacts-tbody"></tbody></table>
+              <div id="contacts-more" style="display:none;padding:10px 16px;font-size:11px;color:#3d4f6a;text-align:center;border-top:1px solid #1c2333"></div>
+            </div>
+            <button class="btn btn-primary" onclick="goTab(2)">Continue to Compose →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPOSE -->
+      <div class="page" id="page-2">
+        <div style="max-width:800px">
+          <div class="section-header">
+            <div><h2>Generate Emails</h2><p class="section-subtitle">Claude writes personalised, insight-led emails in Clarify's voice.</p></div>
+            <button class="btn btn-primary" id="gen-all-btn" onclick="generateAll()">Generate All</button>
+          </div>
+          <div id="compose-list"></div>
+          <div id="compose-continue" style="display:none;margin-top:20px"></div>
+        </div>
+      </div>
+
+      <!-- SEND -->
+      <div class="page" id="page-3">
+        <div style="max-width:900px">
+          <div class="section-header">
+            <div><h2>Send Emails</h2><p class="section-subtitle" id="send-subtitle">Sending from your email via EmailJS.</p></div>
+            <button class="btn btn-primary" onclick="sendAll()">Send All Ready</button>
+          </div>
+          <div id="send-alerts"></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Contact</th><th>Company</th><th>Stage</th><th>Subject</th><th>Status</th><th></th></tr></thead>
+            <tbody id="send-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CADENCE -->
+      <div class="page" id="page-4">
+        <div style="max-width:900px">
+          <div class="section-header">
+            <div><h2>Cadence Tracker</h2><p class="section-subtitle">Full contact history — sequence stage, last touch, and follow-up timing.</p></div>
+            <div id="cadence-action"></div>
+          </div>
+          <div id="cadence-empty" class="card" style="text-align:center;padding:60px 32px;display:none">
+            <div style="font-size:32px;margin-bottom:12px">📭</div>
+            <div style="font-size:14px;font-weight:600;color:#8a9ab5;margin-bottom:6px">No history yet</div>
+            <div style="font-size:12px;color:#3d4f6a">Send some emails and the sequence tracker will appear here.</div>
+          </div>
+          <div id="cadence-table-wrap" style="display:none">
+            <div class="table-wrap" style="margin-bottom:16px">
+              <table><thead><tr><th>Contact</th><th>Company</th><th>Vertical</th><th>Last Touch</th><th>Date</th><th>Days Since</th><th>Next Action</th></tr></thead>
+              <tbody id="cadence-tbody"></tbody></table>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="clearHistory()">Clear History</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal-overlay" onclick="closeModal()">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div><div id="modal-name" style="font-size:16px;font-weight:700"></div><div id="modal-sub" style="font-size:12px;color:#8a9ab5;margin-top:3px;display:flex;gap:8px;align-items:center"></div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" id="modal-regen-btn">↻ Regenerate</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px"><label class="field-label">SUBJECT LINE</label><input class="field-input" id="modal-subject"/></div>
+    <div style="margin-bottom:22px"><label class="field-label">EMAIL BODY</label><textarea class="field-input" id="modal-body" rows="14"></textarea></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="saveModal()">Save Changes</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let currentTab = 0;
+let contacts = [];
+let emails = {};    // contactId -> {subject, body, stage}
+let statuses = {};  // contactId -> string
+let history = loadHistory();
+let modalContact = null;
+let generating = false;
+
+const TABS = [
+  {label:'Setup', icon:'⚙'},
+  {label:'Contacts', icon:'👥'},
+  {label:'Compose', icon:'✏️'},
+  {label:'Send', icon:'📤'},
+  {label:'Cadence', icon:'📅'},
+];
+
+// ── Config helpers ────────────────────────────────────────────────────────
+function cfg(key) { return document.getElementById('cfg-'+key)?.value?.trim() || ''; }
+function canSend() { return cfg('serviceId') && cfg('templateId') && cfg('publicKey'); }
+
+// ── Data ──────────────────────────────────────────────────────────────────
+const COMPANY_VERTICALS = {
+  teleperformance:'BPO',concentrix:'BPO',conduent:'BPO',convergys:'BPO',sitel:'BPO',
+  synnex:'BPO',hcltech:'BPO',hcl:'BPO',wipro:'BPO',infosys:'BPO',capgemini:'BPO',
+  accenture:'BPO',cognizant:'BPO',tcs:'BPO',genpact:'BPO',wns:'BPO',firstsource:'BPO',
+  alorica:'BPO',tdcx:'BPO',ibex:'BPO',taskus:'BPO',
+  syniverse:'Cloud Communications','tata communications':'Cloud Communications',
+  'tata comm':'Cloud Communications',bandwidth:'Cloud Communications',
+  twilio:'Cloud Communications',vonage:'Cloud Communications',sinch:'Cloud Communications',
+  infobip:'Cloud Communications',messagebird:'Cloud Communications',
+  stripe:'Fintech',paypal:'Fintech',square:'Fintech',revolut:'Fintech',klarna:'Fintech',
+  adyen:'Fintech',braintree:'Fintech',plaid:'Fintech',wise:'Fintech',monzo:'Fintech',
+  chime:'Fintech',nubank:'Fintech',robinhood:'Fintech',coinbase:'Fintech',kraken:'Fintech',
+  'american express':'Fintech',amex:'Fintech',mastercard:'Fintech',visa:'Fintech',
+  jpmorgan:'Fintech','goldman sachs':'Fintech',barclays:'Fintech',hsbc:'Fintech',lloyds:'Fintech',
+  paloalto:'Cybersecurity','palo alto':'Cybersecurity',crowdstrike:'Cybersecurity',
+  sentinelone:'Cybersecurity',darktrace:'Cybersecurity',tenable:'Cybersecurity',
+  qualys:'Cybersecurity',rapid7:'Cybersecurity',fortinet:'Cybersecurity',
+  checkpoint:'Cybersecurity','check point':'Cybersecurity',splunk:'Cybersecurity',
+  cyberark:'Cybersecurity',okta:'Cybersecurity',proofpoint:'Cybersecurity',
+  mimecast:'Cybersecurity',wiz:'Cybersecurity',lacework:'Cybersecurity',cyera:'Cybersecurity',
+  dxc:'IT Services','dxc technology':'IT Services',mastek:'IT Services',
+  vodafone:'IT Services',atos:'IT Services',cgi:'IT Services',
+  'ntt data':'IT Services',unisys:'IT Services',kyndryl:'IT Services',
+  fujitsu:'IT Services',ibm:'IT Services',microsoft:'IT Services',
+  salesforce:'Enterprise SaaS',hubspot:'Enterprise SaaS',workday:'Enterprise SaaS',
+  servicenow:'Enterprise SaaS',zendesk:'Enterprise SaaS',freshworks:'Enterprise SaaS',
+  sap:'Enterprise SaaS',oracle:'Enterprise SaaS',netsuite:'Enterprise SaaS',
+  adobe:'Enterprise SaaS',marketo:'Enterprise SaaS',eloqua:'Enterprise SaaS',
+  outreach:'Enterprise SaaS',salesloft:'Enterprise SaaS',apollo:'Enterprise SaaS',
+  gong:'Enterprise SaaS',chorus:'Enterprise SaaS',drift:'Enterprise SaaS',
+  zellis:'Enterprise SaaS',reprise:'Enterprise SaaS',
+};
+
+const VERTICAL_COLORS = {
+  'BPO':                  {bg:'#1a3a2e',text:'#4ade80',border:'#166534'},
+  'IT Services':          {bg:'#1e3a5f',text:'#60a5fa',border:'#1d4ed8'},
+  'Enterprise SaaS':      {bg:'#2d1f5e',text:'#a78bfa',border:'#6d28d9'},
+  'Fintech':              {bg:'#1a2e4a',text:'#38bdf8',border:'#0369a1'},
+  'Cybersecurity':        {bg:'#3b1f1f',text:'#f87171',border:'#991b1b'},
+  'Cloud Communications': {bg:'#2d2614',text:'#fbbf24',border:'#92400e'},
+  'Other':                {bg:'#1c2333',text:'#8a9ab5',border:'#263047'},
+};
+
+const CLARIFY_CLIENTS = {
+  'BPO':['TCS','Tata Communications'],
+  'IT Services':['DXC Technology','Mastek','SAP'],
+  'Enterprise SaaS':['SAP','Adobe','Reprise','Zellis'],
+  'Fintech':['PayPal','Zellis'],
+  'Cybersecurity':['Wiz','Palo Alto Networks','Cyera'],
+  'Cloud Communications':['Syniverse','Tata Communications'],
+  'Other':['DXC Technology','Adobe','PayPal'],
+};
+
+const PAIN_POINTS = {
+  'BPO':'scaling delivery capacity without proportional headcount growth, shrinking margins from client renegotiations, and pressure to differentiate beyond cost arbitrage',
+  'IT Services':'pipeline generation in an increasingly crowded market, positioning against offshore-first competitors, and reaching enterprise buyers inundated with vendor outreach',
+  'Enterprise SaaS':'breaking into enterprise accounts, standing out in a saturated category, and moving beyond product-led growth into strategic account development',
+  'Fintech':'navigating compliance-heavy buying cycles, building trust with risk-averse decision-makers, and shortening lengthy procurement timelines',
+  'Cybersecurity':'standing out in a crowded vendor landscape, reaching CISOs and security leaders overwhelmed with pitches, and demonstrating ROI beyond checkbox compliance',
+  'Cloud Communications':'differentiating in a commoditising CPaaS market, winning enterprise deals against hyperscaler competition, and convincing telco buyers to consolidate platforms',
+  'Other':'generating qualified pipeline from strategic accounts and breaking through to senior decision-makers with relevant, insight-led outreach',
+};
+
+const FOLLOW_UP_ANGLES = {
+  'BPO':'the challenge of differentiating your delivery model when clients are comparing on cost alone',
+  'IT Services':'the reality that most SDR outreach gets ignored because it leads with product rather than business impact',
+  'Enterprise SaaS':'the gap between product-led growth and the enterprise deals that actually move the needle',
+  'Fintech':'how long enterprise sales cycles are getting and what that means for pipeline predictability',
+  'Cybersecurity':'how security leaders are overwhelmed by vendor pitches and what actually cuts through',
+  'Cloud Communications':'how enterprise buyers are consolidating cloud communications vendors and what that means for mid-tier providers',
+  'Other':'the difficulty of generating pipeline in accounts that already have incumbent relationships',
+};
+
+function detectVertical(company) {
+  if (!company) return null;
+  const lower = company.toLowerCase().trim();
+  if (COMPANY_VERTICALS[lower]) return COMPANY_VERTICALS[lower];
+  for (const [key, val] of Object.entries(COMPANY_VERTICALS)) {
+    if (lower.includes(key) || key.includes(lower)) return val;
+  }
+  return null;
+}
+
+function getClientRefs(vertical) {
+  const clients = CLARIFY_CLIENTS[vertical] || CLARIFY_CLIENTS['Other'];
+  return clients.slice(0,2).join(' and ');
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────
+function loadHistory() {
+  try { const v = localStorage.getItem('clarify_sdr_history'); return v ? JSON.parse(v) : {}; }
+  catch { return {}; }
+}
+function saveHistory() {
+  try { localStorage.setItem('clarify_sdr_history', JSON.stringify(history)); } catch {}
+}
+
+function daysSince(d) {
+  if (!d) return null;
+  return Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', {month:'short',day:'numeric'});
+}
+
+// ── Pills HTML ─────────────────────────────────────────────────────────────
+function verticalPill(v) {
+  const c = VERTICAL_COLORS[v] || VERTICAL_COLORS['Other'];
+  return `<span class="pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border}">${v}</span>`;
+}
+
+function stagePill(stage) {
+  const map = {
+    1:{bg:'#1e3a5f30',text:'#60a5fa',border:'#1d4ed840',label:'1st Touch'},
+    2:{bg:'#2d261430',text:'#f59e0b',border:'#92400e40',label:'Follow-up 1'},
+    3:{bg:'#2d1a0e30',text:'#e8581a',border:'#92400e40',label:'Follow-up 2'},
+  };
+  const m = map[stage] || {bg:'#1c2333',text:'#8a9ab5',border:'#263047',label:`Touch ${stage}`};
+  return `<span class="stage-pill" style="background:${m.bg};color:${m.text};border:1px solid ${m.border}">${m.label}</span>`;
+}
+
+function statusPill(s) {
+  const map = {
+    generating:{bg:'#2d2614',text:'#f59e0b',border:'#92400e',label:'<span class="spin">↻</span> Generating…'},
+    ready:     {bg:'#2d1a0e',text:'#e8581a',border:'#92400e50',label:'Ready to Send'},
+    sending:   {bg:'#1e1b4b',text:'#8b5cf6',border:'#4c1d95',label:'Sending…'},
+    sent:      {bg:'#052e16',text:'#10b981',border:'#14532d',label:'Sent ✓'},
+    error:     {bg:'#2d0e0e',text:'#ef4444',border:'#7f1d1d',label:'Failed'},
+  };
+  const m = map[s] || {bg:'#141920',text:'#3d4f6a',border:'#1c2333',label:'Pending'};
+  return `<span class="status-pill" style="background:${m.bg};color:${m.text};border:1px solid ${m.border}">${m.label}</span>`;
+}
+
+// ── Nav ────────────────────────────────────────────────────────────────────
+function renderNav() {
+  const nav = document.getElementById('nav');
+  const fud = followUpDue();
+  nav.innerHTML = TABS.map((t,i) => {
+    const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0);
+    const active = i === currentTab;
+    const notif = i===4 && fud.length > 0 ? `<span class="notif-badge">${fud.length}</span>` : '';
+    return `<button class="nav-btn ${active?'active':''} ${locked?'locked':''}" onclick="goTab(${i})">${t.icon} ${t.label}${notif}</button>`;
+  }).join('');
+}
+
+function goTab(i) {
+  const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0);
+  if (locked) return;
+  currentTab = i;
+  document.querySelectorAll('.page').forEach((p,idx) => p.classList.toggle('active', idx===i));
+  document.getElementById('page-title').textContent = TABS[i].label;
+  renderNav();
+  if (i===1) renderContactsPage();
+  if (i===2) renderComposePage();
+  if (i===3) renderSendPage();
+  if (i===4) renderCadencePage();
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+function countStatus(s) { return Object.values(statuses).filter(v=>v===s).length; }
+
+function updateTopBar() {
+  const ready = countStatus('ready'), sent = countStatus('sent'), failed = countStatus('error');
+  document.getElementById('top-ready').textContent = ready;
+  document.getElementById('top-sent').textContent = sent;
+  document.getElementById('top-failed').textContent = failed;
+  document.getElementById('top-failed').style.color = failed > 0 ? '#ef4444' : '#3d4f6a';
+  const total = contacts.length;
+  const pw = document.getElementById('progress-wrap');
+  if (total > 0) {
+    pw.style.display = 'flex';
+    const pct = Math.round((sent/total)*100);
+    document.getElementById('progress-fill').style.width = pct+'%';
+    document.getElementById('progress-pct').textContent = pct+'%';
+  } else pw.style.display = 'none';
+  if (total > 0) {
+    document.getElementById('contact-badge').textContent = total+' contacts';
+    document.getElementById('contact-badge').style.display = '';
+  } else document.getElementById('contact-badge').style.display = 'none';
+  document.getElementById('stat-cadence').textContent = Object.keys(history).length;
+  const fud = followUpDue();
+  const fudEl = document.getElementById('stat-followup');
+  fudEl.textContent = fud.length;
+  fudEl.style.color = fud.length > 0 ? '#f59e0b' : '#3d4f6a';
+}
+
+function updateReadyStatus() {
+  const ok = canSend();
+  const dot = document.getElementById('ready-dot');
+  const txt = document.getElementById('ready-text');
+  dot.style.background = ok ? '#10b981' : '#3d4f6a';
+  dot.style.boxShadow = ok ? '0 0 8px #10b98180' : 'none';
+  txt.style.color = ok ? '#10b981' : '#8a9ab5';
+  txt.textContent = ok ? `Ready to send from ${cfg('fromEmail')}` : 'Add EmailJS credentials to enable sending';
+}
+
+// Watch config inputs
+document.querySelectorAll('[id^=cfg-]').forEach(el => el.addEventListener('input', () => { updateReadyStatus(); updateTopBar(); }));
+document.getElementById('send-subtitle') && (document.getElementById('send-subtitle').textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`);
+
+// ── CSV/XLSX parsing ───────────────────────────────────────────────────────
+function normaliseHeaders(rawHeaders) {
+  const aliases = {
+    email:['email','email address','e-mail','e mail','mail'],
+    first_name:['first_name','first name','firstname','first','name','full name','fullname','contact name','contact'],
+    last_name:['last_name','last name','lastname','last','surname'],
+    company:['company','company name','organization','organisation','account','account name','firm','employer'],
+    title:['title','job title','position','role','job role','designation'],
+    vertical:['vertical','industry','sector','segment','category'],
+  };
+  return rawHeaders.map(h => {
+    const clean = h.toLowerCase().trim();
+    for (const [canonical, list] of Object.entries(aliases)) {
+      if (list.includes(clean)) return canonical;
+    }
+    return clean;
+  });
+}
+
+function parseRows(rawHeaders, rows) {
+  const headers = normaliseHeaders(rawHeaders);
+  if (!headers.includes('email')) return {error:'Could not find an email column.'};
+  if (!headers.includes('company')) return {error:'Could not find a company column.'};
+  if (!headers.includes('first_name')) return {error:'Could not find a name column. Add a column called Name, First Name, or Contact.'};
+  const result = rows.map((row,i) => {
+    const obj = {};
+    headers.forEach((h,idx) => { obj[h] = (row[idx]||'').toString().trim(); });
+    if (!obj.last_name && obj.first_name && obj.first_name.includes(' ')) {
+      const parts = obj.first_name.split(' ');
+      obj.first_name = parts[0]; obj.last_name = parts.slice(1).join(' ');
+    }
+    const detected = (!obj.vertical || obj.vertical==='Other') ? detectVertical(obj.company) : null;
+    return {id:`${i}_${obj.email}`, ...obj, vertical:detected||obj.vertical||'Other', autoDetected:!!detected};
+  }).filter(c => c.email && c.first_name && c.company);
+  if (result.length===0) return {error:'No valid contacts found.'};
+  return {contacts:result};
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return {error:'File needs a header row and at least one contact.'};
+  const parseRow = line => {
+    const cols=[]; let cur='', inQ=false;
+    for (let ch of line) {
+      if (ch==='"') {inQ=!inQ;continue;}
+      if (ch===',' && !inQ) {cols.push(cur.trim());cur='';continue;}
+      cur+=ch;
+    }
+    cols.push(cur.trim()); return cols;
+  };
+  return parseRows(parseRow(lines[0]), lines.slice(1).filter(l=>l.trim()).map(parseRow));
+}
+
+function parseXLSX(buffer) {
+  try {
+    const wb = XLSX.read(buffer,{type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if (data.length < 2) return {error:'File needs a header row and at least one contact.'};
+    return parseRows(data[0].map(h=>h.toString().trim()), data.slice(1).filter(r=>r.some(c=>c)));
+  } catch { return {error:'Could not read Excel file.'}; }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('over');
+  handleFile(e.dataTransfer.files[0]);
+}
+
+function handleFileInput(e) { handleFile(e.target.files[0]); }
+
+function handleFile(file) {
+  if (!file) return;
+  const errEl = document.getElementById('file-error');
+  errEl.style.display = 'none';
+  const isXlsx = /\.xlsx?$/i.test(file.name);
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const result = isXlsx ? parseXLSX(new Uint8Array(ev.target.result)) : parseCSV(ev.target.result);
+    if (result.error) { errEl.textContent = result.error; errEl.style.display='flex'; return; }
+    contacts = result.contacts; emails = {}; statuses = {};
+    renderContactsPage(); renderComposePage(); renderSendPage();
+    updateTopBar(); renderNav();
+  };
+  if (isXlsx) reader.readAsArrayBuffer(file);
+  else reader.readAsText(file);
+}
+
+function clearContacts() {
+  contacts=[]; emails={}; statuses={};
+  renderContactsPage(); updateTopBar(); renderNav();
+}
+
+// ── Follow-up due ──────────────────────────────────────────────────────────
+function followUpDue() {
+  return Object.entries(history).filter(([,rec]) => {
+    const last = rec.sequences?.[rec.sequences.length-1];
+    if (!last) return false;
+    const days = daysSince(last.sentAt);
+    return days !== null && days >= 3 && (last.stage||1)+1 <= 3;
+  });
+}
+
+function loadFollowUps() {
+  const fud = followUpDue();
+  contacts = fud.map(([email,rec],i) => ({
+    id:`fu_${i}_${email}`, email,
+    first_name:rec.firstName, last_name:rec.lastName,
+    company:rec.company, vertical:rec.vertical, title:'',
+  }));
+  emails={}; statuses={};
+  renderContactsPage(); renderComposePage(); renderSendPage();
+  updateTopBar(); goTab(2);
+}
+
+// ── Contacts page ──────────────────────────────────────────────────────────
+function renderContactsPage() {
+  const fud = followUpDue();
+  const banner = document.getElementById('followup-banner');
+  if (fud.length > 0) {
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="card" style="border:1px solid #f59e0b40;background:#f59e0b08"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:3px">⏰ ${fud.length} contact${fud.length>1?'s':''} ready for follow-up</div><div style="font-size:12px;color:#8a9ab5">Last email sent 3+ days ago — time to follow up</div></div><button class="btn btn-warn btn-sm" onclick="loadFollowUps()">Load Follow-ups →</button></div></div>`;
+  } else banner.style.display = 'none';
+
+  const wrap = document.getElementById('contacts-table-wrap');
+  if (contacts.length === 0) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('contact-count').textContent = contacts.length;
+
+  const tbody = document.getElementById('contacts-tbody');
+  tbody.innerHTML = contacts.slice(0,30).map(c => {
+    const hr = history[c.email];
+    const lastSeq = hr?.sequences?.[hr.sequences.length-1];
+    const histHtml = lastSeq
+      ? `<span style="font-size:11px;color:#3b82f6;display:inline-flex;align-items:center;gap:5px">${stagePill(lastSeq.stage)} <span style="color:#3d4f6a">${fmtDate(lastSeq.sentAt)}</span></span>`
+      : `<span style="font-size:11px;color:#3d4f6a">New</span>`;
+    return `<tr>
+      <td style="font-weight:600;font-size:13px">${c.first_name} ${c.last_name||''}</td>
+      <td style="color:#8a9ab5">${c.company}</td>
+      <td style="color:#e8581a;font-size:11px">${c.email}</td>
+      <td>${verticalPill(c.vertical)}${c.autoDetected?'<span style="font-size:9px;color:#3d4f6a;margin-left:5px">auto</span>':''}</td>
+      <td>${histHtml}</td>
+    </tr>`;
+  }).join('');
+
+  const more = document.getElementById('contacts-more');
+  if (contacts.length > 30) { more.style.display='block'; more.textContent=`+${contacts.length-30} more`; }
+  else more.style.display='none';
+}
+
+// ── Generate ────────────────────────────────────────────────────────────────
+async function generateOne(contact) {
+  statuses[contact.id] = 'generating';
+  renderComposePage(); renderSendPage(); updateTopBar();
+
+  const vertical = contact.vertical || 'Other';
+  const pain = PAIN_POINTS[vertical] || PAIN_POINTS['Other'];
+  const histRec = history[contact.email];
+  const currentStage = histRec ? (histRec.sequences?.length||0)+1 : 1;
+  const isFollowUp = currentStage > 1;
+  const followUpAngle = FOLLOW_UP_ANGLES[vertical] || FOLLOW_UP_ANGLES['Other'];
+  const prevSubject = histRec?.sequences?.[histRec.sequences.length-1]?.subject||'';
+  const dateContext = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const VERIFIED_FACTS = [
+    'Adobe: 9-year partnership. Generated approximately $69.4M in pipeline. 88% conversion from Stage 2 into pipeline.',
+    'Adobe work spans U.S. Higher Education, Digital Media and Digital Experience business units across EMEA.',
+    'Approach with Adobe: targeted ABM motion combining personalised outreach, multi-threaded follow-up, and creative engagement into hard-to-access accounts.',
+    'Other clients (no specific results to cite): PayPal, TCS, Tata Communications, Zellis, Wiz, DXC Technology, SAP, Reprise, Syniverse, Cyera, Palo Alto Networks.',
+  ].join('\n');
+
+  const VOICE_GUIDE = [
+    "Write peer-to-peer, like a trusted advisor who genuinely understands the prospect's world — not a vendor pitching.",
+    'Lead with a sharp, observation-based insight about the challenge this person faces RIGHT NOW in their market. Make it feel like you have been paying attention.',
+    "Use Clarify's natural language: predictable pipeline into strategic accounts, deal cycles are long and access to decision makers is difficult, multi-threaded outreach, engage buying groups earlier in the cycle, sustained engagement rather than one-off outreach, hard-to-access accounts, buying groups, qualified pipeline.",
+    'Paragraph 1 should feel like something a well-informed peer would say over coffee — specific to their vertical, current, and slightly uncomfortable to ignore.',
+    'Paragraph 2 connects that insight to how Clarify works — methodology first, client proof second. Only use VERIFIED_FACTS for any specific claims.',
+    'The CTA should feel natural and confident, not transactional. Think: a peer asking for a conversation, not a salesperson asking for a meeting slot.',
+    'Never fabricate statistics, percentages, or outcomes beyond VERIFIED_FACTS.',
+    'Never use: em dashes, bullet points, I can share plays, happy to share insights, would love to connect, I came across, I noticed, I hope this finds you well, most B2B teams, research shows.',
+  ].join('\n');
+
+  const prompt = isFollowUp
+    ? `You are writing follow-up cold email (touch ${currentStage} of 3) on behalf of ${cfg('fromName')}, ${cfg('title')}.
+Today: ${dateContext}.
+
+VERIFIED CLIENT FACTS - only use what is listed here, invent nothing:
+${VERIFIED_FACTS}
+
+VOICE AND TONE:
+${VOICE_GUIDE}
+
+Contact: ${contact.first_name} ${contact.last_name||''} at ${contact.company} (${vertical})
+Previous email subject: "${prevSubject}"
+Follow-up angle: ${followUpAngle}
+
+FORMAT:
+Subject: [subject line]
+[blank line]
+Hi ${contact.first_name},
+[blank line]
+[2 short paragraphs - new angle, not a rehash, no fabricated stats]
+[1 sentence CTA - direct, ask for 15 min or specific day. No content-offer language.]
+[blank line]
+${cfg('fromName')} | ${cfg('title')}
+
+Under 90 words body only. NO em dashes. NO bullet points.`
+    : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')}.
+Today: ${dateContext}.
+
+VERIFIED CLIENT FACTS - only use what is listed here, invent nothing:
+${VERIFIED_FACTS}
+
+VOICE AND TONE:
+${VOICE_GUIDE}
+
+Contact: ${contact.first_name} ${contact.last_name||''}, ${contact.title||'senior decision-maker'} at ${contact.company} (${vertical})
+Key challenges for this vertical: ${pain}
+
+FORMAT:
+Subject: [subject line]
+[blank line]
+Hi ${contact.first_name},
+[blank line]
+[Paragraph 1 - 2-3 sentences: sharp, specific, observation-based insight about the challenge this person faces RIGHT NOW. No fabricated stats.]
+[Paragraph 2 - 2-3 sentences: how Clarify approaches this using methodology language from voice guide. Reference verified client work only if relevant to this vertical.]
+[Paragraph 3 - 1 sentence: direct CTA asking for 15 minutes. No content-offer language.]
+[blank line]
+${cfg('fromName')} | ${cfg('title')}
+
+Under 160 words body only. NO em dashes. NO bullet points.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]}),
+    });
+    if (!res.ok) throw new Error('API '+res.status);
+    const data = await res.json();
+    const text = data.content?.[0]?.text||'';
+    const lines = text.split(/\r?\n/);
+    let subject='', bodyStart=0;
+    for (let i=0;i<lines.length;i++) {
+      if (/^subject:/i.test(lines[i].trim())) {
+        subject = lines[i].replace(/^subject:\s*/i,'').replace(/\*\*/g,'').trim();
+        bodyStart = i+1;
+        while (bodyStart<lines.length && lines[bodyStart].trim()==='') bodyStart++;
+        break;
+      }
+    }
+    if (!subject && lines.length>0) {subject=lines[0].replace(/\*\*/g,'').trim();bodyStart=1;}
+    const body = lines.slice(bodyStart).join('\n').trim();
+    emails[contact.id] = {subject, body, stage:currentStage};
+    statuses[contact.id] = 'ready';
+  } catch {
+    statuses[contact.id] = 'error';
+  }
+  renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+}
+
+async function generateAll() {
+  if (generating) return;
+  generating = true;
+  document.getElementById('gen-all-btn').textContent = 'Generating…';
+  document.getElementById('gen-all-btn').classList.add('pulse');
+  for (const c of contacts) {
+    if (statuses[c.id] !== 'sent') { await generateOne(c); await new Promise(r=>setTimeout(r,350)); }
+  }
+  generating = false;
+  document.getElementById('gen-all-btn').textContent = `Generate All (${contacts.length})`;
+  document.getElementById('gen-all-btn').classList.remove('pulse');
+}
+
+// ── Compose page ────────────────────────────────────────────────────────────
+function renderComposePage() {
+  document.getElementById('gen-all-btn').textContent = generating ? 'Generating…' : `Generate All (${contacts.length})`;
+  const list = document.getElementById('compose-list');
+  list.innerHTML = contacts.map(c => {
+    const s = statuses[c.id];
+    const em = emails[c.id];
+    const hr = history[c.email];
+    const currentStage = hr ? (hr.sequences?.length||0)+1 : 1;
+    const initials = (c.first_name?.[0]||'')+(c.last_name?.[0]||'');
+    const subjectHtml = em ? `<div class="subject-preview"><span class="subject-label">Subject</span><span class="subject-text">${em.subject}</span></div>` : '';
+    const actionBtns = !em && s!=='sent'
+      ? `<button class="btn btn-ghost btn-sm" onclick="generateOne(window._contacts.find(x=>x.id==='${c.id}'))">${s==='generating'?'…':'Generate'}</button>`
+      : em ? `<button class="btn btn-ghost btn-sm" onclick="openModal('${c.id}')">Preview</button>` : '';
+    return `<div class="compose-card ${s==='ready'?'ready':''}" id="cc-${c.id}">
+      <div class="compose-card-main">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          <div class="contact-avatar">${initials}</div>
+          <div class="contact-info">
+            <div class="contact-name">${c.first_name} ${c.last_name||''} <span class="contact-company">at ${c.company}</span></div>
+            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)}</div>
+          </div>
+        </div>
+        <div class="compose-actions">${statusPill(s)} ${actionBtns}</div>
+      </div>
+      ${subjectHtml}
+    </div>`;
+  }).join('');
+  window._contacts = contacts;
+
+  const cont = document.getElementById('compose-continue');
+  const ready = countStatus('ready');
+  if (ready > 0) {
+    cont.style.display = 'block';
+    cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(3)">Continue to Send (${ready} ready) →</button>`;
+  } else cont.style.display = 'none';
+}
+
+// ── Send ─────────────────────────────────────────────────────────────────────
+async function sendOne(contactId) {
+  const contact = contacts.find(c=>c.id===contactId);
+  const email = emails[contactId];
+  if (!contact||!email||!canSend()) return;
+  if (!window.emailjs) { showSendError('EmailJS not loaded yet — wait a moment and try again.'); return; }
+  clearSendError();
+  statuses[contactId] = 'sending';
+  renderSendPage(); updateTopBar();
+  try {
+    window.emailjs.init({publicKey:cfg('publicKey')});
+    await window.emailjs.send(cfg('serviceId'), cfg('templateId'), {
+      to_email:contact.email,
+      to_name:`${contact.first_name} ${contact.last_name||''}`.trim(),
+      from_name:cfg('fromName'), from_email:cfg('fromEmail'),
+      reply_to:cfg('fromEmail'), subject:email.subject, message:email.body,
+    });
+    statuses[contactId] = 'sent';
+    const stage = email.stage||1;
+    if (!history[contact.email]) history[contact.email] = {firstName:contact.first_name,lastName:contact.last_name,company:contact.company,vertical:contact.vertical,sequences:[]};
+    history[contact.email].sequences.push({stage,sentAt:new Date().toISOString(),subject:email.subject});
+    saveHistory();
+  } catch(err) {
+    statuses[contactId] = 'error';
+    showSendError(err?.text||err?.message||'Send failed — check EmailJS config.');
+  }
+  renderSendPage(); renderCadencePage(); updateTopBar(); renderNav();
+}
+
+async function sendAll() {
+  for (const c of contacts) {
+    if (emails[c.id] && statuses[c.id]==='ready') { await sendOne(c.id); await new Promise(r=>setTimeout(r,700)); }
+  }
+}
+
+function resetStuck(contactId) { statuses[contactId]='ready'; clearSendError(); renderSendPage(); updateTopBar(); }
+
+function showSendError(msg) {
+  const el = document.getElementById('send-alerts');
+  el.innerHTML = `<div class="alert alert-error">⚠ ${msg}<button class="alert-close" onclick="clearSendError()">×</button></div>`;
+}
+function clearSendError() { document.getElementById('send-alerts').innerHTML=''; }
+
+function renderSendPage() {
+  document.getElementById('send-subtitle').textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`;
+  const alerts = document.getElementById('send-alerts');
+  if (!canSend() && !alerts.querySelector('.alert-warn')) {
+    alerts.innerHTML = `<div class="alert alert-warn">⚠ EmailJS not configured — go to Setup.</div>` + alerts.innerHTML;
+  }
+  const sent = countStatus('sent');
+  if (sent > 0 && !alerts.querySelector('.alert-success')) {
+    alerts.innerHTML += `<div class="alert alert-success">✓ ${sent} email${sent>1?'s':''} sent from ${cfg('fromEmail')}</div>`;
+  }
+  const tbody = document.getElementById('send-tbody');
+  tbody.innerHTML = contacts.map(c => {
+    const s = statuses[c.id];
+    const em = emails[c.id];
+    const hr = history[c.email];
+    const currentStage = hr ? (hr.sequences?.length||0)+1 : 1;
+    const sendDisabled = !em||s==='sending'||s==='sent'||!canSend();
+    const cancelBtn = s==='sending' ? `<button class="cancel-btn" onclick="resetStuck('${c.id}')">Cancel</button>` : '';
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${c.first_name} ${c.last_name||''}</div><div style="font-size:11px;color:#3d4f6a;margin-top:2px">${c.email}</div></td>
+      <td style="color:#8a9ab5">${c.company}</td>
+      <td>${stagePill(currentStage)}</td>
+      <td style="color:#8a9ab5;font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${em?.subject||'<span style="color:#3d4f6a;font-style:italic">Not generated</span>'}</td>
+      <td>${statusPill(s)}</td>
+      <td><div style="display:flex;gap:6px;align-items:center"><button class="send-btn" ${sendDisabled?'disabled':''} onclick="sendOne('${c.id}')">${s==='sending'?'Sending…':s==='sent'?'Sent ✓':'Send'}</button>${cancelBtn}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Cadence ───────────────────────────────────────────────────────────────
+function renderCadencePage() {
+  const keys = Object.keys(history);
+  document.getElementById('cadence-empty').style.display = keys.length===0?'block':'none';
+  document.getElementById('cadence-table-wrap').style.display = keys.length>0?'block':'none';
+  const fud = followUpDue();
+  const action = document.getElementById('cadence-action');
+  action.innerHTML = fud.length>0 ? `<button class="btn btn-primary" onclick="loadFollowUps()">Load ${fud.length} Follow-up${fud.length>1?'s':''} →</button>` : '';
+
+  if (keys.length===0) return;
+  const tbody = document.getElementById('cadence-tbody');
+  const sorted = Object.entries(history).sort(([,a],[,b]) => {
+    const al=a.sequences?.[a.sequences.length-1]?.sentAt||'';
+    const bl=b.sequences?.[b.sequences.length-1]?.sentAt||'';
+    return new Date(bl)-new Date(al);
+  });
+  tbody.innerHTML = sorted.map(([email,rec]) => {
+    const last = rec.sequences?.[rec.sequences.length-1];
+    const days = last ? daysSince(last.sentAt) : null;
+    const nextStage = (last?.stage||1)+1;
+    const isDue = days!==null && days>=3 && nextStage<=3;
+    const isComplete = nextStage>3;
+    const nextHtml = isComplete
+      ? `<span style="font-size:11px;color:#10b981;font-weight:600">✓ Complete</span>`
+      : isDue
+      ? `<span style="font-size:11px;color:#f59e0b;font-weight:700">⏰ Follow-up due</span>`
+      : `<span style="font-size:11px;color:#3d4f6a">Wait ${Math.max(1,3-(days||0))}d</span>`;
+    return `<tr style="background:${isDue?'#f59e0b06':'transparent'}">
+      <td><div style="font-weight:600">${rec.firstName} ${rec.lastName||''}</div><div style="font-size:10px;color:#3d4f6a;margin-top:2px">${email}</div></td>
+      <td style="color:#8a9ab5">${rec.company}</td>
+      <td>${verticalPill(rec.vertical)}</td>
+      <td>${last?stagePill(last.stage):'—'}</td>
+      <td style="color:#8a9ab5">${fmtDate(last?.sentAt)}</td>
+      <td style="color:${isDue?'#f59e0b':'#8a9ab5'};font-weight:${isDue?700:400}">${days!==null?days+'d ago':'—'}</td>
+      <td>${nextHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+function clearHistory() {
+  if (!confirm('Clear all history? Cannot be undone.')) return;
+  history = {}; saveHistory(); renderCadencePage(); updateTopBar(); renderNav();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+function openModal(contactId) {
+  const contact = contacts.find(c=>c.id===contactId);
+  const em = emails[contactId];
+  if (!contact||!em) return;
+  modalContact = contact;
+  document.getElementById('modal-name').textContent = `${contact.first_name} ${contact.last_name||''}`;
+  document.getElementById('modal-sub').innerHTML = `${contact.company} ${verticalPill(contact.vertical)}`;
+  document.getElementById('modal-subject').value = em.subject;
+  document.getElementById('modal-body').value = em.body;
+  document.getElementById('modal-regen-btn').onclick = () => { closeModal(); generateOne(contact); };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function saveModal() {
+  if (!modalContact) return;
+  emails[modalContact.id] = {
+    ...emails[modalContact.id],
+    subject: document.getElementById('modal-subject').value,
+    body: document.getElementById('modal-body').value,
+  };
+  statuses[modalContact.id] = 'ready';
+  closeModal(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+renderNav();
+updateTopBar();
+updateReadyStatus();
+renderContactsPage();
+renderComposePage();
+renderSendPage();
+renderCadencePage();
+</script>
+</body>
+</html>
