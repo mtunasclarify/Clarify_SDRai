@@ -9,60 +9,65 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:#0a0d12;color:#e8edf5}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1c2333;border-radius:4px}
+html,body{height:100%;width:100%;font-family:'Plus Jakarta Sans',sans-serif;background:#0a0d12;color:#e8edf5;overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1c2333;border-radius:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.fade-up{animation:fadeUp .2s ease forwards}
+.fade-up{animation:fadeUp .18s ease forwards}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 .pulse{animation:pulse 1.2s ease-in-out infinite}
-#app{display:flex;height:100vh;overflow:hidden}
+#app{display:flex;height:100vh;width:100vw;overflow:hidden;position:fixed;top:0;left:0}
 
 /* Sidebar */
-#sidebar{width:220px;background:#0f1318;border-right:1px solid #1c2333;display:flex;flex-direction:column;padding:0 12px;flex-shrink:0}
-.logo{padding:20px 6px 24px;border-bottom:1px solid #1c2333;margin-bottom:16px}
-.logo-main{font-size:17px;font-weight:800;letter-spacing:-.03em;line-height:1}
+#sidebar{width:240px;background:#0b0e15;border-right:1px solid #1a2030;display:flex;flex-direction:column;padding:0 14px;flex-shrink:0}
+.logo{padding:22px 8px 22px;border-bottom:1px solid #1a2030;margin-bottom:18px}
+.logo-main{font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1}
 .logo-main span{color:#e8581a}
-.logo-sub{font-size:10px;color:#3d4f6a;margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
-nav{flex:1;display:flex;flex-direction:column;gap:2px}
-.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#8a9ab5;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:all .15s}
-.nav-btn:hover{background:#141920;color:#e8edf5}
-.nav-btn.active{background:#e8581a18;color:#e8581a}
-.nav-btn.locked{opacity:.3;cursor:not-allowed;pointer-events:none}
-.notif-badge{margin-left:auto;background:#ef4444;color:#fff;border-radius:10px;font-size:9px;font-weight:800;padding:1px 6px;min-width:18px;text-align:center}
-.sidebar-stats{border-top:1px solid #1c2333;padding:16px 6px;display:flex;flex-direction:column;gap:8px}
+.logo-sub{font-size:10px;color:#3d4f6a;margin-top:4px;letter-spacing:.1em;text-transform:uppercase}
+nav{flex:1;display:flex;flex-direction:column;gap:3px}
+.nav-btn{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7f9a;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:all .15s;letter-spacing:.01em}
+.nav-btn svg{opacity:.7;flex-shrink:0}
+.nav-btn:hover{background:#141920;color:#c8d4e8}
+.nav-btn.active{background:#e8581a15;color:#e8581a}
+.nav-btn.active svg{opacity:1}
+.nav-btn.locked{opacity:.25;cursor:not-allowed;pointer-events:none}
+.notif-badge{margin-left:auto;background:#ef4444;color:#fff;border-radius:10px;font-size:9px;font-weight:800;padding:1px 7px;min-width:18px;text-align:center}
+.sidebar-stats{border-top:1px solid #1a2030;padding:18px 8px;display:flex;flex-direction:column;gap:10px}
 .stat-row{display:flex;justify-content:space-between;align-items:center}
-.stat-label{font-size:11px;color:#8a9ab5}
-.stat-val{font-size:13px;font-weight:700}
-.powered{font-size:10px;color:#3d4f6a;margin-top:4px;letter-spacing:.04em}
+.stat-label{font-size:11px;color:#6b7f9a}
+.stat-val{font-size:14px;font-weight:700}
+.powered{font-size:10px;color:#2d3d54;margin-top:6px;letter-spacing:.04em}
 
 /* Main */
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-#topbar{height:56px;border-bottom:1px solid #1c2333;display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
-.topbar-left{display:flex;align-items:center;gap:8px}
-.topbar-title{font-size:14px;font-weight:700}
-.contact-badge{font-size:11px;color:#3d4f6a;background:#141920;border:1px solid #1c2333;border-radius:5px;padding:2px 8px}
-.topbar-right{display:flex;gap:12px;align-items:center}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;background:#0a0d12}
+#topbar{height:58px;border-bottom:1px solid #1a2030;display:flex;align-items:center;justify-content:space-between;padding:0 32px;flex-shrink:0;background:#0b0e15}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-title{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.contact-badge{font-size:11px;color:#3d4f6a;background:#141920;border:1px solid #1a2030;border-radius:5px;padding:3px 9px;font-weight:600}
+.topbar-right{display:flex;gap:16px;align-items:center}
 .top-stat{display:flex;align-items:center;gap:5px}
-.top-stat-val{font-size:13px;font-weight:800}
+.top-stat-val{font-size:14px;font-weight:800}
 .top-stat-label{font-size:11px;color:#3d4f6a}
-.progress-wrap{display:flex;align-items:center;gap:8px}
-.progress-bar{width:80px;height:4px;background:#1c2333;border-radius:2px;overflow:hidden}
+.progress-wrap{display:flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid #1a2030}
+.progress-bar{width:90px;height:4px;background:#1a2030;border-radius:2px;overflow:hidden}
 .progress-fill{height:100%;background:#10b981;border-radius:2px;transition:width .4s ease}
-.progress-pct{font-size:11px;color:#3d4f6a}
+.progress-pct{font-size:11px;color:#3d4f6a;min-width:28px}
 
-#content{flex:1;overflow:auto;padding:28px 32px}
+#content{flex:1;overflow:auto;padding:32px 40px;height:0}
 .page{display:none}.page.active{display:block}
+/* Remove max-width limits so content fills desktop properly */
+.page > div[style*="max-width"]{max-width:none!important;width:100%}
 
 /* Cards */
-.card{background:#0f1318;border:1px solid #1c2333;border-radius:12px;padding:20px;box-shadow:inset 0 1px 0 #141920}
-.card.highlight{border-color:#263047;box-shadow:0 0 0 1px #e8581a20,inset 0 1px 0 #141920}
+.card{background:#0f1318;border:1px solid #1a2030;border-radius:12px;padding:22px;box-shadow:inset 0 1px 0 #141920}
+.card.highlight{border-color:#e8581a30;box-shadow:0 0 0 1px #e8581a15,inset 0 1px 0 #141920}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
 
 /* Section header */
-.section-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
-.section-header h2{font-size:18px;font-weight:700;letter-spacing:-.02em}
-.section-subtitle{color:#8a9ab5;font-size:13px;margin-top:5px;line-height:1.5}
+.section-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+.section-header h2{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.section-subtitle{color:#8a9ab5;font-size:13px;margin-top:6px;line-height:1.5}
 
 /* Buttons */
 .btn{border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;border-radius:8px;transition:all .15s;letter-spacing:.01em;padding:10px 20px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
@@ -98,13 +103,13 @@ textarea.field-input{resize:vertical;line-height:1.7}
 input[type=file]{display:none}
 
 /* Table */
-.table-wrap{border:1px solid #1c2333;border-radius:12px;overflow:hidden;background:#0f1318}
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{padding:11px 16px;text-align:left;color:#3d4f6a;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;background:#141920;border-bottom:1px solid #1c2333}
-tbody tr{border-bottom:1px solid #1c2333;background:transparent;transition:background .1s}
-tbody tr:hover{background:#141920}
+.table-wrap{border:1px solid #1a2030;border-radius:12px;overflow:hidden;background:#0f1318}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:11px 18px;text-align:left;color:#4a6080;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#0d1017;border-bottom:1px solid #1a2030}
+tbody tr{border-bottom:1px solid #1a2030;background:transparent;transition:background .1s}
+tbody tr:hover{background:#0d1017}
 tbody tr:last-child{border-bottom:none}
-td{padding:12px 16px}
+td{padding:13px 18px}
 
 /* Alert banners */
 .alert{border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
@@ -114,8 +119,8 @@ td{padding:12px 16px}
 .alert-close{background:none;border:none;cursor:pointer;font-size:18px;line-height:1;color:inherit}
 
 /* Compose cards */
-.compose-card{background:#0f1318;border:1px solid #1c2333;border-radius:10px;padding:14px 18px;margin-bottom:8px;transition:border-color .2s}
-.compose-card.ready{border-color:#e8581a40}
+.compose-card{background:#0f1318;border:1px solid #1a2030;border-radius:10px;padding:16px 20px;margin-bottom:8px;transition:border-color .2s}
+.compose-card.ready{border-color:#e8581a40;background:#0f1318}
 .compose-card-main{display:flex;justify-content:space-between;align-items:center}
 .contact-avatar{width:34px;height:34px;border-radius:8px;background:#141920;border:1px solid #1c2333;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#e8581a;flex-shrink:0}
 .contact-info{flex:1;min-width:0;margin-left:10px}
@@ -185,8 +190,13 @@ td{padding:12px 16px}
     <div id="content">
       <!-- SETUP -->
       <div class="page active" id="page-0">
-        <div style="max-width:620px">
+        <div style="max-width:100%">
           <div class="section-header"><div><h2>Email Configuration</h2><p class="section-subtitle">Connect your Outlook via EmailJS to send directly from your work address.</p></div></div>
+          <div class="card highlight" style="margin-bottom:16px">
+            <div style="font-size:11px;color:#e8581a;font-weight:700;letter-spacing:.08em;margin-bottom:16px;text-transform:uppercase">Anthropic API Key</div>
+            <div><label class="field-label">API Key <span style="color:#3d4f6a;font-weight:400;font-size:10px">— get yours at console.anthropic.com</span></label><input class="field-input" id="cfg-apiKey" placeholder="sk-ant-..." type="password"/></div>
+            <div class="info-box" style="margin-top:12px">Required to generate emails. Your key is stored locally in your browser and never sent anywhere except Anthropic's API.</div>
+          </div>
           <div class="card highlight" style="margin-bottom:16px">
             <div style="font-size:11px;color:#e8581a;font-weight:700;letter-spacing:.08em;margin-bottom:16px;text-transform:uppercase">EmailJS Credentials</div>
             <div class="field-group cols2">
@@ -214,7 +224,7 @@ td{padding:12px 16px}
 
       <!-- CONTACTS -->
       <div class="page" id="page-1">
-        <div style="max-width:800px">
+        <div style="max-width:100%">
           <div class="section-header">
             <div><h2>Import Contacts</h2><p class="section-subtitle">Upload from Apollo or any spreadsheet. Vertical auto-detected from company name.</p></div>
           </div>
@@ -243,7 +253,7 @@ td{padding:12px 16px}
 
       <!-- COMPOSE -->
       <div class="page" id="page-2">
-        <div style="max-width:800px">
+        <div style="max-width:100%">
           <div class="section-header">
             <div><h2>Generate Emails</h2><p class="section-subtitle">Claude writes personalised, insight-led emails in Clarify's voice.</p></div>
             <button class="btn btn-primary" id="gen-all-btn" onclick="generateAll()">Generate All</button>
@@ -255,7 +265,7 @@ td{padding:12px 16px}
 
       <!-- SEND -->
       <div class="page" id="page-3">
-        <div style="max-width:900px">
+        <div style="max-width:100%">
           <div class="section-header">
             <div><h2>Send Emails</h2><p class="section-subtitle" id="send-subtitle">Sending from your email via EmailJS.</p></div>
             <button class="btn btn-primary" onclick="sendAll()">Send All Ready</button>
@@ -270,7 +280,7 @@ td{padding:12px 16px}
 
       <!-- CADENCE -->
       <div class="page" id="page-4">
-        <div style="max-width:900px">
+        <div style="max-width:100%">
           <div class="section-header">
             <div><h2>Cadence Tracker</h2><p class="section-subtitle">Full contact history — sequence stage, last touch, and follow-up timing.</p></div>
             <div id="cadence-action"></div>
@@ -526,14 +536,30 @@ function updateReadyStatus() {
   const ok = canSend();
   const dot = document.getElementById('ready-dot');
   const txt = document.getElementById('ready-text');
-  dot.style.background = ok ? '#10b981' : '#3d4f6a';
-  dot.style.boxShadow = ok ? '0 0 8px #10b98180' : 'none';
-  txt.style.color = ok ? '#10b981' : '#8a9ab5';
-  txt.textContent = ok ? `Ready to send from ${cfg('fromEmail')}` : 'Add EmailJS credentials to enable sending';
+  const hasApiKey = !!cfg('apiKey');
+  dot.style.background = ok && hasApiKey ? '#10b981' : '#3d4f6a';
+  dot.style.boxShadow = ok && hasApiKey ? '0 0 8px #10b98180' : 'none';
+  txt.style.color = ok && hasApiKey ? '#10b981' : '#8a9ab5';
+  txt.textContent = !hasApiKey ? 'Add your Anthropic API key to generate emails'
+    : !ok ? 'Add EmailJS credentials to enable sending'
+    : `Ready — sending from ${cfg('fromEmail')}`;
+}
+
+// Persist API key in localStorage
+function loadSavedApiKey() {
+  const saved = localStorage.getItem('clarify_api_key');
+  if (saved) document.getElementById('cfg-apiKey').value = saved;
+}
+function saveApiKey() {
+  const key = document.getElementById('cfg-apiKey')?.value?.trim();
+  if (key) localStorage.setItem('clarify_api_key', key);
 }
 
 // Watch config inputs
-document.querySelectorAll('[id^=cfg-]').forEach(el => el.addEventListener('input', () => { updateReadyStatus(); updateTopBar(); }));
+document.querySelectorAll('[id^=cfg-]').forEach(el => el.addEventListener('input', () => {
+  if (el.id === 'cfg-apiKey') saveApiKey();
+  updateReadyStatus(); updateTopBar();
+}));
 document.getElementById('send-subtitle') && (document.getElementById('send-subtitle').textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`);
 
 // ── CSV/XLSX parsing ───────────────────────────────────────────────────────
@@ -769,8 +795,11 @@ ${cfg('fromName')} | ${cfg('title')}
 Under 160 words body only. NO em dashes. NO bullet points.`;
 
   try {
+    const apiKey = cfg('apiKey');
+    if (!apiKey) { statuses[contact.id]='error'; renderComposePage(); updateTopBar(); alert('Add your Anthropic API key in the Setup tab first.'); return; }
     const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]}),
     });
     if (!res.ok) throw new Error('API '+res.status);
@@ -991,6 +1020,7 @@ function saveModal() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
+loadSavedApiKey();
 renderNav();
 updateTopBar();
 updateReadyStatus();
