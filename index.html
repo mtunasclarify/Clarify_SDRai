@@ -226,6 +226,7 @@ td{padding:13px 18px}
     <div class="sidebar-stats">
       <div class="stat-row"><span class="stat-label">In Cadence</span><span class="stat-val" id="stat-cadence" style="color:#0F9ED5">0</span></div>
       <div class="stat-row"><span class="stat-label">Follow-up Due</span><span class="stat-val" id="stat-followup" style="color:rgba(255,255,255,0.3)">0</span></div>
+      <div class="stat-row"><span class="stat-label">Nurture Ready</span><span class="stat-val" id="stat-nurture" style="color:rgba(255,255,255,0.3)">0</span></div>
       <div class="powered">Powered by Claude</div>
     </div>
   </div>
@@ -283,6 +284,20 @@ td{padding:13px 18px}
             <div class="status-dot" id="ready-dot" style="background:rgba(255,255,255,0.3)"></div>
             <span class="ready-text" id="ready-text" style="color:rgba(255,255,255,0.5)">Add EmailJS credentials to enable sending</span>
           </div>
+          <div class="card" style="margin-bottom:16px;padding:14px 16px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:3px">🤖 Auto-Send Sequence</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.4)">When enabled, follow-ups generate and send automatically 3 days after each touch. No manual action needed.</div>
+              </div>
+              <label style="cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.5)">
+                <div id="auto-send-indicator" style="width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,0.15);position:relative;cursor:pointer;transition:background .2s" onclick="toggleAutoSendUI()">
+                  <div id="auto-send-knob" style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s"></div>
+                </div>
+                <span id="auto-send-label">Off</span>
+              </label>
+            </div>
+          </div>
           <button class="btn btn-primary" onclick="goTab(1)">Continue to Contacts →</button>
         </div>
       </div>
@@ -292,6 +307,9 @@ td{padding:13px 18px}
         <div style="max-width:100%">
           <div class="section-header">
             <div><h2>Import Contacts</h2><p class="section-subtitle">Upload from Apollo or any spreadsheet. Vertical auto-detected from company name.</p></div>
+            <div id="clear-contacts-btn" style="display:none">
+              <button class="btn btn-danger btn-sm" onclick="confirmClearContacts()">✕ Remove List</button>
+            </div>
           </div>
           <div id="followup-banner" style="display:none;margin-bottom:20px"></div>
           <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleDrop(event)">
@@ -307,7 +325,7 @@ td{padding:13px 18px}
               <button class="btn btn-ghost btn-sm" onclick="clearContacts()">Clear all</button>
             </div>
             <div class="table-wrap" style="margin-bottom:20px">
-              <table><thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Vertical</th><th>History</th></tr></thead>
+              <table><thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Vertical</th><th>Persona</th><th>History</th></tr></thead>
               <tbody id="contacts-tbody"></tbody></table>
               <div id="contacts-more" style="display:none;padding:10px 16px;font-size:11px;color:rgba(255,255,255,0.3);text-align:center;border-top:1px solid rgba(255,255,255,0.1)"></div>
             </div>
@@ -320,7 +338,7 @@ td{padding:13px 18px}
       <div class="page" id="page-2">
         <div style="max-width:100%">
           <div class="section-header">
-            <div><h2>Generate Emails</h2><p class="section-subtitle">Claude writes personalised, insight-led emails in Clarify's voice.</p></div>
+            <div><h2>Generate Emails</h2><p class="section-subtitle">Claude writes persona-aware emails — Sales personas get ABD messaging, Marketing personas get ABM+integrated messaging.</p></div>
             <button class="btn btn-primary" id="gen-all-btn" onclick="generateAll()">Generate All</button>
           </div>
           <div id="compose-list"></div>
@@ -331,6 +349,7 @@ td{padding:13px 18px}
       <!-- SEND -->
       <div class="page" id="page-3">
         <div style="max-width:100%">
+          <div id="auto-advance-banner" style="display:none"></div>
           <div class="section-header">
             <div><h2>Send Emails</h2><p class="section-subtitle" id="send-subtitle">Sending from your email via EmailJS.</p></div>
             <button class="btn btn-primary" id="send-all-btn" onclick="sendAll()">Send All Ready</button>
@@ -364,12 +383,79 @@ td{padding:13px 18px}
           </div>
         </div>
       </div>
+
+      <!-- NURTURE -->
+      <div class="page" id="page-5">
+        <div style="max-width:100%">
+          <div class="section-header">
+            <div>
+              <h2>Nurture Pool</h2>
+              <p class="section-subtitle">Contacts who completed all 3 touches. Re-engage after 90 days with fresh messaging.</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <select id="nurture-wait-days" class="field-input" style="width:160px;padding:8px 12px">
+                <option value="90">Re-engage after 90d</option>
+                <option value="60">Re-engage after 60d</option>
+                <option value="120">Re-engage after 120d</option>
+                <option value="180">Re-engage after 180d</option>
+              </select>
+              <button class="btn btn-primary" id="nurture-load-btn" onclick="loadNurtureContacts()">Load Re-engage Queue</button>
+            </div>
+          </div>
+
+          <!-- Stats bar -->
+          <div id="nurture-stats" style="display:none;margin-bottom:20px">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+              <div class="card" style="text-align:center;padding:16px">
+                <div id="nurture-stat-total" style="font-size:28px;font-weight:900;color:#0F9ED5">0</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;text-transform:uppercase;letter-spacing:.06em">In Nurture Pool</div>
+              </div>
+              <div class="card" style="text-align:center;padding:16px">
+                <div id="nurture-stat-due" style="font-size:28px;font-weight:900;color:#E97132">0</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;text-transform:uppercase;letter-spacing:.06em">Ready to Re-engage</div>
+              </div>
+              <div class="card" style="text-align:center;padding:16px">
+                <div id="nurture-stat-waiting" style="font-size:28px;font-weight:900;color:rgba(255,255,255,0.3)">0</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;text-transform:uppercase;letter-spacing:.06em">Still Waiting</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div id="nurture-empty" class="card" style="text-align:center;padding:60px 32px">
+            <div style="font-size:32px;margin-bottom:12px">🌱</div>
+            <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:6px">No contacts in nurture yet</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.3)">Contacts who complete all 3 cadence touches automatically move here.</div>
+          </div>
+
+          <!-- Nurture table -->
+          <div id="nurture-table-wrap" style="display:none">
+            <div class="table-wrap" style="margin-bottom:16px">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Contact</th>
+                    <th>Company</th>
+                    <th>Vertical</th>
+                    <th>Persona</th>
+                    <th>Completed</th>
+                    <th>Days Since</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="nurture-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Modal -->
-<div id="modal-overlay" onclick="closeModal()">
+<div id="modal-overlay" onclick="closeModal()" onkeydown="if(event.key==='Escape')closeModal()">
   <div id="modal-box" onclick="event.stopPropagation()">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
       <div><div id="modal-name" style="font-size:16px;font-weight:700"></div><div id="modal-sub" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;display:flex;gap:8px;align-items:center"></div></div>
@@ -388,6 +474,11 @@ td{padding:13px 18px}
 </div>
 
 <script>
+// ── Utilities ─────────────────────────────────────────────────────────────
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ── State ──────────────────────────────────────────────────────────────────
 let currentTab = 0;
 let contacts = [];
@@ -396,6 +487,7 @@ let statuses = {};  // contactId -> string
 let history = loadHistory();
 let modalContact = null;
 let generating = false;
+let _autoRunning = false; // guard for runAutoSequence
 
 const TABS = [
   {label:'Setup', icon:'⚙'},
@@ -403,14 +495,16 @@ const TABS = [
   {label:'Compose', icon:'✏️'},
   {label:'Send', icon:'📤'},
   {label:'Cadence', icon:'📅'},
+  {label:'Nurture', icon:'🌱'},
 ];
 
 // ── Config helpers ────────────────────────────────────────────────────────
 function cfg(key) { return document.getElementById('cfg-'+key)?.value?.trim() || ''; }
-function canSend() { return cfg('serviceId') && cfg('templateId') && cfg('publicKey'); }
+function canSend() { return !!(cfg('serviceId') && cfg('templateId') && cfg('publicKey') && cfg('fromEmail')); }
 
 // ── Data ──────────────────────────────────────────────────────────────────
 const COMPANY_VERTICALS = {
+  // ── Clarify known accounts ─────────────────────────────────────────────
   teleperformance:'BPO',concentrix:'BPO',conduent:'BPO',convergys:'BPO',sitel:'BPO',
   synnex:'BPO',hcltech:'BPO',hcl:'BPO',wipro:'BPO',infosys:'BPO',capgemini:'BPO',
   accenture:'BPO',cognizant:'BPO',tcs:'BPO',genpact:'BPO',wns:'BPO',firstsource:'BPO',
@@ -427,20 +521,1009 @@ const COMPANY_VERTICALS = {
   paloalto:'Cybersecurity','palo alto':'Cybersecurity',crowdstrike:'Cybersecurity',
   sentinelone:'Cybersecurity',darktrace:'Cybersecurity',tenable:'Cybersecurity',
   qualys:'Cybersecurity',rapid7:'Cybersecurity',fortinet:'Cybersecurity',
-  checkpoint:'Cybersecurity','check point':'Cybersecurity',splunk:'Cybersecurity',
-  cyberark:'Cybersecurity',okta:'Cybersecurity',proofpoint:'Cybersecurity',
-  mimecast:'Cybersecurity',wiz:'Cybersecurity',lacework:'Cybersecurity',cyera:'Cybersecurity',
-  dxc:'IT Services','dxc technology':'IT Services',mastek:'IT Services',
-  vodafone:'IT Services',atos:'IT Services',cgi:'IT Services',
-  'ntt data':'IT Services',unisys:'IT Services',kyndryl:'IT Services',
-  fujitsu:'IT Services',ibm:'IT Services',microsoft:'IT Services',
-  salesforce:'Enterprise SaaS',hubspot:'Enterprise SaaS',workday:'Enterprise SaaS',
-  servicenow:'Enterprise SaaS',zendesk:'Enterprise SaaS',freshworks:'Enterprise SaaS',
-  sap:'Enterprise SaaS',oracle:'Enterprise SaaS',netsuite:'Enterprise SaaS',
-  adobe:'Enterprise SaaS',marketo:'Enterprise SaaS',eloqua:'Enterprise SaaS',
-  outreach:'Enterprise SaaS',salesloft:'Enterprise SaaS',apollo:'Enterprise SaaS',
-  gong:'Enterprise SaaS',chorus:'Enterprise SaaS',drift:'Enterprise SaaS',
-  zellis:'Enterprise SaaS',reprise:'Enterprise SaaS',
+  mastek:'IT Services',dxc:'IT Services','dxc technology':'IT Services',
+  hexaware:'IT Services',mphasis:'IT Services',ltimindtree:'IT Services',
+  // ── 1000 Enterprise SaaS companies ────────────────────────────────────
+  '15five':'Enterprise SaaS',
+  '1password':'Cybersecurity',
+  '360learning':'Enterprise SaaS',
+  '6sense':'Enterprise SaaS',
+  'ab tasty':'Enterprise SaaS',
+  'abbyy':'Enterprise SaaS',
+  'abnormal security':'Cybersecurity',
+  'abridge':'Enterprise SaaS',
+  'absorb software':'Enterprise SaaS',
+  'accela':'Enterprise SaaS',
+  'achievers':'Enterprise SaaS',
+  'acoustic':'Enterprise SaaS',
+  'action1':'Cybersecurity',
+  'actioniq':'Enterprise SaaS',
+  'activecampaign':'Enterprise SaaS',
+  'acumatica':'Enterprise SaaS',
+  'ada':'Enterprise SaaS',
+  'adaptive shield':'Cybersecurity',
+  'adept':'Enterprise SaaS',
+  'aderant':'Enterprise SaaS',
+  'adjust':'Enterprise SaaS',
+  'adobe':'Enterprise SaaS',
+  'adp':'Enterprise SaaS',
+  'adverity':'Enterprise SaaS',
+  'adyen':'Enterprise SaaS',
+  'aerospike':'Enterprise SaaS',
+  'agentsync':'Enterprise SaaS',
+  'aha!':'Enterprise SaaS',
+  'aidoc':'Enterprise SaaS',
+  'airbase':'Enterprise SaaS',
+  'airbyte':'Enterprise SaaS',
+  'aircall':'Enterprise SaaS',
+  'airfocus':'Enterprise SaaS',
+  'airship':'Enterprise SaaS',
+  'airtable':'Enterprise SaaS',
+  'airwallex':'Enterprise SaaS',
+  'aisera':'Enterprise SaaS',
+  'aiven':'Enterprise SaaS',
+  'akamai':'Cybersecurity',
+  'akuity':'Cybersecurity',
+  'alation':'Enterprise SaaS',
+  'albacross':'Enterprise SaaS',
+  'alchemer':'Enterprise SaaS',
+  'aleph':'Enterprise SaaS',
+  'algolia':'Enterprise SaaS',
+  'algonomy':'Enterprise SaaS',
+  'alkami':'Enterprise SaaS',
+  'allego':'Enterprise SaaS',
+  'alteryx':'Enterprise SaaS',
+  'amplitude':'Enterprise SaaS',
+  'anaplan':'Enterprise SaaS',
+  'anthology':'Enterprise SaaS',
+  'anthropic':'Enterprise SaaS',
+  'anyscale':'Enterprise SaaS',
+  'apollo.io':'Enterprise SaaS',
+  'appcues':'Enterprise SaaS',
+  'appfolio':'Enterprise SaaS',
+  'appian':'Enterprise SaaS',
+  'applied systems':'Enterprise SaaS',
+  'appomni':'Cybersecurity',
+  'appsflyer':'Enterprise SaaS',
+  'appsmith':'Enterprise SaaS',
+  'appzen':'Enterprise SaaS',
+  'aqua security':'Cybersecurity',
+  'arctic wolf':'Cybersecurity',
+  'arize ai':'Enterprise SaaS',
+  'armis':'Cybersecurity',
+  'arthur ai':'Enterprise SaaS',
+  'asana':'Enterprise SaaS',
+  'ascend.io':'Enterprise SaaS',
+  'ashby':'Enterprise SaaS',
+  'assemblyai':'Enterprise SaaS',
+  'astronomer':'Enterprise SaaS',
+  'atera':'Cybersecurity',
+  'athenahealth':'Enterprise SaaS',
+  'atlan':'Enterprise SaaS',
+  'atlassian':'Enterprise SaaS',
+  'attention':'Enterprise SaaS',
+  'attentive':'Enterprise SaaS',
+  'auditboard':'Enterprise SaaS',
+  'augury':'Enterprise SaaS',
+  'automation anywhere':'Enterprise SaaS',
+  'automationedge':'Enterprise SaaS',
+  'automox':'Cybersecurity',
+  'auvik':'Cybersecurity',
+  'avalara':'Enterprise SaaS',
+  'aveva':'Enterprise SaaS',
+  'avidxchange':'Enterprise SaaS',
+  'aviso':'Enterprise SaaS',
+  'avoma':'Enterprise SaaS',
+  'axiom':'Cybersecurity',
+  'axonius':'Cybersecurity',
+  'backbase':'Enterprise SaaS',
+  'backblaze':'Enterprise SaaS',
+  'balto':'Enterprise SaaS',
+  'bamboohr':'Enterprise SaaS',
+  'bardeen':'Enterprise SaaS',
+  'barracuda':'Cybersecurity',
+  'basecamp':'Enterprise SaaS',
+  'basware':'Enterprise SaaS',
+  'beamery':'Enterprise SaaS',
+  'bentobox':'Enterprise SaaS',
+  'better stack':'Cybersecurity',
+  'bettercloud':'Cybersecurity',
+  'betterup':'Enterprise SaaS',
+  'betterworks':'Enterprise SaaS',
+  'beyondtrust':'Cybersecurity',
+  'bigeye':'Enterprise SaaS',
+  'bigid':'Cybersecurity',
+  'bigpanda':'Cybersecurity',
+  'bill':'Enterprise SaaS',
+  'bird':'Enterprise SaaS',
+  'birdeye':'Enterprise SaaS',
+  'bishop fox':'Cybersecurity',
+  'blackline':'Enterprise SaaS',
+  'blackpoint cyber':'Cybersecurity',
+  'blend':'Enterprise SaaS',
+  'bloomfire':'Enterprise SaaS',
+  'bloomreach':'Enterprise SaaS',
+  'blue prism':'Enterprise SaaS',
+  'blue yonder':'Enterprise SaaS',
+  'bluebeam':'Enterprise SaaS',
+  'blueshift':'Enterprise SaaS',
+  'bmc':'Cybersecurity',
+  'bonusly':'Enterprise SaaS',
+  'boomi':'Enterprise SaaS',
+  'box':'Enterprise SaaS',
+  'braintree':'Enterprise SaaS',
+  'branch':'Enterprise SaaS',
+  'braze':'Enterprise SaaS',
+  'brex':'Enterprise SaaS',
+  'bringg':'Enterprise SaaS',
+  'brivo':'Enterprise SaaS',
+  'bubble':'Enterprise SaaS',
+  'budibase':'Enterprise SaaS',
+  'buffer':'Enterprise SaaS',
+  'bugcrowd':'Cybersecurity',
+  'buildium':'Enterprise SaaS',
+  'c3 ai':'Enterprise SaaS',
+  'calendly':'Enterprise SaaS',
+  'callminer':'Enterprise SaaS',
+  'callrail':'Enterprise SaaS',
+  'camunda':'Enterprise SaaS',
+  'canonical':'Enterprise SaaS',
+  'canva':'Enterprise SaaS',
+  'captivateiq':'Enterprise SaaS',
+  'caspio':'Enterprise SaaS',
+  'cast ai':'Cybersecurity',
+  'castordoc':'Enterprise SaaS',
+  'cato networks':'Cybersecurity',
+  'causal':'Enterprise SaaS',
+  'cedar':'Enterprise SaaS',
+  'celonis':'Enterprise SaaS',
+  'censys':'Cybersecurity',
+  'centage':'Enterprise SaaS',
+  'center':'Enterprise SaaS',
+  'cflow':'Enterprise SaaS',
+  'chainguard':'Cybersecurity',
+  'chameleon':'Enterprise SaaS',
+  'chargebee':'Enterprise SaaS',
+  'charthop':'Enterprise SaaS',
+  'check point':'Cybersecurity',
+  'checkmarx':'Cybersecurity',
+  'checkout.com':'Enterprise SaaS',
+  'checkr':'Enterprise SaaS',
+  'chili piper':'Enterprise SaaS',
+  'chronosphere':'Enterprise SaaS',
+  'churnzero':'Enterprise SaaS',
+  'circleci':'Enterprise SaaS',
+  'cisco':'Enterprise SaaS',
+  'clari':'Enterprise SaaS',
+  'claroty':'Cybersecurity',
+  'clearbit':'Enterprise SaaS',
+  'clevertap':'Enterprise SaaS',
+  'clickhouse':'Enterprise SaaS',
+  'clickup':'Enterprise SaaS',
+  'clio':'Enterprise SaaS',
+  'clockwise':'Enterprise SaaS',
+  'close':'Enterprise SaaS',
+  'cloudbeds':'Enterprise SaaS',
+  'cloudbees':'Enterprise SaaS',
+  'cloudera':'Enterprise SaaS',
+  'cloudflare':'Cybersecurity',
+  'cloudinary':'Enterprise SaaS',
+  'coachhub':'Enterprise SaaS',
+  'cockroach labs':'Enterprise SaaS',
+  'cockroachdb':'Enterprise SaaS',
+  'coda':'Enterprise SaaS',
+  'code42':'Cybersecurity',
+  'codecov':'Enterprise SaaS',
+  'codeium':'Enterprise SaaS',
+  'cognigy':'Enterprise SaaS',
+  'cognism':'Enterprise SaaS',
+  'cohere':'Enterprise SaaS',
+  'cohesity':'Cybersecurity',
+  'collate':'Enterprise SaaS',
+  'collibra':'Enterprise SaaS',
+  'comet':'Enterprise SaaS',
+  'comm100':'Enterprise SaaS',
+  'commerceiq':'Enterprise SaaS',
+  'commercetools':'Enterprise SaaS',
+  'common room':'Enterprise SaaS',
+  'commure':'Enterprise SaaS',
+  'conductorone':'Cybersecurity',
+  'confluent':'Enterprise SaaS',
+  'conga':'Enterprise SaaS',
+  'connectwise':'Cybersecurity',
+  'contentsquare':'Enterprise SaaS',
+  'contextual ai':'Enterprise SaaS',
+  'convertigo':'Enterprise SaaS',
+  'copper':'Enterprise SaaS',
+  'copy.ai':'Enterprise SaaS',
+  'coralogix':'Cybersecurity',
+  'coreweave':'Enterprise SaaS',
+  'cornerstone ondemand':'Enterprise SaaS',
+  'cortex':'Cybersecurity',
+  'couchbase':'Enterprise SaaS',
+  'coupa':'Enterprise SaaS',
+  'coveo':'Enterprise SaaS',
+  'creately':'Enterprise SaaS',
+  'creatio':'Enterprise SaaS',
+  'cresta':'Enterprise SaaS',
+  'cribl':'Cybersecurity',
+  'crowdstrike':'Cybersecurity',
+  'cube':'Enterprise SaaS',
+  'culture amp':'Enterprise SaaS',
+  'cursor':'Enterprise SaaS',
+  'customer.io':'Enterprise SaaS',
+  'cyberark':'Cybersecurity',
+  'cyclr':'Enterprise SaaS',
+  'cycognito':'Cybersecurity',
+  'cyera':'Cybersecurity',
+  'd2l':'Enterprise SaaS',
+  'dagster labs':'Enterprise SaaS',
+  'darktrace':'Cybersecurity',
+  'dashlane':'Cybersecurity',
+  'data.world':'Enterprise SaaS',
+  'databricks':'Enterprise SaaS',
+  'datadog':'Enterprise SaaS',
+  'dataiku':'Enterprise SaaS',
+  'datarails':'Enterprise SaaS',
+  'datarobot':'Enterprise SaaS',
+  'datastax':'Enterprise SaaS',
+  'datto':'Cybersecurity',
+  'dayforce':'Enterprise SaaS',
+  'dbt labs':'Enterprise SaaS',
+  'dealpath':'Enterprise SaaS',
+  'decagon':'Enterprise SaaS',
+  'deel':'Enterprise SaaS',
+  'deepgram':'Enterprise SaaS',
+  'degreed':'Enterprise SaaS',
+  'delinea':'Cybersecurity',
+  'deltek':'Enterprise SaaS',
+  'demandbase':'Enterprise SaaS',
+  'demandscience':'Enterprise SaaS',
+  'denodo':'Enterprise SaaS',
+  'descartes':'Enterprise SaaS',
+  'descript':'Enterprise SaaS',
+  'devo':'Cybersecurity',
+  'dialpad':'Enterprise SaaS',
+  'dig security':'Cybersecurity',
+  'digitalocean':'Enterprise SaaS',
+  'diligent':'Enterprise SaaS',
+  'dispatchtrack':'Enterprise SaaS',
+  'divvy':'Enterprise SaaS',
+  'dixa':'Enterprise SaaS',
+  'docebo':'Enterprise SaaS',
+  'docker':'Enterprise SaaS',
+  'docusign':'Enterprise SaaS',
+  'docuware':'Enterprise SaaS',
+  'domino data lab':'Enterprise SaaS',
+  'domo':'Enterprise SaaS',
+  'domotz':'Cybersecurity',
+  'dovetail':'Enterprise SaaS',
+  'dragos':'Cybersecurity',
+  'drata':'Cybersecurity',
+  'drchrono':'Enterprise SaaS',
+  'dremio':'Enterprise SaaS',
+  'drift':'Enterprise SaaS',
+  'dronahq':'Enterprise SaaS',
+  'dropbox':'Enterprise SaaS',
+  'duck creek':'Enterprise SaaS',
+  'duo security':'Cybersecurity',
+  'dust':'Enterprise SaaS',
+  'dynatrace':'Enterprise SaaS',
+  'e2open':'Enterprise SaaS',
+  'easypost':'Enterprise SaaS',
+  'egnyte':'Enterprise SaaS',
+  'eightfold ai':'Enterprise SaaS',
+  'elastic':'Enterprise SaaS',
+  'electroneek':'Enterprise SaaS',
+  'elevenlabs':'Enterprise SaaS',
+  'emburse':'Enterprise SaaS',
+  'entrata':'Enterprise SaaS',
+  'envestnet':'Enterprise SaaS',
+  'epic':'Enterprise SaaS',
+  'epicor':'Enterprise SaaS',
+  'esentire':'Cybersecurity',
+  'estuary':'Enterprise SaaS',
+  'evisort':'Enterprise SaaS',
+  'exabeam':'Cybersecurity',
+  'exasol':'Enterprise SaaS',
+  'expensify':'Enterprise SaaS',
+  'extrahop':'Cybersecurity',
+  'fabric':'Enterprise SaaS',
+  'fareye':'Enterprise SaaS',
+  'fastly':'Enterprise SaaS',
+  'fathom':'Enterprise SaaS',
+  'fellow':'Enterprise SaaS',
+  'fiddler ai':'Enterprise SaaS',
+  'figma':'Enterprise SaaS',
+  'filevine':'Enterprise SaaS',
+  'finastra':'Enterprise SaaS',
+  'finix':'Enterprise SaaS',
+  'fireflies.ai':'Enterprise SaaS',
+  'fireworks ai':'Enterprise SaaS',
+  'fis':'Enterprise SaaS',
+  'fiserv':'Enterprise SaaS',
+  'five9':'Enterprise SaaS',
+  'fivetran':'Enterprise SaaS',
+  'fleetio':'Enterprise SaaS',
+  'floqast':'Enterprise SaaS',
+  'fluent commerce':'Enterprise SaaS',
+  'fly.io':'Enterprise SaaS',
+  'forescout':'Cybersecurity',
+  'forethought':'Enterprise SaaS',
+  'fortinet':'Cybersecurity',
+  'fountain':'Enterprise SaaS',
+  'fourkites':'Enterprise SaaS',
+  'foxit':'Enterprise SaaS',
+  'freshbooks':'Enterprise SaaS',
+  'freshdesk':'Enterprise SaaS',
+  'freshworks':'Enterprise SaaS',
+  'front':'Enterprise SaaS',
+  'fullstory':'Enterprise SaaS',
+  'fyle':'Enterprise SaaS',
+  'gainsight':'Enterprise SaaS',
+  'gamma':'Enterprise SaaS',
+  'gem':'Enterprise SaaS',
+  'genesys':'Enterprise SaaS',
+  'geotab':'Enterprise SaaS',
+  'gep':'Enterprise SaaS',
+  'getfeedback':'Enterprise SaaS',
+  'github':'Enterprise SaaS',
+  'gitlab':'Enterprise SaaS',
+  'gladly':'Enterprise SaaS',
+  'glassbox':'Enterprise SaaS',
+  'glean':'Enterprise SaaS',
+  'glean ai':'Enterprise SaaS',
+  'glide':'Enterprise SaaS',
+  'glint':'Enterprise SaaS',
+  'gong':'Enterprise SaaS',
+  'goodtime':'Enterprise SaaS',
+  'google':'Enterprise SaaS',
+  'gorgias':'Enterprise SaaS',
+  'goto':'Cybersecurity',
+  'grafana labs':'Enterprise SaaS',
+  'grain':'Enterprise SaaS',
+  'grammarly':'Enterprise SaaS',
+  'granicus':'Enterprise SaaS',
+  'greenhouse':'Enterprise SaaS',
+  'gretel':'Enterprise SaaS',
+  'groundcover':'Cybersecurity',
+  'guesty':'Enterprise SaaS',
+  'guidewire':'Enterprise SaaS',
+  'guru':'Enterprise SaaS',
+  'gusto':'Enterprise SaaS',
+  'h2o.ai':'Enterprise SaaS',
+  'hackerone':'Cybersecurity',
+  'haiilo':'Enterprise SaaS',
+  'halcyon':'Cybersecurity',
+  'halopsa':'Cybersecurity',
+  'handshake':'Enterprise SaaS',
+  'happyfox':'Enterprise SaaS',
+  'harness':'Enterprise SaaS',
+  'harri':'Enterprise SaaS',
+  'harvey':'Enterprise SaaS',
+  'hashicorp':'Enterprise SaaS',
+  'hasura':'Enterprise SaaS',
+  'hazelcast':'Enterprise SaaS',
+  'heap':'Enterprise SaaS',
+  'hebbia':'Enterprise SaaS',
+  'height':'Enterprise SaaS',
+  'help scout':'Enterprise SaaS',
+  'hemlane':'Enterprise SaaS',
+  'hevo data':'Enterprise SaaS',
+  'hex':'Enterprise SaaS',
+  'hibob':'Enterprise SaaS',
+  'hiddenlayer':'Cybersecurity',
+  'highradius':'Enterprise SaaS',
+  'highspot':'Enterprise SaaS',
+  'hireright':'Enterprise SaaS',
+  'hive':'Enterprise SaaS',
+  'honeycomb':'Enterprise SaaS',
+  'hootsuite':'Enterprise SaaS',
+  'hotjar':'Enterprise SaaS',
+  'hubspot':'Enterprise SaaS',
+  'hugging face':'Enterprise SaaS',
+  'humaans':'Enterprise SaaS',
+  'humanfirst':'Enterprise SaaS',
+  'humanitec':'Enterprise SaaS',
+  'humanloop':'Enterprise SaaS',
+  'hunters':'Cybersecurity',
+  'huntress':'Cybersecurity',
+  'hyperscience':'Enterprise SaaS',
+  'ibm':'Enterprise SaaS',
+  'icertis':'Enterprise SaaS',
+  'icims':'Enterprise SaaS',
+  'ifs':'Enterprise SaaS',
+  'illumio':'Cybersecurity',
+  'imanage':'Enterprise SaaS',
+  'immuta':'Cybersecurity',
+  'imperva':'Cybersecurity',
+  'imply':'Enterprise SaaS',
+  'influ2':'Enterprise SaaS',
+  'influxdata':'Enterprise SaaS',
+  'infor':'Enterprise SaaS',
+  'informatica':'Enterprise SaaS',
+  'inmoment':'Enterprise SaaS',
+  'innovaccer':'Enterprise SaaS',
+  'insider':'Enterprise SaaS',
+  'insightsquared':'Enterprise SaaS',
+  'instructure':'Enterprise SaaS',
+  'intercom':'Enterprise SaaS',
+  'intuit':'Enterprise SaaS',
+  'invgate':'Cybersecurity',
+  'invoca':'Enterprise SaaS',
+  'ironclad':'Enterprise SaaS',
+  'ironscales':'Cybersecurity',
+  'island':'Cybersecurity',
+  'iterable':'Enterprise SaaS',
+  'ivalua':'Enterprise SaaS',
+  'ivanti':'Cybersecurity',
+  'jack henry':'Enterprise SaaS',
+  'jaggaer':'Enterprise SaaS',
+  'jamf':'Cybersecurity',
+  'jasper':'Enterprise SaaS',
+  'jellyfish':'Enterprise SaaS',
+  'jestor':'Enterprise SaaS',
+  'jfrog':'Enterprise SaaS',
+  'jitterbit':'Enterprise SaaS',
+  'jobvite':'Enterprise SaaS',
+  'joget':'Enterprise SaaS',
+  'jumpcloud':'Cybersecurity',
+  'jumpshare':'Enterprise SaaS',
+  'juniper square':'Enterprise SaaS',
+  'kandji':'Cybersecurity',
+  'kaseya':'Cybersecurity',
+  'kasisto':'Enterprise SaaS',
+  'kaspr':'Enterprise SaaS',
+  'keboola':'Enterprise SaaS',
+  'keeper security':'Cybersecurity',
+  'khoros':'Enterprise SaaS',
+  'kibo commerce':'Enterprise SaaS',
+  'kinaxis':'Enterprise SaaS',
+  'kisi':'Enterprise SaaS',
+  'kissflow':'Enterprise SaaS',
+  'klaviyo':'Enterprise SaaS',
+  'koala':'Enterprise SaaS',
+  'kofax':'Enterprise SaaS',
+  'kolide':'Cybersecurity',
+  'kong':'Enterprise SaaS',
+  'kore.ai':'Enterprise SaaS',
+  'krisp':'Enterprise SaaS',
+  'kubecost':'Cybersecurity',
+  'kustomer':'Enterprise SaaS',
+  'kyriba':'Enterprise SaaS',
+  'kyruus health':'Enterprise SaaS',
+  'labelbox':'Enterprise SaaS',
+  'lacework':'Cybersecurity',
+  'lakera':'Cybersecurity',
+  'lambda':'Enterprise SaaS',
+  'langchain':'Enterprise SaaS',
+  'lark':'Enterprise SaaS',
+  'laserfiche':'Enterprise SaaS',
+  'lastpass':'Cybersecurity',
+  'lattice':'Enterprise SaaS',
+  'launchdarkly':'Enterprise SaaS',
+  'lavender':'Enterprise SaaS',
+  'leadiq':'Enterprise SaaS',
+  'leandata':'Enterprise SaaS',
+  'leanix':'Enterprise SaaS',
+  'leanplum':'Enterprise SaaS',
+  'leapsome':'Enterprise SaaS',
+  'lever':'Enterprise SaaS',
+  'lightspeed':'Enterprise SaaS',
+  'limeade':'Enterprise SaaS',
+  'linear':'Enterprise SaaS',
+  'liveperson':'Enterprise SaaS',
+  'llamaindex':'Enterprise SaaS',
+  'loft labs':'Enterprise SaaS',
+  'logicmonitor':'Cybersecurity',
+  'logrhythm':'Cybersecurity',
+  'logz.io':'Cybersecurity',
+  'lookout':'Cybersecurity',
+  'loom':'Enterprise SaaS',
+  'lucid software':'Enterprise SaaS',
+  'lumapps':'Enterprise SaaS',
+  'lumos':'Cybersecurity',
+  'lusha':'Enterprise SaaS',
+  'lytics':'Enterprise SaaS',
+  'm-files':'Enterprise SaaS',
+  'madkudu':'Enterprise SaaS',
+  'magic':'Enterprise SaaS',
+  'mailchimp':'Enterprise SaaS',
+  'maintainx':'Enterprise SaaS',
+  'make':'Enterprise SaaS',
+  'mambu':'Enterprise SaaS',
+  'managecasa':'Enterprise SaaS',
+  'manageengine':'Cybersecurity',
+  'mariadb':'Enterprise SaaS',
+  'marqeta':'Enterprise SaaS',
+  'material security':'Cybersecurity',
+  'materialize':'Enterprise SaaS',
+  'matillion':'Enterprise SaaS',
+  'matterport':'Enterprise SaaS',
+  'maven agi':'Enterprise SaaS',
+  'mavenoid':'Enterprise SaaS',
+  'maxio':'Enterprise SaaS',
+  'maze':'Enterprise SaaS',
+  'medallia':'Enterprise SaaS',
+  'mediafly':'Enterprise SaaS',
+  'medius':'Enterprise SaaS',
+  'meistertask':'Enterprise SaaS',
+  'melio':'Enterprise SaaS',
+  'memgraph':'Enterprise SaaS',
+  'mendix':'Enterprise SaaS',
+  'menlo security':'Cybersecurity',
+  'mercury':'Enterprise SaaS',
+  'merge':'Enterprise SaaS',
+  'mesh payments':'Enterprise SaaS',
+  'metadata.io':'Enterprise SaaS',
+  'mews':'Enterprise SaaS',
+  'mezmo':'Cybersecurity',
+  'microsoft':'Enterprise SaaS',
+  'milanote':'Enterprise SaaS',
+  'mimecast':'Cybersecurity',
+  'mindbody':'Enterprise SaaS',
+  'mindsay':'Enterprise SaaS',
+  'mindtickle':'Enterprise SaaS',
+  'minio':'Enterprise SaaS',
+  'mirakl':'Enterprise SaaS',
+  'mirantis':'Enterprise SaaS',
+  'miro':'Enterprise SaaS',
+  'missive':'Enterprise SaaS',
+  'mistral ai':'Enterprise SaaS',
+  'mixpanel':'Enterprise SaaS',
+  'modal':'Enterprise SaaS',
+  'mode':'Enterprise SaaS',
+  'modern treasury':'Enterprise SaaS',
+  'modernizing medicine':'Enterprise SaaS',
+  'modernloop':'Enterprise SaaS',
+  'moengage':'Enterprise SaaS',
+  'mollie':'Enterprise SaaS',
+  'monday.com':'Enterprise SaaS',
+  'mongodb':'Enterprise SaaS',
+  'monte carlo':'Enterprise SaaS',
+  'moogsoft':'Cybersecurity',
+  'mosaic':'Enterprise SaaS',
+  'moss':'Enterprise SaaS',
+  'motherduck':'Enterprise SaaS',
+  'motion':'Enterprise SaaS',
+  'motive':'Enterprise SaaS',
+  'moveworks':'Enterprise SaaS',
+  'mparticle':'Enterprise SaaS',
+  'mri software':'Enterprise SaaS',
+  'mspbots':'Enterprise SaaS',
+  'mulesoft':'Enterprise SaaS',
+  'mural':'Enterprise SaaS',
+  'mutiny':'Enterprise SaaS',
+  'n-able':'Cybersecurity',
+  'n8n':'Enterprise SaaS',
+  'namely':'Enterprise SaaS',
+  'navan':'Enterprise SaaS',
+  'navattic':'Enterprise SaaS',
+  'ncino':'Enterprise SaaS',
+  'neo4j':'Enterprise SaaS',
+  'neon':'Enterprise SaaS',
+  'neptune.ai':'Enterprise SaaS',
+  'netapp':'Enterprise SaaS',
+  'netbird':'Cybersecurity',
+  'netlify':'Enterprise SaaS',
+  'netskope':'Cybersecurity',
+  'netspi':'Cybersecurity',
+  'netsuite':'Enterprise SaaS',
+  'new relic':'Enterprise SaaS',
+  'newstore':'Enterprise SaaS',
+  'nexla':'Enterprise SaaS',
+  'nextech':'Enterprise SaaS',
+  'nextgen healthcare':'Enterprise SaaS',
+  'nice':'Enterprise SaaS',
+  'nice actimize':'Enterprise SaaS',
+  'nifty':'Enterprise SaaS',
+  'ninjaone':'Cybersecurity',
+  'nintex':'Enterprise SaaS',
+  'nitro':'Enterprise SaaS',
+  'nium':'Enterprise SaaS',
+  'nobl9':'Cybersecurity',
+  'nooks':'Enterprise SaaS',
+  'nosto':'Enterprise SaaS',
+  'notion':'Enterprise SaaS',
+  'nozomi networks':'Cybersecurity',
+  'nuclino':'Enterprise SaaS',
+  'nudge security':'Cybersecurity',
+  'numeric':'Enterprise SaaS',
+  'nutanix':'Enterprise SaaS',
+  'nutshell':'Enterprise SaaS',
+  'nylas':'Enterprise SaaS',
+  'o9 solutions':'Enterprise SaaS',
+  'observe':'Enterprise SaaS',
+  'observe.ai':'Enterprise SaaS',
+  'obsidian security':'Cybersecurity',
+  'octoai':'Enterprise SaaS',
+  'odoo':'Enterprise SaaS',
+  'okta':'Cybersecurity',
+  'olo':'Enterprise SaaS',
+  'onbase':'Enterprise SaaS',
+  'onesignal':'Enterprise SaaS',
+  'onetrust':'Cybersecurity',
+  'onit':'Enterprise SaaS',
+  'onlyoffice':'Enterprise SaaS',
+  'openai':'Enterprise SaaS',
+  'opengov':'Enterprise SaaS',
+  'opentext':'Enterprise SaaS',
+  'opsgenie':'Cybersecurity',
+  'opslevel':'Cybersecurity',
+  'opsramp':'Cybersecurity',
+  'optimizely':'Enterprise SaaS',
+  'optimove':'Enterprise SaaS',
+  'oracle':'Enterprise SaaS',
+  'orca security':'Cybersecurity',
+  'ordway':'Enterprise SaaS',
+  'orgvue':'Enterprise SaaS',
+  'otter':'Enterprise SaaS',
+  'outplay':'Enterprise SaaS',
+  'outreach':'Enterprise SaaS',
+  'outsystems':'Enterprise SaaS',
+  'oyster':'Enterprise SaaS',
+  'paddle':'Enterprise SaaS',
+  'pagerduty':'Enterprise SaaS',
+  'pagertree':'Cybersecurity',
+  'palantir':'Enterprise SaaS',
+  'palo alto networks':'Cybersecurity',
+  'pandadoc':'Enterprise SaaS',
+  'panther':'Cybersecurity',
+  'papaya global':'Enterprise SaaS',
+  'par technology':'Enterprise SaaS',
+  'parabol':'Enterprise SaaS',
+  'parabola':'Enterprise SaaS',
+  'paradox':'Enterprise SaaS',
+  'parloa':'Enterprise SaaS',
+  'patientpop':'Enterprise SaaS',
+  'paychex':'Enterprise SaaS',
+  'payhawk':'Enterprise SaaS',
+  'paylocity':'Enterprise SaaS',
+  'payoneer':'Enterprise SaaS',
+  'payscale':'Enterprise SaaS',
+  'pdq':'Cybersecurity',
+  'pegasystems':'Enterprise SaaS',
+  'pendo':'Enterprise SaaS',
+  'pentera':'Cybersecurity',
+  'people.ai':'Enterprise SaaS',
+  'percona':'Enterprise SaaS',
+  'perplexity':'Enterprise SaaS',
+  'personetics':'Enterprise SaaS',
+  'personio':'Enterprise SaaS',
+  'phenom':'Enterprise SaaS',
+  'phreesia':'Enterprise SaaS',
+  'pigment':'Enterprise SaaS',
+  'pika':'Enterprise SaaS',
+  'pinecone':'Enterprise SaaS',
+  'ping identity':'Cybersecurity',
+  'pipedream':'Enterprise SaaS',
+  'pipedrive':'Enterprise SaaS',
+  'pipefy':'Enterprise SaaS',
+  'pitch':'Enterprise SaaS',
+  'plaid':'Enterprise SaaS',
+  'planetscale':'Enterprise SaaS',
+  'planful':'Enterprise SaaS',
+  'planguru':'Enterprise SaaS',
+  'pleo':'Enterprise SaaS',
+  'pocus':'Enterprise SaaS',
+  'podium':'Enterprise SaaS',
+  'polyai':'Enterprise SaaS',
+  'poolside':'Enterprise SaaS',
+  'port':'Cybersecurity',
+  'postal':'Enterprise SaaS',
+  'postman':'Enterprise SaaS',
+  'powerschool':'Enterprise SaaS',
+  'precisely':'Enterprise SaaS',
+  'predibase':'Enterprise SaaS',
+  'prefect':'Enterprise SaaS',
+  'prelude':'Enterprise SaaS',
+  'preset':'Enterprise SaaS',
+  'prismatic':'Enterprise SaaS',
+  'processmaker':'Enterprise SaaS',
+  'procore':'Enterprise SaaS',
+  'procurify':'Enterprise SaaS',
+  'productboard':'Enterprise SaaS',
+  'productiv':'Enterprise SaaS',
+  'progress software':'Enterprise SaaS',
+  'project44':'Enterprise SaaS',
+  'proofhub':'Enterprise SaaS',
+  'proofpoint':'Cybersecurity',
+  'prophix':'Enterprise SaaS',
+  'protect ai':'Cybersecurity',
+  'ptc':'Enterprise SaaS',
+  'pulumi':'Enterprise SaaS',
+  'pypestream':'Enterprise SaaS',
+  'q2':'Enterprise SaaS',
+  'qdrant':'Enterprise SaaS',
+  'qlik':'Enterprise SaaS',
+  'qualaroo':'Enterprise SaaS',
+  'qualified':'Enterprise SaaS',
+  'qualtrics':'Enterprise SaaS',
+  'qualys':'Cybersecurity',
+  'quantum metric':'Enterprise SaaS',
+  'quest software':'Cybersecurity',
+  'questionpro':'Enterprise SaaS',
+  'quickbase':'Enterprise SaaS',
+  'quip':'Enterprise SaaS',
+  'qwak':'Enterprise SaaS',
+  'rad ai':'Enterprise SaaS',
+  'rafay':'Cybersecurity',
+  'railway':'Enterprise SaaS',
+  'ramp':'Enterprise SaaS',
+  'rapid':'Enterprise SaaS',
+  'rapid7':'Cybersecurity',
+  'read ai':'Enterprise SaaS',
+  'realpage':'Enterprise SaaS',
+  'reclaim.ai':'Enterprise SaaS',
+  'recorded future':'Cybersecurity',
+  'recurly':'Enterprise SaaS',
+  'red hat':'Enterprise SaaS',
+  'redis':'Enterprise SaaS',
+  'relativity':'Enterprise SaaS',
+  'relevance ai':'Enterprise SaaS',
+  'reliaquest':'Cybersecurity',
+  'remote':'Enterprise SaaS',
+  'render':'Enterprise SaaS',
+  'replicant':'Enterprise SaaS',
+  'replicate':'Enterprise SaaS',
+  'replit':'Enterprise SaaS',
+  'reply.io':'Enterprise SaaS',
+  'restaurant365':'Enterprise SaaS',
+  'retool':'Enterprise SaaS',
+  'revenue.io':'Enterprise SaaS',
+  'rho':'Enterprise SaaS',
+  'ringcentral':'Enterprise SaaS',
+  'rippling':'Enterprise SaaS',
+  'rivery':'Enterprise SaaS',
+  'roadmunk':'Enterprise SaaS',
+  'robocorp':'Enterprise SaaS',
+  'rockset':'Enterprise SaaS',
+  'rollworks':'Enterprise SaaS',
+  'rossum':'Enterprise SaaS',
+  'rubrik':'Cybersecurity',
+  'rudderstack':'Enterprise SaaS',
+  'runway':'Enterprise SaaS',
+  'rydoo':'Enterprise SaaS',
+  'safe software':'Enterprise SaaS',
+  'safebase':'Cybersecurity',
+  'sage':'Enterprise SaaS',
+  'sailpoint':'Cybersecurity',
+  'salesflare':'Enterprise SaaS',
+  'salesforce':'Enterprise SaaS',
+  'saleshood':'Enterprise SaaS',
+  'salesloft':'Enterprise SaaS',
+  'salesrabbit':'Enterprise SaaS',
+  'samsara':'Enterprise SaaS',
+  'sana':'Enterprise SaaS',
+  'sana commerce':'Enterprise SaaS',
+  'sana labs':'Enterprise SaaS',
+  'sap':'Enterprise SaaS',
+  'sap ariba':'Enterprise SaaS',
+  'sap concur':'Enterprise SaaS',
+  'saviynt':'Cybersecurity',
+  'scale ai':'Enterprise SaaS',
+  'sciencelogic':'Cybersecurity',
+  'scratchpad':'Enterprise SaaS',
+  'screenpal':'Enterprise SaaS',
+  'scribe':'Enterprise SaaS',
+  'scylladb':'Enterprise SaaS',
+  'seamless.ai':'Enterprise SaaS',
+  'secoda':'Enterprise SaaS',
+  'secureframe':'Cybersecurity',
+  'securityscorecard':'Cybersecurity',
+  'securonix':'Cybersecurity',
+  'seekout':'Enterprise SaaS',
+  'seismic':'Enterprise SaaS',
+  'semgrep':'Cybersecurity',
+  'sendoso':'Enterprise SaaS',
+  'sentinelone':'Cybersecurity',
+  'sentra':'Cybersecurity',
+  'sentry':'Enterprise SaaS',
+  'servicenow':'Enterprise SaaS',
+  'servicetitan':'Enterprise SaaS',
+  'sevenrooms':'Enterprise SaaS',
+  'shipbob':'Enterprise SaaS',
+  'shippo':'Enterprise SaaS',
+  'shipstation':'Enterprise SaaS',
+  'shortcut':'Enterprise SaaS',
+  'showpad':'Enterprise SaaS',
+  'sierra':'Enterprise SaaS',
+  'sigma computing':'Enterprise SaaS',
+  'simon data':'Enterprise SaaS',
+  'simplepractice':'Enterprise SaaS',
+  'simpplr':'Enterprise SaaS',
+  'sinch':'Enterprise SaaS',
+  'singlestore':'Enterprise SaaS',
+  'singular':'Enterprise SaaS',
+  'sisense':'Enterprise SaaS',
+  'siteminder':'Enterprise SaaS',
+  'slab':'Enterprise SaaS',
+  'slack':'Enterprise SaaS',
+  'smartrecruiters':'Enterprise SaaS',
+  'smartsheet':'Enterprise SaaS',
+  'snaplogic':'Enterprise SaaS',
+  'snorkel ai':'Enterprise SaaS',
+  'snowflake':'Enterprise SaaS',
+  'snyk':'Cybersecurity',
+  'socotra':'Enterprise SaaS',
+  'softr':'Enterprise SaaS',
+  'solarwinds':'Cybersecurity',
+  'soldo':'Enterprise SaaS',
+  'solvexia':'Enterprise SaaS',
+  'sonar':'Cybersecurity',
+  'sonatype':'Enterprise SaaS',
+  'sonrai security':'Cybersecurity',
+  'sopro':'Enterprise SaaS',
+  'sourcegraph':'Enterprise SaaS',
+  'sovos':'Enterprise SaaS',
+  'spendesk':'Enterprise SaaS',
+  'spendflo':'Enterprise SaaS',
+  'splashtop':'Cybersecurity',
+  'splunk':'Cybersecurity',
+  'spoton':'Enterprise SaaS',
+  'sprinklr':'Enterprise SaaS',
+  'sprinto':'Cybersecurity',
+  'sprout social':'Enterprise SaaS',
+  'stacker':'Enterprise SaaS',
+  'staffbase':'Enterprise SaaS',
+  'stampli':'Enterprise SaaS',
+  'starburst':'Enterprise SaaS',
+  'stardog':'Enterprise SaaS',
+  'startree':'Enterprise SaaS',
+  'stellar cyber':'Cybersecurity',
+  'sterling':'Enterprise SaaS',
+  'streamnative':'Enterprise SaaS',
+  'striim':'Enterprise SaaS',
+  'stripe':'Enterprise SaaS',
+  'strongdm':'Cybersecurity',
+  'sugarcrm':'Enterprise SaaS',
+  'sumo logic':'Cybersecurity',
+  'supabase':'Enterprise SaaS',
+  'superblocks':'Enterprise SaaS',
+  'superhuman':'Enterprise SaaS',
+  'superops':'Cybersecurity',
+  'supportlogic':'Enterprise SaaS',
+  'surveymonkey':'Enterprise SaaS',
+  'suse':'Enterprise SaaS',
+  'swimlane':'Cybersecurity',
+  'syncro':'Cybersecurity',
+  'synthesia':'Enterprise SaaS',
+  'sysaid':'Cybersecurity',
+  'sysdig':'Cybersecurity',
+  'tailscale':'Cybersecurity',
+  'talend':'Enterprise SaaS',
+  'talentlms':'Enterprise SaaS',
+  'talkdesk':'Enterprise SaaS',
+  'tanium':'Cybersecurity',
+  'tealium':'Enterprise SaaS',
+  'teampay':'Enterprise SaaS',
+  'teamviewer':'Cybersecurity',
+  'teamwork':'Enterprise SaaS',
+  'tecton':'Enterprise SaaS',
+  'teleport':'Cybersecurity',
+  'temenos':'Enterprise SaaS',
+  'temporal':'Enterprise SaaS',
+  'tenable':'Cybersecurity',
+  'teradata':'Enterprise SaaS',
+  'terminus':'Enterprise SaaS',
+  'tesorio':'Enterprise SaaS',
+  'tethr':'Enterprise SaaS',
+  'tettra':'Enterprise SaaS',
+  'thought machine':'Enterprise SaaS',
+  'thoughtspot':'Enterprise SaaS',
+  'tidio':'Enterprise SaaS',
+  'tigergraph':'Enterprise SaaS',
+  'timescale':'Enterprise SaaS',
+  'tines':'Cybersecurity',
+  'tipalti':'Enterprise SaaS',
+  'toast':'Enterprise SaaS',
+  'todoist':'Enterprise SaaS',
+  'together ai':'Enterprise SaaS',
+  'tome':'Enterprise SaaS',
+  'tonkean':'Enterprise SaaS',
+  'topdesk':'Cybersecurity',
+  'torii':'Cybersecurity',
+  'torq':'Cybersecurity',
+  'totango':'Enterprise SaaS',
+  'transcend':'Cybersecurity',
+  'travis ci':'Enterprise SaaS',
+  'tray.io':'Enterprise SaaS',
+  'treasure data':'Enterprise SaaS',
+  'treasury prime':'Enterprise SaaS',
+  'trellix':'Cybersecurity',
+  'trello':'Enterprise SaaS',
+  'trinet':'Enterprise SaaS',
+  'trintech':'Enterprise SaaS',
+  'tropic':'Enterprise SaaS',
+  'tufin':'Cybersecurity',
+  'tulip':'Enterprise SaaS',
+  'twilio':'Enterprise SaaS',
+  'twingate':'Cybersecurity',
+  'tyk':'Enterprise SaaS',
+  'tyler technologies':'Enterprise SaaS',
+  'typeform':'Enterprise SaaS',
+  'udemy':'Enterprise SaaS',
+  'uipath':'Enterprise SaaS',
+  'ujet':'Enterprise SaaS',
+  'ukg':'Enterprise SaaS',
+  'unbounce':'Enterprise SaaS',
+  'unify':'Enterprise SaaS',
+  'unqork':'Enterprise SaaS',
+  'unstructured':'Enterprise SaaS',
+  'upkeep':'Enterprise SaaS',
+  'upwind':'Cybersecurity',
+  'userflow':'Enterprise SaaS',
+  'usergems':'Enterprise SaaS',
+  'userpilot':'Enterprise SaaS',
+  'usertesting':'Enterprise SaaS',
+  'userzoom':'Enterprise SaaS',
+  'vanta':'Cybersecurity',
+  'varonis':'Cybersecurity',
+  'vast data':'Enterprise SaaS',
+  'vectra ai':'Cybersecurity',
+  'veeva':'Enterprise SaaS',
+  'vellum':'Enterprise SaaS',
+  'vena':'Enterprise SaaS',
+  'vendr':'Enterprise SaaS',
+  'veracode':'Cybersecurity',
+  'vercel':'Enterprise SaaS',
+  'verint':'Enterprise SaaS',
+  'verkada':'Enterprise SaaS',
+  'vertafore':'Enterprise SaaS',
+  'vertex':'Enterprise SaaS',
+  'veza':'Cybersecurity',
+  'vimeo':'Enterprise SaaS',
+  'visier':'Enterprise SaaS',
+  'vmware':'Enterprise SaaS',
+  'vonage':'Enterprise SaaS',
+  'vtex':'Enterprise SaaS',
+  'vts':'Enterprise SaaS',
+  'vwo':'Enterprise SaaS',
+  'walkme':'Enterprise SaaS',
+  'warmly':'Enterprise SaaS',
+  'wasabi':'Enterprise SaaS',
+  'weaviate':'Enterprise SaaS',
+  'weights & biases':'Enterprise SaaS',
+  'wellsky':'Enterprise SaaS',
+  'whalesync':'Enterprise SaaS',
+  'whereby':'Enterprise SaaS',
+  'whimsical':'Enterprise SaaS',
+  'wiz':'Cybersecurity',
+  'workable':'Enterprise SaaS',
+  'workato':'Enterprise SaaS',
+  'workday':'Enterprise SaaS',
+  'workfusion':'Enterprise SaaS',
+  'workgrid':'Enterprise SaaS',
+  'workhuman':'Enterprise SaaS',
+  'workiva':'Enterprise SaaS',
+  'workrail':'Enterprise SaaS',
+  'workvivo':'Enterprise SaaS',
+  'worldpay':'Enterprise SaaS',
+  'wrike':'Enterprise SaaS',
+  'writer':'Enterprise SaaS',
+  'xactly':'Enterprise SaaS',
+  'xero':'Enterprise SaaS',
+  'xm cyber':'Cybersecurity',
+  'xmatters':'Cybersecurity',
+  'yardi':'Enterprise SaaS',
+  'yellow.ai':'Enterprise SaaS',
+  'yellowbrick data':'Enterprise SaaS',
+  'yext':'Enterprise SaaS',
+  'yugabyte':'Enterprise SaaS',
+  'zapier':'Enterprise SaaS',
+  'zendesk':'Enterprise SaaS',
+  'zenefits':'Enterprise SaaS',
+  'zenoti':'Enterprise SaaS',
+  'zeta global':'Enterprise SaaS',
+  'zilliz':'Enterprise SaaS',
+  'zip':'Enterprise SaaS',
+  'zluri':'Cybersecurity',
+  'zoho':'Enterprise SaaS',
+  'zoom':'Enterprise SaaS',
+  'zoominfo':'Enterprise SaaS',
+  'zscaler':'Cybersecurity',
+  'zuora':'Enterprise SaaS',
+  'zylo':'Enterprise SaaS',
 };
 
 const VERTICAL_COLORS = {
@@ -453,15 +1536,6 @@ const VERTICAL_COLORS = {
   'Other':                {bg:'rgba(255,255,255,0.06)',text:'rgba(255,255,255,0.5)',border:'rgba(255,255,255,0.12)'},
 };
 
-const CLARIFY_CLIENTS = {
-  'BPO':['TCS','Tata Communications'],
-  'IT Services':['DXC Technology','Mastek','SAP'],
-  'Enterprise SaaS':['SAP','Adobe','Reprise','Zellis'],
-  'Fintech':['PayPal','Zellis'],
-  'Cybersecurity':['Wiz','Palo Alto Networks','Cyera'],
-  'Cloud Communications':['Syniverse','Tata Communications'],
-  'Other':['DXC Technology','Adobe','PayPal'],
-};
 
 const PAIN_POINTS = {
   'BPO':'scaling delivery capacity without proportional headcount growth, shrinking margins from client renegotiations, and pressure to differentiate beyond cost arbitrage',
@@ -486,17 +1560,146 @@ const FOLLOW_UP_ANGLES = {
 function detectVertical(company) {
   if (!company) return null;
   const lower = company.toLowerCase().trim();
+  // Exact match
   if (COMPANY_VERTICALS[lower]) return COMPANY_VERTICALS[lower];
+  // Partial match - only match if key is a whole word or the full company name matches substantially
   for (const [key, val] of Object.entries(COMPANY_VERTICALS)) {
-    if (lower.includes(key) || key.includes(lower)) return val;
+    if (key.length > 4 && (lower === key || lower.startsWith(key + ' ') || lower.endsWith(' ' + key) || lower.includes(' ' + key + ' '))) return val;
   }
   return null;
 }
 
-function getClientRefs(vertical) {
-  const clients = CLARIFY_CLIENTS[vertical] || CLARIFY_CLIENTS['Other'];
-  return clients.slice(0,2).join(' and ');
+// Claude-powered fallback for unknown companies - called during import
+// ── Persona Detection ────────────────────────────────────────────────────
+const SALES_TITLES = [
+  'cro','chief revenue','vp sales','vice president sales','head of sales',
+  'director of sales','sales director','vp of sales','svp sales','evp sales',
+  'chief sales','head of business development','vp business development',
+  'director business development','bd director','revenue leader','sales leader',
+  'commercial director','vp commercial','head of commercial','sales operations',
+  'revenue operations','revops','sales enablement','account executive','ae',
+  'enterprise ae','strategic account','key account','head of partnerships',
+];
+
+const MARKETING_TITLES = [
+  'cmo','chief marketing','vp marketing','vice president marketing',
+  'head of marketing','marketing director','director of marketing',
+  'svp marketing','evp marketing','growth','demand gen','demand generation',
+  'head of demand','vp demand','director demand','marketing ops','marketing operations',
+  'performance marketing','digital marketing','brand','comms','communications',
+  'content marketing','abm','account based','field marketing','revenue marketing',
+  'growth marketing','product marketing','vp growth','head of growth',
+];
+
+function detectPersona(title) {
+  if (!title) return 'other';
+  const t = title.toLowerCase();
+  if (SALES_TITLES.some(k => t.includes(k))) return 'sales';
+  if (MARKETING_TITLES.some(k => t.includes(k))) return 'marketing';
+  return 'other';
 }
+
+function personaPill(persona) {
+  const map = {
+    sales:     {bg:'rgba(78,167,46,0.12)',text:'#4EA72E',border:'rgba(78,167,46,0.25)',label:'Sales'},
+    marketing: {bg:'rgba(160,43,147,0.12)',text:'#A02B93',border:'rgba(160,43,147,0.25)',label:'Marketing'},
+    other:     {bg:'rgba(255,255,255,0.06)',text:'rgba(255,255,255,0.4)',border:'rgba(255,255,255,0.1)',label:'Other'},
+  };
+  const m = map[persona] || map.other;
+  return `<span class="pill" style="background:${m.bg};color:${m.text};border:1px solid ${m.border}">${m.label}</span>`;
+}
+
+// ── Persona-specific pain points ─────────────────────────────────────────
+const PAIN_POINTS_SALES = {
+  'BPO':'building an account-based development motion that generates predictable pipeline into strategic accounts — not just reactive RFP responses. Most BD teams are stretched too thin to execute multi-threaded outreach across hundreds of target logos.',
+  'IT Services':'breaking into enterprise accounts where incumbents are entrenched. Sales teams need a systematic way to engage buying groups before procurement gets involved and the deal becomes a price negotiation.',
+  'Enterprise SaaS':'moving beyond inbound and product-led motion into strategic account development. Enterprise deals require a dedicated outbound function that can open doors before the formal buying process starts.',
+  'Fintech':'generating qualified pipeline in enterprise accounts where risk committees and procurement add six to twelve months to sales cycles. Sales teams need early access to business buyers, not just IT.',
+  'Cybersecurity':'reaching CISO and security leadership who are overwhelmed with vendor outreach. Standing out requires account-based development that leads with business impact, not feature specs.',
+  'Cloud Communications':'winning enterprise deals against hyperscaler competition when buyers are consolidating vendors. Sales teams need multi-threaded coverage across IT, procurement, and business units simultaneously.',
+  'Other':'building predictable pipeline into strategic accounts through a dedicated account-based development motion that engages buying groups before formal RFPs exist.',
+};
+
+const PAIN_POINTS_MARKETING = {
+  'BPO':'investing in ABM and account-based campaigns but struggling to convert marketing engagement into qualified sales conversations. Without an embedded sales development resource, campaign ROI stalls at awareness.',
+  'IT Services':'running sophisticated demand gen programs but losing pipeline at the handoff to sales. Marketing needs an integrated motion — embedded SDR resources that convert content engagement into qualified pipeline.',
+  'Enterprise SaaS':'building ABM programmes that generate engagement but not pipeline. Marketing leaders need a sales development layer that activates the accounts their campaigns have warmed, before the intent window closes.',
+  'Fintech':'creating strong content and campaign engines but struggling to translate that into enterprise pipeline. ABM without a coordinated outbound motion leaves marketing investment on the table.',
+  'Cybersecurity':'running events, content, and digital campaigns but seeing weak conversion to qualified pipeline. Integrated marketing requires an outbound function that converts marketing-qualified accounts into sales conversations.',
+  'Cloud Communications':'investing in account-based marketing programs but lacking the sales development bandwidth to activate target accounts at scale. Campaigns create awareness — embedded outbound converts it to pipeline.',
+  'Other':'investing in marketing programmes that generate awareness and engagement without a coordinated sales development motion to convert that interest into qualified pipeline and enterprise conversations.',
+};
+
+const FOLLOW_UP_ANGLES_SALES = {
+  'BPO':'how your competitors are using outsourced account-based development to cover more accounts without adding headcount — and what that means for your pipeline targets',
+  'IT Services':'the pattern we see across IT services firms where the most capable delivery teams lose deals because pipeline generation is still reactive rather than account-led',
+  'Enterprise SaaS':'how the fastest-growing enterprise SaaS companies are separating pipeline generation from AE capacity — and using dedicated ABD to get into accounts before the formal buying process starts',
+  'Fintech':'what happens to win rates when you engage the business buyer six months before procurement — and how account-based development makes that systematically possible',
+  'Cybersecurity':'how security vendors who lead with business impact rather than threat landscape are cutting through the noise and getting in front of CISOs who have stopped taking vendor calls',
+  'Cloud Communications':'how the enterprise comms vendors winning consolidation deals are engaging IT, procurement, and business units simultaneously rather than starting at the top and hoping it cascades',
+  'Other':'the difference between reactive pipeline and built pipeline — and how account-based development changes the revenue equation when sales teams are already stretched',
+};
+
+const FOLLOW_UP_ANGLES_MARKETING = {
+  'BPO':'the gap between ABM investment and pipeline output — and how integrated marketing programmes with embedded sales development are closing that gap for BPO marketing leaders',
+  'IT Services':'how marketing leaders at IT services firms are turning content engagement and campaign activity into qualified pipeline by embedding sales development into their ABM motion',
+  'Enterprise SaaS':'what it looks like when ABM and outbound are genuinely integrated — same target account list, coordinated messaging, and a shared pipeline metric',
+  'Fintech':'how fintech marketing teams are extending the impact of their compliance-aware content by pairing it with account-based outreach that converts intent into pipeline',
+  'Cybersecurity':'how security marketing leaders are turning CISO event attendance and content downloads into pipeline by coupling their ABM with a coordinated outbound motion',
+  'Cloud Communications':'how marketing-led account based programmes are delivering pipeline ROI when they are backed by an outbound motion that converts campaign engagement before the intent window closes',
+  'Other':'how integrated marketing and sales development can turn your existing ABM investment into measurable pipeline — without adding headcount to your sales team',
+};
+
+// ── Nurture re-engagement angles ─────────────────────────────────────────
+const NURTURE_ANGLES_SALES = {
+  'BPO':'a specific development in the BPO market that has changed the pipeline calculus since we last spoke',
+  'IT Services':'a shift in how enterprise buyers are evaluating IT services partners that is worth a brief conversation',
+  'Enterprise SaaS':'something specific we have done in your category since we last connected that may be directly relevant to your pipeline challenge',
+  'Fintech':'a pattern we are seeing in fintech pipeline generation that seems worth sharing given where you were focused',
+  'Cybersecurity':'a new approach to opening security accounts that is cutting through where traditional outreach has stopped working',
+  'Cloud Communications':'a development in the enterprise comms market that has shifted how the best vendors are building pipeline',
+  'Other':'something we have been working on that is directly relevant to the pipeline conversation we started',
+};
+
+const NURTURE_ANGLES_MARKETING = {
+  'BPO':'a specific integrated marketing case study from the BPO space that closes the gap between ABM spend and pipeline output',
+  'IT Services':'a new way we are helping IT services marketing teams convert campaign engagement into qualified enterprise pipeline',
+  'Enterprise SaaS':'how we have evolved our ABM integration model since we last connected — and what it means for marketing ROI',
+  'Fintech':'a fintech-specific approach to integrated marketing that converts intent signals into sales pipeline without increasing headcount',
+  'Cybersecurity':'a security marketing case study that shows what happens when ABM and outbound are genuinely unified',
+  'Cloud Communications':'a specific way we are helping cloud comms marketing teams close the loop between campaign activity and pipeline',
+  'Other':'an update on how we are helping marketing teams convert their account-based investment into qualified pipeline',
+};
+
+const _verticalCache = {};
+async function detectVerticalWithAI(company, apiKey) {
+  if (!company || !apiKey) return 'Enterprise SaaS';
+  const lower = company.toLowerCase().trim();
+  if (_verticalCache[lower]) return _verticalCache[lower];
+  const known = detectVertical(company);
+  if (known) { _verticalCache[lower] = known; return known; }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:20,
+        messages:[{role:'user',content:`Classify "${company}" into exactly one of these: BPO, IT Services, Enterprise SaaS, Fintech, Cybersecurity, Cloud Communications, Other. Reply with the category name only, nothing else.`}]
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const v = data.content?.[0]?.text?.trim();
+      const valid = ['BPO','IT Services','Enterprise SaaS','Fintech','Cybersecurity','Cloud Communications','Other'];
+      const result = valid.find(x => v?.includes(x)) || 'Enterprise SaaS';
+      _verticalCache[lower] = result;
+      return result;
+    }
+  } catch {}
+  return 'Enterprise SaaS';
+}
+
 
 // ── API Base URL ──────────────────────────────────────────────────────────
 const API = window.BACKEND_URL || 'https://clarify-sdrai.onrender.com';
@@ -566,11 +1769,17 @@ async function doSignup() {
 }
 
 async function loadUserData(hasApiKey) {
-  // Load history from backend
-  try {
-    const res = await fetch(API+'/user/history', {headers:authHeaders()});
-    if (res.ok) { const data = await res.json(); history = data.history || {}; }
-  } catch(e) { console.warn('loadHistory failed:', e); }
+  // Load history from backend (retry once on failure - handles Render cold start)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(API+'/user/history', {headers:authHeaders()});
+      if (res.ok) { const data = await res.json(); history = data.history || {}; break; }
+      if (res.status === 401) break; // auth error, no point retrying
+    } catch(e) {
+      console.warn('loadHistory attempt', attempt+1, 'failed:', e);
+      if (attempt === 0) await new Promise(r => setTimeout(r, 3000)); // wait 3s before retry
+    }
+  }
   // Load API key from backend
   if (hasApiKey) {
     try {
@@ -626,12 +1835,28 @@ function showApp() {
   document.getElementById('app').style.display = 'flex';
   document.getElementById('user-name-display').textContent = currentUser?.name || '';
   renderNav(); updateTopBar(); updateReadyStatus();
-  renderContactsPage(); renderComposePage(); renderSendPage(); renderCadencePage();
+  renderContactsPage(); renderComposePage(); renderSendPage(); renderCadencePage(); renderNurturePage();
+  updateAutoSendUI();
+  // Init EmailJS once on login
+  if (window.emailjs && cfg('publicKey')) window.emailjs.init({publicKey:cfg('publicKey')});
+  // Check for pending follow-ups on login
+  setTimeout(autoAdvanceIfReady, 1500);
 }
 
 function logout() {
-  authToken = ''; localStorage.removeItem('clarify_token');
+  // Reset all state
+  authToken = '';
+  localStorage.removeItem('clarify_token');
   history = {}; contacts = []; emails = {}; statuses = {};
+  generating = false;
+  _autoRunning = false;
+  clearTimeout(_saveHistoryTimer);
+  clearTimeout(_saveApiTimer);
+  // Reset UI
+  const genBtn = document.getElementById('gen-all-btn');
+  if (genBtn) { genBtn.classList.remove('pulse'); genBtn.textContent = 'Generate All'; }
+  const banner = document.getElementById('auto-advance-banner');
+  if (banner) banner.style.display = 'none';
   showAuthScreen();
 }
 
@@ -651,11 +1876,17 @@ async function saveHistory() {
 
 function daysSince(d) {
   if (!d) return null;
-  return Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+  const ms = Date.now() - new Date(d).getTime();
+  if (isNaN(ms)) return null;
+  return Math.max(0, Math.floor(ms / 86400000));
 }
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-US', {month:'short',day:'numeric'});
+  try {
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return '—';
+    return dt.toLocaleDateString('en-US', {month:'short',day:'numeric'});
+  } catch { return '—'; }
 }
 
 // ── Pills HTML ─────────────────────────────────────────────────────────────
@@ -670,7 +1901,9 @@ function stagePill(stage) {
     2:{bg:'rgba(245,158,11,0.12)',text:'#f59e0b',border:'rgba(245,158,11,0.25)',label:'Follow-up 1'},
     3:{bg:'rgba(233,113,50,0.12)',text:'#E97132',border:'rgba(233,113,50,0.25)',label:'Follow-up 2'},
   };
-  const m = map[stage] || {bg:'rgba(255,255,255,0.06)',text:'rgba(255,255,255,0.5)',border:'rgba(255,255,255,0.12)',label:`Touch ${stage}`};
+  const m = map[stage] || (stage > 3
+    ? {bg:'rgba(15,158,213,0.08)',text:'#0F9ED5',border:'rgba(15,158,213,0.2)',label:'Re-engage'}
+    : {bg:'rgba(255,255,255,0.06)',text:'rgba(255,255,255,0.5)',border:'rgba(255,255,255,0.12)',label:`Touch ${stage}`});
   return `<span class="stage-pill" style="background:${m.bg};color:${m.text};border:1px solid ${m.border}">${m.label}</span>`;
 }
 
@@ -691,15 +1924,18 @@ function renderNav() {
   const nav = document.getElementById('nav');
   const fud = followUpDue();
   nav.innerHTML = TABS.map((t,i) => {
-    const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0);
+    const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0) || (i===5 && getNurtureContacts().length===0);
     const active = i === currentTab;
-    const notif = i===4 && fud.length > 0 ? `<span class="notif-badge">${fud.length}</span>` : '';
+    let nurtureCount = 0;
+    try { nurtureCount = i===5 ? getNurtureContacts().filter(([,r]) => nurtureReadyDue(r)).length : 0; } catch {}
+    const notif = i===4 && fud.length > 0 ? `<span class="notif-badge">${fud.length}</span>`
+                : i===5 && nurtureCount > 0 ? `<span class="notif-badge" style="background:#E97132">${nurtureCount}</span>` : '';
     return `<button class="nav-btn ${active?'active':''} ${locked?'locked':''}" onclick="goTab(${i})">${t.icon} ${t.label}${notif}</button>`;
   }).join('');
 }
 
 function goTab(i) {
-  const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0);
+  const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0) || (i===5 && getNurtureContacts().length===0);
   if (locked) return;
   currentTab = i;
   document.querySelectorAll('.page').forEach((p,idx) => p.classList.toggle('active', idx===i));
@@ -708,8 +1944,9 @@ function goTab(i) {
   renderNav();
   if (i===1) renderContactsPage();
   if (i===2) renderComposePage();
-  if (i===3) renderSendPage();
+  if (i===3) { renderSendPage(); setTimeout(autoAdvanceIfReady, 500); }
   if (i===4) renderCadencePage();
+  if (i===5) renderNurturePage();
 }
 
 // ── Stats ──────────────────────────────────────────────────────────────────
@@ -717,27 +1954,37 @@ function countStatus(s) { return Object.values(statuses).filter(v=>v===s).length
 
 function updateTopBar() {
   const ready = countStatus('ready'), sent = countStatus('sent'), failed = countStatus('error');
-  document.getElementById('top-ready').textContent = ready;
-  document.getElementById('top-sent').textContent = sent;
-  document.getElementById('top-failed').textContent = failed;
-  document.getElementById('top-failed').style.color = failed > 0 ? '#ef4444' : 'rgba(255,255,255,0.3)';
+  const topReady = document.getElementById('top-ready');
+  const topSent  = document.getElementById('top-sent');
+  const topFailed = document.getElementById('top-failed');
+  if (topReady)  topReady.textContent  = ready;
+  if (topSent)   topSent.textContent   = sent;
+  if (topFailed) { topFailed.textContent = failed; topFailed.style.color = failed > 0 ? '#ef4444' : 'rgba(255,255,255,0.3)'; }
   const total = contacts.length;
   const pw = document.getElementById('progress-wrap');
+  const progressFill = document.getElementById('progress-fill');
+  const progressPct = document.getElementById('progress-pct');
+  const contactBadge = document.getElementById('contact-badge');
   if (total > 0) {
-    pw.style.display = 'flex';
+    if (pw) pw.style.display = 'flex';
     const pct = Math.round((sent/total)*100);
-    document.getElementById('progress-fill').style.width = pct+'%';
-    document.getElementById('progress-pct').textContent = pct+'%';
-  } else pw.style.display = 'none';
-  if (total > 0) {
-    document.getElementById('contact-badge').textContent = total+' contacts';
-    document.getElementById('contact-badge').style.display = '';
-  } else document.getElementById('contact-badge').style.display = 'none';
-  document.getElementById('stat-cadence').textContent = Object.keys(history).length;
+    if (progressFill) progressFill.style.width = pct+'%';
+    if (progressPct) progressPct.textContent = pct+'%';
+    if (contactBadge) { contactBadge.textContent = total+' contacts'; contactBadge.style.display = ''; }
+  } else {
+    if (pw) pw.style.display = 'none';
+    if (contactBadge) contactBadge.style.display = 'none';
+  }
+  const statCad = document.getElementById('stat-cadence'); if (statCad) statCad.textContent = Object.keys(history).length;
   const fud = followUpDue();
   const fudEl = document.getElementById('stat-followup');
   fudEl.textContent = fud.length;
   fudEl.style.color = fud.length > 0 ? '#f59e0b' : 'rgba(255,255,255,0.3)';
+  // Nurture ready count
+  let nurtureReady = 0;
+  try { nurtureReady = getNurtureContacts().filter(([,r]) => nurtureReadyDue(r)).length; } catch {}
+  const nurtureEl = document.getElementById('stat-nurture');
+  if (nurtureEl) { nurtureEl.textContent = nurtureReady; nurtureEl.style.color = nurtureReady > 0 ? '#E97132' : 'rgba(255,255,255,0.3)'; }
 }
 
 function updateReadyStatus() {
@@ -768,9 +2015,10 @@ async function saveApiKeyToBackend() {
 // Watch config inputs
 document.querySelectorAll('[id^=cfg-]').forEach(el => el.addEventListener('input', () => {
   if (el.id === 'cfg-apiKey') saveApiKeyToBackend();
+  if (el.id === 'cfg-publicKey' && window.emailjs && cfg('publicKey')) window.emailjs.init({publicKey:cfg('publicKey')});
   updateReadyStatus(); updateTopBar();
 }));
-document.getElementById('send-subtitle') && (document.getElementById('send-subtitle').textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`);
+// send-subtitle initialized on render
 
 // ── CSV/XLSX parsing ───────────────────────────────────────────────────────
 function normaliseHeaders(rawHeaders) {
@@ -779,11 +2027,12 @@ function normaliseHeaders(rawHeaders) {
     first_name:['first_name','first name','firstname','first','name','full name','fullname','contact name','contact'],
     last_name:['last_name','last name','lastname','last','surname'],
     company:['company','company name','organization','organisation','account','account name','firm','employer'],
-    title:['title','job title','position','role','job role','designation'],
+    title:['title','job title','position','role','job role','designation','seniority','job function','department'],
     vertical:['vertical','industry','sector','segment','category'],
   };
   return rawHeaders.map(h => {
-    const clean = h.toLowerCase().trim();
+    if (!h) return '';
+    const clean = h.toString().toLowerCase().trim();
     for (const [canonical, list] of Object.entries(aliases)) {
       if (list.includes(clean)) return canonical;
     }
@@ -802,7 +2051,7 @@ function parseRows(rawHeaders, rows) {
     const emailLower = obj.email.toLowerCase().trim();
     if (seen.has(emailLower)) return null; // deduplicate
     seen.add(emailLower);
-    obj.email = emailLower;
+    obj.email = emailLower.trim();
     // Split full name if no separate last_name
     if (!obj.last_name && obj.first_name && obj.first_name.includes(' ')) {
       const parts = obj.first_name.split(' ');
@@ -840,7 +2089,10 @@ function parseXLSX(buffer) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
     if (data.length < 2) return {error:'File needs a header row and at least one contact.'};
-    return parseRows(data[0].map(h=>h.toString().trim()), data.slice(1).filter(r=>r.some(c=>c)));
+    // Filter completely empty rows and rows where all cells are empty strings
+    const rows = data.slice(1).filter(r => r.some(c => c !== null && c !== undefined && c.toString().trim() !== ''));
+    if (rows.length === 0) return {error:'No data rows found in the spreadsheet.'};
+    return parseRows(data[0].map(h => (h||'').toString().trim()), rows);
   } catch { return {error:'Could not read Excel file.'}; }
 }
 
@@ -858,25 +2110,59 @@ function handleFile(file) {
   errEl.style.display = 'none';
   const isXlsx = /\.xlsx?$/i.test(file.name);
   const reader = new FileReader();
-  reader.onload = ev => {
+  reader.onload = async ev => {
     const result = isXlsx ? parseXLSX(new Uint8Array(ev.target.result)) : parseCSV(ev.target.result);
     if (result.error) { errEl.textContent = result.error; errEl.style.display='flex'; return; }
     contacts = result.contacts; emails = {}; statuses = {};
     renderContactsPage(); renderComposePage(); renderSendPage();
     updateTopBar(); renderNav();
+    // AI vertical detection for unknowns (runs in background)
+    const apiKey = cfg('apiKey');
+    if (!apiKey) {
+      const dropSub = document.querySelector('.drop-sub');
+      if (dropSub && contacts.filter(c => c.vertical === 'Other').length > 0)
+        dropSub.textContent = `Add your Anthropic API key in Setup to auto-classify unknown verticals`;
+    }
+    if (apiKey) {
+      const unknowns = contacts.filter(c => c.vertical === 'Other' || c.autoDetected === false);
+      if (unknowns.length > 0) {
+        const dropSub = document.querySelector('.drop-sub');
+        if (dropSub) dropSub.textContent = `Identifying ${unknowns.length} companies…`;
+        // Process in small batches to avoid rate limits
+        for (let i = 0; i < unknowns.length; i += 3) {
+          const batch = unknowns.slice(i, i+3);
+          await Promise.all(batch.map(async c => {
+            const v = await detectVerticalWithAI(c.company, apiKey);
+            c.vertical = v; c.autoDetected = true;
+          }));
+          renderContactsPage();
+        }
+        if (dropSub) dropSub.textContent = '.xlsx or .csv · up to 1,000 contacts · drag & drop supported';
+      }
+    }
   };
   if (isXlsx) reader.readAsArrayBuffer(file);
   else reader.readAsText(file);
 }
 
+function confirmClearContacts() {
+  if (!confirm(`Remove all ${contacts.length} contacts? Unsent emails will be lost. History is kept.`)) return;
+  clearContacts();
+}
+
 function clearContacts() {
   contacts=[]; emails={}; statuses={};
-  renderContactsPage(); updateTopBar(); renderNav();
+  const dropZone = document.getElementById('drop-zone');
+  if (dropZone) dropZone.style.display = 'block';
+  renderContactsPage(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
 }
 
 // ── Follow-up due ──────────────────────────────────────────────────────────
 function followUpDue() {
-  return Object.entries(history).filter(([,rec]) => {
+  const activeEmails = new Set(contacts.map(c => c.email));
+  return Object.entries(history).filter(([email, rec]) => {
+    if (activeEmails.has(email)) return false; // already loaded
+    if (rec.nurtureEntered) return false; // in nurture pool
     const last = rec.sequences?.[rec.sequences.length-1];
     if (!last) return false;
     const days = daysSince(last.sentAt);
@@ -886,29 +2172,48 @@ function followUpDue() {
 
 function loadFollowUps() {
   const fud = followUpDue();
+  if (fud.length === 0) return;
   contacts = fud.map(([email,rec],i) => ({
-    id:`fu_${i}_${email}`, email,
-    first_name:rec.firstName, last_name:rec.lastName,
-    company:rec.company, vertical:rec.vertical, title:'',
+    id:`fu_${i}_${email.replace(/[^a-z0-9]/gi,'')}`,
+    email,
+    first_name: rec.firstName || '',
+    last_name:  rec.lastName  || '',
+    company:    rec.company   || '',
+    vertical:   rec.vertical  || 'Other',
+    title:      rec.title     || '',
+    persona:    rec.persona   || detectPersona(rec.title||''),
   }));
   emails={}; statuses={};
   renderContactsPage(); renderComposePage(); renderSendPage();
-  updateTopBar(); goTab(2);
+  updateTopBar(); renderNav(); goTab(2);
 }
 
 // ── Contacts page ──────────────────────────────────────────────────────────
 function renderContactsPage() {
   const fud = followUpDue();
   const banner = document.getElementById('followup-banner');
-  if (fud.length > 0) {
-    banner.style.display = 'block';
-    banner.innerHTML = `<div class="card" style="border:1px solid #f59e0b40;background:#f59e0b08"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:3px">⏰ ${fud.length} contact${fud.length>1?'s':''} ready for follow-up</div><div style="font-size:12px;color:rgba(255,255,255,0.5)">Last email sent 3+ days ago — time to follow up</div></div><button class="btn btn-warn btn-sm" onclick="loadFollowUps()">Load Follow-ups →</button></div></div>`;
-  } else banner.style.display = 'none';
+  if (banner) {
+    if (fud.length > 0) {
+      banner.style.display = 'block';
+      banner.innerHTML = `<div class="card" style="border:1px solid #f59e0b40;background:#f59e0b08"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:3px">⏰ ${fud.length} contact${fud.length>1?'s':''} ready for follow-up</div><div style="font-size:12px;color:rgba(255,255,255,0.5)">Last email sent 3+ days ago — time to follow up</div></div><button class="btn btn-warn btn-sm" onclick="loadFollowUps()">Load Follow-ups →</button></div></div>`;
+    } else banner.style.display = 'none';
+  }
 
   const wrap = document.getElementById('contacts-table-wrap');
-  if (contacts.length === 0) { wrap.style.display='none'; return; }
+  if (!wrap) return;
+  if (contacts.length === 0) {
+    wrap.style.display='none';
+    const clearBtn = document.getElementById('clear-contacts-btn');
+    if (clearBtn) clearBtn.style.display='none';
+    return;
+  }
   wrap.style.display = 'block';
-  document.getElementById('contact-count').textContent = contacts.length;
+  const ccEl = document.getElementById('contact-count'); if (ccEl) ccEl.textContent = contacts.length;
+  const clearBtn = document.getElementById('clear-contacts-btn');
+  if (clearBtn) clearBtn.style.display = contacts.length > 0 ? 'block' : 'none';
+  // Hide drop zone when contacts are loaded, show when empty
+  const dropZone = document.getElementById('drop-zone');
+  if (dropZone) dropZone.style.display = contacts.length > 0 ? 'none' : 'block';
 
   const tbody = document.getElementById('contacts-tbody');
   tbody.innerHTML = contacts.slice(0,50).map(c => {
@@ -918,17 +2223,17 @@ function renderContactsPage() {
       ? `<span style="font-size:11px;color:#0F9ED5;display:inline-flex;align-items:center;gap:5px">${stagePill(lastSeq.stage)} <span style="color:rgba(255,255,255,0.3)">${fmtDate(lastSeq.sentAt)}</span></span>`
       : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">New</span>`;
     return `<tr>
-      <td style="font-weight:600;font-size:13px">${c.first_name} ${c.last_name||''}</td>
-      <td style="color:rgba(255,255,255,0.5)">${c.company}</td>
-      <td style="color:#E97132;font-size:11px">${c.email}</td>
+      <td style="font-weight:600;font-size:13px">${esc(c.first_name)} ${esc(c.last_name)}<div style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:400">${esc(c.title)}</div></td>
+      <td style="color:rgba(255,255,255,0.5)">${esc(c.company)}</td>
+      <td style="color:#E97132;font-size:11px">${esc(c.email)}</td>
       <td>${verticalPill(c.vertical)}${c.autoDetected?'<span style="font-size:9px;color:rgba(255,255,255,0.3);margin-left:5px">auto</span>':''}</td>
+      <td>${personaPill(detectPersona(c.title||''))}</td>
       <td>${histHtml}</td>
     </tr>`;
   }).join('');
 
   const more = document.getElementById('contacts-more');
-  if (contacts.length > 50) { more.style.display='block'; more.textContent=`+${contacts.length-50} more`; }
-  else more.style.display='none';
+  if (more) { if (contacts.length > 50) { more.style.display='block'; more.textContent=`+${contacts.length-50} more contacts not shown`; } else more.style.display='none'; }
 }
 
 // ── Generate ────────────────────────────────────────────────────────────────
@@ -939,33 +2244,76 @@ async function generateOne(contact, skipRender=false) {
   if (!skipRender) { renderComposePage(); renderSendPage(); updateTopBar(); }
 
   const vertical = contact.vertical || 'Other';
-  const pain = PAIN_POINTS[vertical] || PAIN_POINTS['Other'];
+  const persona = detectPersona(contact.title || '');
+  // Select pain points and follow-up angles based on persona
+  const painMap = persona === 'sales' ? PAIN_POINTS_SALES : persona === 'marketing' ? PAIN_POINTS_MARKETING : PAIN_POINTS;
+  const followMap = persona === 'sales' ? FOLLOW_UP_ANGLES_SALES : persona === 'marketing' ? FOLLOW_UP_ANGLES_MARKETING : FOLLOW_UP_ANGLES;
+  const pain = painMap[vertical] || painMap['Other'] || PAIN_POINTS['Other'];
   const histRec = history[contact.email];
   const currentStage = histRec ? (histRec.sequences?.length||0)+1 : 1;
   const isFollowUp = currentStage > 1;
-  const followUpAngle = FOLLOW_UP_ANGLES[vertical] || FOLLOW_UP_ANGLES['Other'];
+  const followUpAngle = followMap[vertical] || followMap['Other'];
   const prevSubject = histRec?.sequences?.[histRec.sequences.length-1]?.subject||'';
   const dateContext = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  // Persona-specific context for prompt
+  const personaContext = persona === 'sales'
+    ? `SALES LEADER (${contact.title||'sales/revenue'}): Lead with account-based development (ABD), pipeline predictability, multi-threaded account coverage, engaging buying groups before the formal RFP process. This person cares about revenue and hitting number.`
+    : persona === 'marketing'
+    ? `MARKETING LEADER (${contact.title||'marketing'}): Lead with ABM, integrated marketing with embedded sales development, converting campaign investment into qualified pipeline. Language: ABM motion, integrated outbound, marketing-to-pipeline conversion, embedded SDR resources.`
+    : `DECISION MAKER (${contact.title||'senior leader'}): Use Clarify's general pipeline generation and account-based outreach messaging.`;
 
   const VERIFIED_FACTS = [
-    'Adobe: 9-year partnership. Generated approximately $69.4M in pipeline. 88% conversion from Stage 2 into pipeline.',
-    'Adobe work spans U.S. Higher Education, Digital Media and Digital Experience business units across EMEA.',
-    'Approach with Adobe: targeted ABM motion combining personalised outreach, multi-threaded follow-up, and creative engagement into hard-to-access accounts.',
-    'Other clients (no specific results to cite): PayPal, TCS, Tata Communications, Zellis, Wiz, DXC Technology, SAP, Reprise, Syniverse, Cyera, Palo Alto Networks.',
+    'Adobe: 9-year partnership. Generated approximately $69.4M in pipeline. 88% Stage 2 to pipeline conversion.',
+    'Adobe scope: U.S. Higher Education, Digital Media and Digital Experience across EMEA.',
+    'Methodology with Adobe: account-based motion combining personalised outreach, multi-threaded follow-up, and sustained engagement into hard-to-access buying groups.',
+    'Other clients (reference by name only, no fabricated stats): PayPal, TCS, Tata Communications, Zellis, Wiz, DXC Technology, SAP, Reprise, Syniverse, Cyera, Palo Alto Networks.',
   ].join('\n');
 
   const VOICE_GUIDE = [
-    "Write peer-to-peer, like a trusted advisor who genuinely understands the prospect's world — not a vendor pitching.",
-    'Lead with a sharp, observation-based insight about the challenge this person faces RIGHT NOW in their market. Make it feel like you have been paying attention.',
-    "Use Clarify's natural language: predictable pipeline into strategic accounts, deal cycles are long and access to decision makers is difficult, multi-threaded outreach, engage buying groups earlier in the cycle, sustained engagement rather than one-off outreach, hard-to-access accounts, buying groups, qualified pipeline.",
-    'Paragraph 1 should feel like something a well-informed peer would say over coffee — specific to their vertical, current, and slightly uncomfortable to ignore.',
-    'Paragraph 2 connects that insight to how Clarify works — methodology first, client proof second. Only use VERIFIED_FACTS for any specific claims.',
-    'The CTA should feel natural and confident, not transactional. Think: a peer asking for a conversation, not a salesperson asking for a meeting slot.',
-    'Never fabricate statistics, percentages, or outcomes beyond VERIFIED_FACTS.',
-    'Never use: em dashes, bullet points, I can share plays, happy to share insights, would love to connect, I came across, I noticed, I hope this finds you well, most B2B teams, research shows.',
+    "Write peer-to-peer. You are a trusted advisor who understands this person's world. Not a vendor pitching.",
+    "Lead paragraph 1 with a sharp, observation-based insight about the challenge this person faces RIGHT NOW. Make it feel uncomfortably accurate.",
+    "Use Clarify language: predictable pipeline into strategic accounts, multi-threaded outreach, engage buying groups earlier in the cycle, sustained engagement, hard-to-access accounts, qualified pipeline.",
+    "Paragraph 2 connects that insight to how Clarify works. Methodology first, proof second. Only reference VERIFIED_FACTS for any specific claims.",
+    "CTA is confident and direct. A peer asking for a conversation, not a salesperson requesting a meeting slot.",
+    "NEVER fabricate statistics, percentages, or outcomes beyond what is listed in VERIFIED_FACTS.",
+    "NEVER use: bullet points, em dashes (use commas instead), 'I can share', 'happy to share insights', 'would love to connect', 'I came across', 'I noticed', 'I hope this finds you well', 'most B2B teams', 'research shows', 'reaching out because', 'just wanted to'.",
   ].join('\n');
 
-  const prompt = isFollowUp
+  // Nurture re-engagement uses completely fresh angle
+  const isNurture = contact.isNurture || false;
+  const nurtureAngleMap = persona === 'sales' ? NURTURE_ANGLES_SALES : NURTURE_ANGLES_MARKETING;
+  const nurtureAngle = nurtureAngleMap[vertical] || nurtureAngleMap['Other'];
+
+  const prompt = isNurture
+    ? `You are writing a re-engagement email on behalf of ${cfg('fromName')}, ${cfg('title')}.
+Today: ${dateContext}. This contact completed a 3-touch outbound sequence ${daysSince(histRec?.nurtureEntered) || 90}+ days ago. This is a completely fresh outreach.
+
+VERIFIED CLIENT FACTS - only use what is listed here, invent nothing:
+${VERIFIED_FACTS}
+
+VOICE AND TONE:
+${VOICE_GUIDE}
+
+Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior decision-maker'} at ${contact.company} (${vertical})
+Persona context: ${personaContext}
+Re-engagement angle: ${nurtureAngle}
+
+IMPORTANT: Do NOT reference the previous emails. Write as if making contact fresh but with new insight or development to share. The angle should feel timely and specific.
+
+FORMAT:
+Subject: [subject line — feels like a new message, not a follow-up]
+[blank line]
+Hi ${contact.first_name||'there'},
+[blank line]
+[1 paragraph - 2-3 sentences: a new, specific development or insight that makes this outreach feel timely. NOT a recap of previous outreach.]
+[1 paragraph - 1-2 sentences: why this is relevant to them specifically given their role and vertical.]
+
+[CTA sentence: Ask for 15 minutes to share something specific. Confident, not apologetic.]
+
+${cfg('fromName')} | ${cfg('title')}
+
+RULES: Body under 110 words. No em dashes. No bullet points. Never say: "circling back", "following up", "reaching out again", "as I mentioned", "just wanted to". No placeholders in the output.`
+    : isFollowUp
     ? `You are writing follow-up cold email (touch ${currentStage} of 3) on behalf of ${cfg('fromName')}, ${cfg('title')}.
 Today: ${dateContext}.
 
@@ -975,14 +2323,15 @@ ${VERIFIED_FACTS}
 VOICE AND TONE:
 ${VOICE_GUIDE}
 
-Contact: ${contact.first_name} ${contact.last_name||''} at ${contact.company} (${vertical})
+Contact: ${contact.first_name||'there'} ${contact.last_name||''} at ${contact.company||'your company'} (${vertical})
+Persona context: ${personaContext}
 Previous email subject: "${prevSubject}"
 Follow-up angle: ${followUpAngle}
 
 FORMAT:
 Subject: [subject line]
 [blank line]
-Hi ${contact.first_name},
+Hi ${contact.first_name||'there'},
 [blank line]
 [2 short paragraphs - new angle, not a rehash, no fabricated stats]
 [1 sentence CTA - direct, ask for 15 min or specific day. No content-offer language.]
@@ -999,21 +2348,24 @@ ${VERIFIED_FACTS}
 VOICE AND TONE:
 ${VOICE_GUIDE}
 
-Contact: ${contact.first_name} ${contact.last_name||''}, ${contact.title||'senior decision-maker'} at ${contact.company} (${vertical})
-Key challenges for this vertical: ${pain}
+Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior decision-maker'} at ${contact.company} (${vertical})
+Persona context: ${personaContext}
+Key challenges for this persona and vertical: ${pain}
 
-FORMAT:
-Subject: [subject line]
-[blank line]
-Hi ${contact.first_name},
-[blank line]
-[Paragraph 1 - 2-3 sentences: sharp, specific, observation-based insight about the challenge this person faces RIGHT NOW. No fabricated stats.]
-[Paragraph 2 - 2-3 sentences: how Clarify approaches this using methodology language from voice guide. Reference verified client work only if relevant to this vertical.]
-[Paragraph 3 - 1 sentence: direct CTA asking for 15 minutes. No content-offer language.]
-[blank line]
+OUTPUT FORMAT (write the actual email, not placeholders):
+Subject: [write subject line here]
+
+Hi ${contact.first_name||'there'},
+
+[Paragraph 1: 2-3 sentences. Sharp insight about the challenge they face right now in their market. Specific to their vertical and role. Uncomfortably accurate.]
+
+[Paragraph 2: 2-3 sentences. How Clarify addresses this through methodology. Reference a verified client only if it fits the vertical.]
+
+[Single CTA sentence: Direct, confident. Ask for 15 minutes on a specific day or this week. No offer of content, case studies, or resources.]
+
 ${cfg('fromName')} | ${cfg('title')}
 
-Under 160 words body only. NO em dashes. NO bullet points.`;
+RULES: Body under 160 words. No em dashes. No bullet points. No placeholders in the output.`;
 
   try {
     const apiKey = cfg('apiKey');
@@ -1021,7 +2373,7 @@ Under 160 words body only. NO em dashes. NO bullet points.`;
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,messages:[{role:'user',content:prompt}]}),
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,messages:[{role:'user',content:prompt}]}),
     });
     if (!res.ok) {
       const errBody = await res.json().catch(()=>({}));
@@ -1036,21 +2388,37 @@ Under 160 words body only. NO em dashes. NO bullet points.`;
     let subject='', bodyStart=0;
     for (let i=0;i<lines.length;i++) {
       if (/^subject:/i.test(lines[i].trim())) {
-        subject = lines[i].replace(/^subject:\s*/i,'').replace(/\*\*/g,'').trim();
+        subject = lines[i].replace(/^subject:\s*/i,'').replace(/\*\*/g,'').replace(/—/g,' ').replace(/^["']|["']$/g,'').trim();
         bodyStart = i+1;
         while (bodyStart<lines.length && lines[bodyStart].trim()==='') bodyStart++;
         break;
       }
     }
-    if (!subject && lines.length>0) {subject=lines[0].replace(/\*\*/g,'').trim();bodyStart=1;}
-    // Strip signature if model included it
+    if (!subject && lines.length>0) {subject=lines[0].replace(/\*\*/g,'').replace(/^subject:\s*/i,'').replace(/—/g,' ').trim();bodyStart=1;}
+    // Strip signature and common sign-offs if model included them
     let bodyLines = lines.slice(bodyStart);
     const fromName = cfg('fromName') || '';
-    if (fromName) {
-      const sigIdx = bodyLines.findIndex(l => l.trim().startsWith(fromName) || /^--\s*$/.test(l.trim()));
-      if (sigIdx > 0) bodyLines = bodyLines.slice(0, sigIdx);
-    }
-    const body = bodyLines.join('\n').trim();
+    const signOffPatterns = /^(best|regards|thanks|cheers|sincerely|kind regards|warm regards|best wishes|talk soon|looking forward|speak soon)/i;
+    const sigIdx = bodyLines.findIndex((l, i) => {
+      const t = l.trim();
+      if (!t) return false;
+      if (fromName && t.startsWith(fromName)) return true;
+      if (/^--\s*$/.test(t)) return true;
+      // Sign-off line followed by name or empty
+      if (signOffPatterns.test(t) && i >= bodyLines.length - 4) return true;
+      return false;
+    });
+    if (sigIdx > 0) bodyLines = bodyLines.slice(0, sigIdx);
+
+    let body = bodyLines.join('\n').trim();
+
+    // Strip any em dashes the model snuck in (replace with comma or nothing)
+    body = body.replace(/ — /g, ', ').replace(/—/g, ' ');
+    subject = subject.replace(/—/g, ' ').replace(/\*\*/g, '').trim();
+
+    // Strip markdown bold/italic from body
+    body = body.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1');
+
     emails[contact.id] = {subject, body, stage:currentStage};
     statuses[contact.id] = 'ready';
   } catch(err) {
@@ -1069,29 +2437,36 @@ async function generateAll() {
     return;
   }
 
-  generating = true;
-  document.getElementById('gen-all-btn').classList.add('pulse');
-
-  const BATCH = 5; // run 5 in parallel
   const queue = contacts.filter(c => statuses[c.id] !== 'sent' && statuses[c.id] !== 'generating');
-  let done = 0;
+  if (queue.length === 0) return;
 
-  for (let i = 0; i < queue.length; i += BATCH) {
-    const batch = queue.slice(i, i + BATCH);
-    // Run batch in parallel, skipRender=true to avoid DOM thrashing
-    await Promise.all(batch.map(c => generateOne(c, true)));
-    done += batch.length;
-    // Render once after each batch completes
+  generating = true;
+  const genBtn = document.getElementById('gen-all-btn');
+  if (genBtn) genBtn.classList.add('pulse');
+
+  try {
+    const BATCH = 5;
+    let done = 0;
+
+    for (let i = 0; i < queue.length; i += BATCH) {
+      const batch = queue.slice(i, i + BATCH);
+      await Promise.all(batch.map(c => generateOne(c, true)));
+      done += batch.length;
+      renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+      if (genBtn) genBtn.textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
+      if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 800));
+    }
+  } catch(err) {
+    console.error('generateAll error:', err);
+  } finally {
+    // Always reset generating flag — even if error thrown
+    generating = false;
+    if (genBtn) {
+      genBtn.textContent = `Generate All (${contacts.length})`;
+      genBtn.classList.remove('pulse');
+    }
     renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
-    document.getElementById('gen-all-btn').textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
-    // Pause between batches to respect Anthropic rate limits
-    if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 800));
   }
-
-  generating = false;
-  document.getElementById('gen-all-btn').textContent = `Generate All (${contacts.length})`;
-  document.getElementById('gen-all-btn').classList.remove('pulse');
-  renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
 }
 
 // ── Compose page ────────────────────────────────────────────────────────────
@@ -1099,14 +2474,20 @@ function renderComposePage() {
   const genBtn = document.getElementById('gen-all-btn');
   if (genBtn && !generating) genBtn.textContent = contacts.length > 0 ? `Generate All (${contacts.length})` : 'Generate All';
   const list = document.getElementById('compose-list');
+  if (!list) return;
+  if (contacts.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 32px;color:rgba(255,255,255,0.3)"><div style="font-size:28px;margin-bottom:12px">✏️</div><div style="font-size:13px">Import contacts first, then generate emails here.</div></div>';
+    return;
+  }
   list.innerHTML = contacts.map(c => {
     const s = statuses[c.id];
     const em = emails[c.id];
     const hr = history[c.email];
     const currentStage = hr ? (hr.sequences?.length||0)+1 : 1;
     const initials = (c.first_name?.[0]||'')+(c.last_name?.[0]||'');
-    const subjectHtml = em && s !== 'error' ? `<div class="subject-preview"><span class="subject-label">Subject</span><span class="subject-text">${em.subject}</span></div>`
-      : s === 'error' ? `<div class="subject-preview"><span class="subject-label" style="color:#ef4444">Error</span><span class="subject-text" style="color:#ef4444;font-style:normal">${em?.subject||'Generation failed — click Generate to retry'}</span></div>` : '';
+    const wordCount = em?.body ? em.body.trim().split(/\s+/).filter(Boolean).length : 0;
+    const subjectHtml = em && s !== 'error' ? `<div class="subject-preview"><span class="subject-label">Subject</span><span class="subject-text" title="${esc(em.subject)}">${esc(em.subject)}</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:auto;white-space:nowrap">${wordCount}w</span></div>`
+      : s === 'error' ? `<div class="subject-preview"><span class="subject-label" style="color:#ef4444">Error</span><span class="subject-text" style="color:#ef4444;font-style:normal">${em?.subject ? esc(em.subject) : 'Generation failed — click Generate to retry'}</span></div>` : '';
     const actionBtns = s === 'sent' ? ''
       : s === 'error' ? `<button class="btn btn-ghost btn-sm" onclick="generateById('${c.id}')">↻ Retry</button>`
       : !em ? `<button class="btn btn-ghost btn-sm" ${s==='generating'?'disabled':''} onclick="generateById('${c.id}')">${s==='generating'?'<span class=\'spin\'>↻</span>':'Generate'}</button>`
@@ -1116,8 +2497,8 @@ function renderComposePage() {
         <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
           <div class="contact-avatar">${initials}</div>
           <div class="contact-info">
-            <div class="contact-name">${c.first_name} ${c.last_name||''} <span class="contact-company">at ${c.company}</span></div>
-            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)}</div>
+            <div class="contact-name">${esc(c.first_name)} ${esc(c.last_name)} <span class="contact-company">at ${esc(c.company)}</span></div>
+            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)} ${personaPill(c.persona || detectPersona(c.title||''))} ${c.isNurture ? '<span class="pill" style="background:rgba(15,158,213,0.12);color:#0F9ED5;border:1px solid rgba(15,158,213,0.25)">🌱 Nurture</span>' : ''}</div>
           </div>
         </div>
         <div class="compose-actions">${statusPill(s)} ${actionBtns}</div>
@@ -1125,14 +2506,11 @@ function renderComposePage() {
       ${subjectHtml}
     </div>`;
   }).join('');
-  window._contacts = contacts;
+  contacts = contacts;
 
   const cont = document.getElementById('compose-continue');
   const ready = countStatus('ready');
-  if (ready > 0) {
-    cont.style.display = 'block';
-    cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(3)">Continue to Send (${ready} ready) →</button>`;
-  } else cont.style.display = 'none';
+  if (cont) { if (ready > 0) { cont.style.display = 'block'; cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(3)">Continue to Send (${ready} ready) →</button>`; } else cont.style.display = 'none'; }
 }
 
 // ── Send ─────────────────────────────────────────────────────────────────────
@@ -1140,17 +2518,20 @@ async function sendOne(contactId) {
   const contact = contacts.find(c=>c.id===contactId);
   const email = emails[contactId];
   if (!contact||!email||!canSend()) return;
-  if (!window.emailjs) { showSendError('EmailJS not loaded yet — wait a moment and try again.'); return; }
+  if (statuses[contactId] === 'sending' || statuses[contactId] === 'sent') return; // double-send guard
+  if (!window.emailjs) {
+    showSendError('EmailJS is still loading — wait 5 seconds and try again. If this persists, check your internet connection.');
+    return;
+  }
   clearSendError();
   statuses[contactId] = 'sending';
   renderSendPage(); updateTopBar();
   try {
-    window.emailjs.init({publicKey:cfg('publicKey')});
     await window.emailjs.send(cfg('serviceId'), cfg('templateId'), {
       to_email:contact.email,
       to_name:`${contact.first_name} ${contact.last_name||''}`.trim(),
       from_name:cfg('fromName'), from_email:cfg('fromEmail'),
-      reply_to:cfg('fromEmail'), subject:email.subject, message:email.body,
+      reply_to:cfg('fromEmail'), subject:email.subject||'(no subject)', message:email.body||'',
     });
     statuses[contactId] = 'sent';
     const stage = email.stage||1;
@@ -1167,42 +2548,278 @@ async function sendOne(contactId) {
       subject:email.subject||'(no subject)',
       sentFrom:cfg('fromEmail')||''
     });
+    // Auto-move to nurture if sequence complete (stage 3 sent)
+    if (stage >= 3 && !contact.isNurture) {
+      history[contact.email].nurtureEntered = new Date().toISOString();
+      history[contact.email].persona = detectPersona(contact.title||'');
+      history[contact.email].title = contact.title || '';
+      history[contact.email].persona = detectPersona(contact.title||'');
+    }
+    // After nurture re-engagement sent, reset the nurture clock
+    if (contact.isNurture) {
+      history[contact.email].nurtureEntered = new Date().toISOString(); // restart 90 day clock
+      history[contact.email].reEngaging = false;
+      history[contact.email].reEngageCount = (history[contact.email].reEngageCount || 0) + 1;
+    }
     await saveHistory();
   } catch(err) {
     statuses[contactId] = 'error';
     showSendError(err?.text||err?.message||'Send failed — check EmailJS config.');
   }
+  renderSendPage(); renderCadencePage(); renderNurturePage(); updateTopBar(); renderNav();
+}
+
+// ── Auto-advance Engine ──────────────────────────────────────────────────
+// Fully autonomous: generate + send next touches without any manual clicks
+async function autoAdvanceIfReady() {
+  const fud = followUpDue();
+  if (fud.length === 0) return;
+  if (_autoRunning) return;
+
+  const autoEnabled = localStorage.getItem('clarify_auto_send') === 'true';
+  const apiKey = cfg('apiKey');
+  const canDoSend = canSend();
+
+  if (autoEnabled && apiKey && canDoSend) {
+    // FULL AUTO: generate + send with no prompts
+    await runAutoSequence(fud);
+  } else {
+    // SEMI AUTO: show banner, user clicks send
+    const banner = document.getElementById('auto-advance-banner');
+    if (!banner) return;
+    banner.style.display = 'block';
+    banner.innerHTML = `
+      <div class="card" style="border:1px solid rgba(78,167,46,0.35);background:rgba(78,167,46,0.06);margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#4EA72E;margin-bottom:3px">
+              ↻ ${fud.length} contact${fud.length>1?'s':''} ready for next touch
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">
+              3+ days since last email — sequence will auto-continue
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="font-size:11px;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="auto-send-toggle" ${autoEnabled?'checked':''} onchange="toggleAutoSend(this.checked)" style="cursor:pointer"/>
+              Auto-send
+            </label>
+            <button class="btn btn-primary btn-sm" onclick="runAutoSequence()">Generate + Send Now →</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('auto-advance-banner').style.display='none'">Later</button>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+function toggleAutoSend(enabled) {
+  localStorage.setItem('clarify_auto_send', enabled ? 'true' : 'false');
+  updateAutoSendUI();
+}
+
+function toggleAutoSendUI() {
+  const current = localStorage.getItem('clarify_auto_send') === 'true';
+  toggleAutoSend(!current);
+}
+
+function updateAutoSendUI() {
+  const enabled = localStorage.getItem('clarify_auto_send') === 'true';
+  const indicator = document.getElementById('auto-send-indicator');
+  const knob = document.getElementById('auto-send-knob');
+  const label = document.getElementById('auto-send-label');
+  if (indicator) indicator.style.background = enabled ? '#4EA72E' : 'rgba(255,255,255,0.15)';
+  if (knob) knob.style.left = enabled ? '18px' : '2px';
+  if (label) { label.textContent = enabled ? 'On' : 'Off'; label.style.color = enabled ? '#4EA72E' : 'rgba(255,255,255,0.5)'; }
+}
+
+async function runAutoSequence(fudOverride) {
+  if (_autoRunning) return;
+  _autoRunning = true;
+
+  const banner = document.getElementById('auto-advance-banner');
+  if (banner) banner.style.display = 'none';
+
+  const apiKey = cfg('apiKey');
+  if (!apiKey) {
+    _autoRunning = false;
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = '<div class="card" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);padding:14px 16px;font-size:13px;color:#ef4444">⚠ Add your Anthropic API key in <a onclick="goTab(0)" style="cursor:pointer;text-decoration:underline;color:#ef4444">Setup</a> to run auto-sequence.</div>';
+    }
+    return;
+  }
+
+  const fud = fudOverride || followUpDue();
+  if (fud.length === 0) { _autoRunning = false; return; }
+
+  // Load follow-up contacts
+  contacts = fud.map(([email, rec], i) => ({
+    id: `fu_${i}_${email.replace(/[^a-z0-9]/gi,'')}`,
+    email,
+    first_name: rec.firstName || '',
+    last_name:  rec.lastName  || '',
+    company:    rec.company   || '',
+    vertical:   rec.vertical  || 'Other',
+    title:      rec.title     || '',
+    persona:    rec.persona   || detectPersona(rec.title||''),
+  }));
+  emails = {}; statuses = {};
+
+  // Show progress in send page
+  goTab(3);
+  renderContactsPage(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+
+  // Show running status in banner
+  if (banner) {
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="card" style="border:1px solid rgba(15,158,213,0.3);background:rgba(15,158,213,0.06);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:#0F9ED5" id="auto-status">
+        <span class="spin">↻</span> Generating ${contacts.length} follow-up${contacts.length>1?'s':''}…
+      </div>
+    </div>`;
+  }
+
+  const updateStatus = (msg) => {
+    const el = document.getElementById('auto-status');
+    if (el) el.innerHTML = `<span class="spin">↻</span> ${msg}`;
+  };
+
+  // Step 1: Generate all emails
+  generating = true;
+  const BATCH = 5;
+  const queue = [...contacts];
+  let done = 0;
+
+  for (let i = 0; i < queue.length; i += BATCH) {
+    const batch = queue.slice(i, i + BATCH);
+    await Promise.all(batch.map(c => generateOne(c, true)));
+    done += batch.length;
+    renderComposePage(); renderSendPage(); updateTopBar();
+    updateStatus(`Generating ${Math.min(done, queue.length)}/${queue.length}…`);
+    if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 800));
+  }
+  generating = false;
+
+  // Step 2: Check all generated successfully
+  const failed = contacts.filter(c => statuses[c.id] === 'error');
+  const ready  = contacts.filter(c => statuses[c.id] === 'ready');
+
+  if (ready.length === 0) {
+    updateStatus(`⚠ Generation failed for all contacts. Check API key.`);
+    if (banner) banner.querySelector('.spin') && (banner.querySelector('[id=auto-status]').innerHTML = `⚠ Generation failed. Check your Anthropic API key.`);
+    _autoRunning = false;
+    return;
+  }
+
+  // Step 3: Send all ready emails
+  updateStatus(`Sending ${ready.length} email${ready.length>1?'s':''}…`);
+  let sent = 0;
+
+  for (const c of ready) {
+    await sendOne(c.id);
+    sent++;
+    updateStatus(`Sending ${sent}/${ready.length}…`);
+    renderSendPage(); updateTopBar();
+    if (sent < ready.length) await new Promise(r => setTimeout(r, 700));
+  }
+
+  // Step 4: Done — show summary in banner
+  const failedSend = contacts.filter(c => statuses[c.id] === 'error').length;
+  if (banner) {
+    banner.innerHTML = `
+      <div class="card" style="border:1px solid rgba(78,167,46,0.3);background:rgba(78,167,46,0.06);margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#4EA72E;margin-bottom:3px">
+              ✓ Sequence advanced — ${sent} email${sent>1?'s':''} sent${failedSend>0?' ('+failedSend+' failed)':''}
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">
+              Next follow-ups will surface automatically in 3 days
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('auto-advance-banner').style.display='none'">✕</button>
+        </div>
+      </div>`;
+  }
+
   renderSendPage(); renderCadencePage(); updateTopBar(); renderNav();
+  _autoRunning = false;
+
+  // Recursively check again — handles edge case where multiple cohorts are due
+  setTimeout(async () => {
+    const stillDue = followUpDue();
+    if (stillDue.length > 0) await autoAdvanceIfReady();
+  }, 2000);
+}
+
+function showSendSuccess(msg) {
+  const el = document.getElementById('send-alerts');
+  if (!el) return;
+  // Remove any existing auto alerts first
+  el.querySelectorAll('.alert-auto').forEach(e => e.remove());
+  const div = document.createElement('div');
+  div.className = 'alert alert-success alert-auto';
+  div.textContent = '✓ ' + msg;
+  el.prepend(div);
+  // Auto-dismiss after 8 seconds
+  setTimeout(() => div.remove(), 8000);
 }
 
 async function sendAll() {
-  for (const c of contacts) {
-    if (emails[c.id] && statuses[c.id]==='ready') { await sendOne(c.id); await new Promise(r=>setTimeout(r,700)); }
+  if (!canSend()) { showSendError('Configure EmailJS in the Setup tab before sending.'); return; }
+  const btn = document.getElementById('send-all-btn');
+  const toSend = contacts.filter(c => emails[c.id] && statuses[c.id]==='ready');
+  if (toSend.length === 0) { showSendError('No emails are ready to send. Generate emails first.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending 0/' + toSend.length + '…'; }
+  let sent = 0;
+  for (const c of toSend) {
+    await sendOne(c.id);
+    sent++;
+    if (btn) btn.textContent = 'Sending ' + sent + '/' + toSend.length + '…';
+    if (sent < toSend.length) await new Promise(r=>setTimeout(r,700));
   }
+  if (btn) { btn.disabled = false; btn.textContent = 'Send All Ready'; }
+  // After sending, auto-check if any contacts need next touch
+  await autoAdvanceIfReady();
 }
 
 function resetStuck(contactId) { statuses[contactId]='ready'; clearSendError(); renderSendPage(); updateTopBar(); }
 
 function showSendError(msg) {
   const el = document.getElementById('send-alerts');
-  el.innerHTML = `<div class="alert alert-error">⚠ ${msg}<button class="alert-close" onclick="clearSendError()">×</button></div>`;
+  if (!el) return;
+  el.querySelectorAll('.alert-error').forEach(e => e.remove());
+  const div = document.createElement('div');
+  div.className = 'alert alert-error';
+  div.innerHTML = `⚠ ${msg} <button class="alert-close" onclick="this.parentElement.remove()">×</button>`;
+  el.prepend(div);
 }
-function clearSendError() { document.getElementById('send-alerts').innerHTML=''; }
+function clearSendError() {
+  document.getElementById('send-alerts')?.querySelectorAll('.alert-error').forEach(e => e.remove());
+}
 
 function renderSendPage() {
-  document.getElementById('send-subtitle').textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`;
+  const sendSubEl = document.getElementById('send-subtitle'); if (sendSubEl) sendSubEl.textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`;
   const readyCount = countStatus('ready');
   const sendAllBtn = document.getElementById('send-all-btn');
   if (sendAllBtn && !sendAllBtn.disabled) sendAllBtn.textContent = readyCount > 0 ? `Send All Ready (${readyCount})` : 'Send All Ready';
   const alerts = document.getElementById('send-alerts');
-  if (!canSend() && !alerts.querySelector('.alert-warn')) {
-    alerts.innerHTML = `<div class="alert alert-warn">⚠ EmailJS not configured — go to Setup.</div>` + alerts.innerHTML;
-  }
-  const sent = countStatus('sent');
-  if (sent > 0 && !alerts.querySelector('.alert-success')) {
-    alerts.innerHTML += `<div class="alert alert-success">✓ ${sent} email${sent>1?'s':''} sent from ${cfg('fromEmail')}</div>`;
-  }
+  // Clean rebuild of static alerts every render — no accumulation
+  const sentCount = countStatus('sent');
+  const errorCount = countStatus('error');
+  const existingErrors = [...(alerts?.querySelectorAll('.alert-error')||[])].map(e=>e.outerHTML).join('');
+  const existingAuto  = [...(alerts?.querySelectorAll('.alert-auto')||[])].map(e=>e.outerHTML).join('');
+  let alertHtml = existingAuto;
+  if (!canSend()) alertHtml += `<div class="alert alert-warn">⚠ EmailJS not configured — go to Setup tab.</div>`;
+  if (sentCount > 0) alertHtml += `<div class="alert alert-success">✓ ${sentCount} email${sentCount>1?'s':''} sent from ${cfg('fromEmail')}</div>`;
+  alertHtml += existingErrors;
+  if (alerts) alerts.innerHTML = alertHtml;
   const tbody = document.getElementById('send-tbody');
+  if (!tbody) return;
+  if (contacts.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:rgba(255,255,255,0.3)">No contacts loaded. Import contacts and generate emails first.</td></tr>';
+    return;
+  }
   tbody.innerHTML = contacts.map(c => {
     const s = statuses[c.id];
     const em = emails[c.id];
@@ -1211,14 +2828,136 @@ function renderSendPage() {
     const sendDisabled = !em||s==='sending'||s==='sent'||!canSend();
     const cancelBtn = s==='sending' ? `<button class="cancel-btn" onclick="resetStuck('${c.id}')">Cancel</button>` : '';
     return `<tr>
-      <td><div style="font-weight:600;font-size:13px">${c.first_name} ${c.last_name||''}</div><div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">${c.email}</div></td>
+      <td><div style="font-weight:600;font-size:13px">${esc(c.first_name)} ${esc(c.last_name)}</div><div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">${esc(c.email)}</div></td>
       <td style="color:rgba(255,255,255,0.5)">${c.company}</td>
       <td>${stagePill(currentStage)}</td>
-      <td style="color:rgba(255,255,255,0.5);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${em?.subject||'<span style="color:rgba(255,255,255,0.3);font-style:italic">Not generated</span>'}</td>
+      <td style="color:rgba(255,255,255,0.5);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${em?.subject ? esc(em.subject) : '<span style="color:rgba(255,255,255,0.3);font-style:italic">Not generated</span>'}</td>
       <td>${statusPill(s)}</td>
       <td><div style="display:flex;gap:6px;align-items:center"><button class="send-btn" ${sendDisabled?'disabled':''} onclick="sendOne('${c.id}')">${s==='sending'?'Sending…':s==='sent'?'Sent ✓':'Send'}</button>${cancelBtn}</div></td>
     </tr>`;
   }).join('');
+}
+
+// ── Nurture ───────────────────────────────────────────────────────────────
+function getNurtureContacts() {
+  return Object.entries(history).filter(([,rec]) => rec.nurtureEntered);
+}
+
+function getNurtureWaitDays() {
+  const el = document.getElementById('nurture-wait-days');
+  return el ? parseInt(el.value) : 90;
+}
+
+function nurtureReadyDue(rec) {
+  if (!rec.nurtureEntered) return false;
+  const days = daysSince(rec.nurtureEntered);
+  return days !== null && days >= getNurtureWaitDays();
+}
+
+function loadNurtureContacts() {
+  const waitDays = getNurtureWaitDays();
+  const due = getNurtureContacts().filter(([,rec]) => nurtureReadyDue(rec));
+  if (due.length === 0) {
+    showSendSuccess('No contacts ready to re-engage yet — check back when the wait period passes.');
+    goTab(4); // go to cadence to see status
+    return;
+  }
+  // Load into contacts for new sequence
+  contacts = due.map(([email, rec], i) => ({
+    id: `nurture_${i}_${email.replace(/[^a-z0-9]/gi,'')}`,
+    email,
+    first_name: rec.firstName || '',
+    last_name: rec.lastName || '',
+    company: rec.company || '',
+    vertical: rec.vertical || 'Other',
+    title: rec.title || '',
+    isNurture: true,
+  }));
+  emails = {}; statuses = {};
+  // Flag as nurture in history so prompts know
+  contacts.forEach(c => {
+    if (history[c.email]) history[c.email].reEngaging = true;
+  });
+  goTab(2);
+  renderComposePage();
+  showSendSuccess(`${due.length} contact${due.length>1?'s':''} loaded — go to Compose to generate re-engagement emails.`);
+}
+
+function renderNurturePage() {
+  const all = getNurtureContacts();
+  const waitDays = getNurtureWaitDays();
+  const due = all.filter(([,rec]) => nurtureReadyDue(rec));
+  const waiting = all.filter(([,rec]) => !nurtureReadyDue(rec));
+
+  const statsEl = document.getElementById('nurture-stats');
+  const emptyEl = document.getElementById('nurture-empty');
+  const tableEl = document.getElementById('nurture-table-wrap');
+
+  if (all.length === 0) {
+    if (statsEl) statsEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    if (tableEl) tableEl.style.display = 'none';
+    return;
+  }
+
+  if (statsEl) statsEl.style.display = 'block';
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (tableEl) tableEl.style.display = 'block';
+
+  // Update stats
+  const totalEl = document.getElementById('nurture-stat-total');
+  const dueEl = document.getElementById('nurture-stat-due');
+  const waitEl = document.getElementById('nurture-stat-waiting');
+  if (totalEl) totalEl.textContent = all.length;
+  if (dueEl) dueEl.textContent = due.length;
+  if (waitEl) waitEl.textContent = waiting.length;
+
+  // Render table
+  const tbody = document.getElementById('nurture-tbody');
+  if (!tbody) return;
+  const sorted = [...all].sort(([,a],[,b]) => {
+    const ad = daysSince(a.nurtureEntered) || 0;
+    const bd = daysSince(b.nurtureEntered) || 0;
+    return bd - ad; // most recent first
+  });
+
+  tbody.innerHTML = sorted.map(([email, rec]) => {
+    const days = daysSince(rec.nurtureEntered);
+    const isDue = nurtureReadyDue(rec);
+    const daysUntil = waitDays - (days||0);
+    const persona = rec.persona || detectPersona(rec.title||'');
+    const statusHtml = isDue
+      ? `<span style="font-size:11px;color:#E97132;font-weight:700">⏰ Ready to re-engage</span>`
+      : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">Wait ${Math.max(0,daysUntil)}d</span>`;
+    return `<tr style="background:${isDue?'rgba(233,113,50,0.04)':'transparent'}">
+      <td><div style="font-weight:600">${esc(rec.firstName)} ${esc(rec.lastName)}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">${esc(email)}</div></td>
+      <td style="color:rgba(255,255,255,0.5)">${rec.company||''}</td>
+      <td>${verticalPill(rec.vertical||'Other')}</td>
+      <td>${personaPill(persona)}</td>
+      <td style="color:rgba(255,255,255,0.5)">${fmtDate(rec.nurtureEntered)}</td>
+      <td style="color:${isDue?'#E97132':'rgba(255,255,255,0.4)'};font-weight:${isDue?700:400}">${days!==null?days+'d ago':'—'}</td>
+      <td>${statusHtml}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="loadSingleNurture('${email}')" ${!isDue?'disabled':''}>Re-engage →</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function loadSingleNurture(email) {
+  const rec = history[email];
+  if (!rec || !nurtureReadyDue(rec)) return;
+  contacts = [{
+    id: `nurture_single_${email.replace(/[^a-z0-9]/gi,'')}`,
+    email,
+    first_name: rec.firstName || '',
+    last_name: rec.lastName || '',
+    company: rec.company || '',
+    vertical: rec.vertical || 'Other',
+    title: rec.title || '',
+    isNurture: true,
+  }];
+  emails = {}; statuses = {};
+  if (history[email]) history[email].reEngaging = true;
+  goTab(2);
 }
 
 // ── Cadence ───────────────────────────────────────────────────────────────
@@ -1232,6 +2971,7 @@ function renderCadencePage() {
 
   if (keys.length===0) return;
   const tbody = document.getElementById('cadence-tbody');
+  if (!tbody) return;
   const sorted = Object.entries(history).sort(([,a],[,b]) => {
     const al=a.sequences?.[a.sequences.length-1]?.sentAt||'';
     const bl=b.sequences?.[b.sequences.length-1]?.sentAt||'';
@@ -1243,14 +2983,20 @@ function renderCadencePage() {
     const nextStage = (last?.stage||1)+1;
     const isDue = days!==null && days>=3 && nextStage<=3;
     const isComplete = nextStage>3;
-    const nextHtml = isComplete
+    const inNurture = rec.nurtureEntered && isComplete;
+    const nurtureReady = inNurture && nurtureReadyDue(rec);
+    const nextHtml = isComplete && nurtureReady
+      ? `<span style="font-size:11px;color:#E97132;font-weight:700">🌱 Ready to re-engage</span>`
+      : isComplete && inNurture
+      ? `<span style="font-size:11px;color:#0F9ED5;font-weight:600">🌱 In nurture pool</span>`
+      : isComplete
       ? `<span style="font-size:11px;color:#4EA72E;font-weight:600">✓ Complete</span>`
       : isDue
       ? `<span style="font-size:11px;color:#f59e0b;font-weight:700">⏰ Follow-up due</span>`
       : days !== null && (3 - days) <= 1 ? `<span style="font-size:11px;color:#E97132;font-weight:600">Due today</span>`
       : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">Wait ${3-(days||0)}d</span>`;
     return `<tr style="background:${isDue?'#f59e0b06':'transparent'}">
-      <td><div style="font-weight:600">${rec.firstName} ${rec.lastName||''}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">${email}</div></td>
+      <td><div style="font-weight:600">${esc(rec.firstName)} ${esc(rec.lastName)}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">${esc(email)}</div></td>
       <td style="color:rgba(255,255,255,0.5)">${rec.company}</td>
       <td>${verticalPill(rec.vertical)}</td>
       <td>${last?stagePill(last.stage):'—'}</td>
@@ -1276,10 +3022,11 @@ function openModal(contactId) {
   const em = emails[contactId];
   if (!contact||!em) return;
   modalContact = contact;
-  document.getElementById('modal-name').textContent = `${contact.first_name} ${contact.last_name||''}`;
-  document.getElementById('modal-sub').innerHTML = `${contact.company} ${verticalPill(contact.vertical)}`;
-  document.getElementById('modal-subject').value = em.subject;
-  document.getElementById('modal-body').value = em.body;
+  const mName = document.getElementById('modal-name'); if (mName) mName.textContent = `${contact.first_name} ${contact.last_name||''}`;
+  const modalSubEl = document.getElementById('modal-sub');
+  if (modalSubEl) modalSubEl.innerHTML = `<span style="color:rgba(255,255,255,0.5)">${contact.company.replace(/</g,'&lt;')}</span> ${verticalPill(contact.vertical)} ${personaPill(detectPersona(contact.title||''))}`;
+  const mSub = document.getElementById('modal-subject'); if (mSub) mSub.value = em.subject;
+  const mBody = document.getElementById('modal-body'); if (mBody) mBody.value = em.body;
   document.getElementById('modal-regen-btn').onclick = async () => { closeModal(); await generateOne(contact); };
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -1288,11 +3035,10 @@ function closeModal() { document.getElementById('modal-overlay').classList.remov
 
 function saveModal() {
   if (!modalContact) return;
-  emails[modalContact.id] = {
-    ...emails[modalContact.id],
-    subject: document.getElementById('modal-subject').value,
-    body: document.getElementById('modal-body').value,
-  };
+  const subject = document.getElementById('modal-subject').value.trim();
+  const body = document.getElementById('modal-body').value.trim();
+  if (!subject || !body) { alert('Subject and body cannot be empty.'); return; }
+  emails[modalContact.id] = { ...emails[modalContact.id], subject, body };
   statuses[modalContact.id] = 'ready';
   closeModal(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
 }
@@ -1302,6 +3048,30 @@ function saveModal() {
 // Store auth screen HTML before cold-start loading state replaces it
 _authScreenHTML = document.getElementById('auth-screen').innerHTML;
 checkAutoLogin();
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); }
+  if (e.key === 'Enter' && !e.shiftKey) {
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    if (loginForm?.style.display !== 'none') {
+      const btn = document.getElementById('login-btn');
+      if (btn && !btn.disabled) doLogin();
+    } else if (signupForm?.style.display !== 'none') {
+      const btn = document.getElementById('signup-btn');
+      if (btn && !btn.disabled) doSignup();
+    }
+  }
+});
+
+// Background check every 30 minutes - surfaces follow-ups while app is open
+setInterval(() => {
+  if (authToken && contacts.length === 0) {
+    const fud = followUpDue();
+    if (fud.length > 0) autoAdvanceIfReady();
+  }
+}, 30 * 60 * 1000);
 </script>
 </body>
 </html>
