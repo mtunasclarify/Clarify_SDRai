@@ -297,7 +297,7 @@ td{padding:13px 18px}
           <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleDrop(event)">
             <div class="drop-emoji">📂</div>
             <div class="drop-title">Drop file or click to browse</div>
-            <div class="drop-sub">.xlsx or .csv · up to 100 contacts · drag & drop supported</div>
+            <div class="drop-sub">.xlsx or .csv · up to 1,000 contacts · drag & drop supported</div>
             <input type="file" id="file-input" accept=".csv,.xlsx,.xls" onchange="handleFileInput(event)"/>
           </div>
           <div id="file-error" style="display:none" class="alert alert-error"></div>
@@ -874,7 +874,7 @@ function renderContactsPage() {
   document.getElementById('contact-count').textContent = contacts.length;
 
   const tbody = document.getElementById('contacts-tbody');
-  tbody.innerHTML = contacts.slice(0,30).map(c => {
+  tbody.innerHTML = contacts.slice(0,50).map(c => {
     const hr = history[c.email];
     const lastSeq = hr?.sequences?.[hr.sequences.length-1];
     const histHtml = lastSeq
@@ -890,7 +890,7 @@ function renderContactsPage() {
   }).join('');
 
   const more = document.getElementById('contacts-more');
-  if (contacts.length > 30) { more.style.display='block'; more.textContent=`+${contacts.length-30} more`; }
+  if (contacts.length > 50) { more.style.display='block'; more.textContent=`+${contacts.length-50} more`; }
   else more.style.display='none';
 }
 
@@ -1017,11 +1017,21 @@ Under 160 words body only. NO em dashes. NO bullet points.`;
 async function generateAll() {
   if (generating) return;
   generating = true;
-  document.getElementById('gen-all-btn').textContent = 'Generating…';
   document.getElementById('gen-all-btn').classList.add('pulse');
-  for (const c of contacts) {
-    if (statuses[c.id] !== 'sent') { await generateOne(c); await new Promise(r=>setTimeout(r,350)); }
+
+  const BATCH = 5; // run 5 in parallel
+  const queue = contacts.filter(c => statuses[c.id] !== 'sent');
+  let done = 0;
+
+  for (let i = 0; i < queue.length; i += BATCH) {
+    const batch = queue.slice(i, i + BATCH);
+    await Promise.all(batch.map(c => generateOne(c)));
+    done += batch.length;
+    document.getElementById('gen-all-btn').textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
+    // Small pause between batches to respect rate limits
+    if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 1000));
   }
+
   generating = false;
   document.getElementById('gen-all-btn').textContent = `Generate All (${contacts.length})`;
   document.getElementById('gen-all-btn').classList.remove('pulse');
