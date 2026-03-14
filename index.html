@@ -333,7 +333,7 @@ td{padding:13px 18px}
         <div style="max-width:100%">
           <div class="section-header">
             <div><h2>Send Emails</h2><p class="section-subtitle" id="send-subtitle">Sending from your email via EmailJS.</p></div>
-            <button class="btn btn-primary" onclick="sendAll()">Send All Ready</button>
+            <button class="btn btn-primary" id="send-all-btn" onclick="sendAll()">Send All Ready</button>
           </div>
           <div id="send-alerts"></div>
           <div class="table-wrap">
@@ -549,6 +549,8 @@ async function doSignup() {
   const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
   if (!name || !email || !password) { showAuthError('Please fill in all fields.'); return; }
+  if (password.length < 8) { showAuthError('Password must be at least 8 characters.'); return; }
+  if (!email.includes('@')) { showAuthError('Please enter a valid email address.'); return; }
   const btn = document.getElementById('signup-btn');
   btn.textContent = 'Creating account…'; btn.disabled = true;
   try {
@@ -568,21 +570,33 @@ async function loadUserData(hasApiKey) {
   try {
     const res = await fetch(API+'/user/history', {headers:authHeaders()});
     if (res.ok) { const data = await res.json(); history = data.history || {}; }
-  } catch {}
+  } catch(e) { console.warn('loadHistory failed:', e); }
   // Load API key from backend
   if (hasApiKey) {
     try {
       const res = await fetch(API+'/user/apikey', {headers:authHeaders()});
-      if (res.ok) { const data = await res.json(); if (data.api_key) document.getElementById('cfg-apiKey').value = data.api_key; }
-    } catch {}
+      if (res.ok) {
+        const data = await res.json();
+        if (data.api_key) {
+          const el = document.getElementById('cfg-apiKey');
+          if (el) el.value = data.api_key;
+        }
+      }
+    } catch(e) { console.warn('loadApiKey failed:', e); }
   }
+  // Update UI state after loading
+  updateReadyStatus();
 }
 
 async function checkAutoLogin() {
   if (!authToken) { showAuthScreen(); return; }
+  // Show loading state while backend wakes up (Render free tier cold start)
+  const authScr = document.getElementById('auth-screen');
+  authScr.style.display = 'flex';
+  authScr.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.5)"><div style="font-size:28px;font-weight:900;margin-bottom:16px"><span style="color:#E97132">Clarify</span> AI SDR</div><div style="font-size:13px;margin-bottom:8px">Connecting…</div><div style="font-size:11px;opacity:0.5">First load may take 30s on free plan</div></div>`;
   try {
     const res = await fetch(API+'/auth/me', {headers:authHeaders()});
-    if (!res.ok) { localStorage.removeItem('clarify_token'); showAuthScreen(); return; }
+    if (!res.ok) { localStorage.removeItem('clarify_token'); location.reload(); return; }
     const data = await res.json();
     currentUser = {name:data.name, email:data.email};
     await loadUserData(data.has_api_key);
@@ -599,8 +613,11 @@ async function checkAutoLogin() {
   } catch { showAuthScreen(); }
 }
 
+let _authScreenHTML = null;
 function showAuthScreen() {
-  document.getElementById('auth-screen').style.display = 'flex';
+  const scr = document.getElementById('auth-screen');
+  if (_authScreenHTML) scr.innerHTML = _authScreenHTML;
+  scr.style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
 
@@ -621,10 +638,15 @@ function logout() {
 // ── Storage — now backend-powered ─────────────────────────────────────────
 function loadHistory() { return {}; } // unused — history loaded from backend on login
 
+let _saveHistoryTimer = null;
 async function saveHistory() {
   if (!authToken) return;
-  try { await fetch(API+'/user/history', {method:'PUT',headers:authHeaders(),body:JSON.stringify({history})}); }
-  catch {}
+  // Debounce: wait 1.5s after last call before actually saving
+  clearTimeout(_saveHistoryTimer);
+  _saveHistoryTimer = setTimeout(async () => {
+    try { await fetch(API+'/user/history', {method:'PUT',headers:authHeaders(),body:JSON.stringify({history})}); }
+    catch(e) { console.warn('saveHistory failed:', e); }
+  }, 1500);
 }
 
 function daysSince(d) {
@@ -681,7 +703,8 @@ function goTab(i) {
   if (locked) return;
   currentTab = i;
   document.querySelectorAll('.page').forEach((p,idx) => p.classList.toggle('active', idx===i));
-  document.getElementById('page-title').textContent = TABS[i].label;
+  const titleEl = document.getElementById('page-title');
+  if (titleEl && TABS[i]) titleEl.textContent = TABS[i].label;
   renderNav();
   if (i===1) renderContactsPage();
   if (i===2) renderComposePage();
@@ -730,11 +753,16 @@ function updateReadyStatus() {
     : `Ready — sending from ${cfg('fromEmail')}`;
 }
 
+let _saveApiTimer = null;
 async function saveApiKeyToBackend() {
   const key = document.getElementById('cfg-apiKey')?.value?.trim();
   if (!key || !authToken) return;
-  try { await fetch(API+'/user/apikey', {method:'PUT',headers:authHeaders(),body:JSON.stringify({api_key:key})}); }
-  catch {}
+  if (!key.startsWith('sk-ant-')) return; // Don't save partial/invalid keys
+  clearTimeout(_saveApiTimer);
+  _saveApiTimer = setTimeout(async () => {
+    try { await fetch(API+'/user/apikey', {method:'PUT',headers:authHeaders(),body:JSON.stringify({api_key:key})}); }
+    catch(e) { console.warn('saveApiKey failed:', e); }
+  }, 1000);
 }
 
 // Watch config inputs
@@ -765,20 +793,29 @@ function normaliseHeaders(rawHeaders) {
 
 function parseRows(rawHeaders, rows) {
   const headers = normaliseHeaders(rawHeaders);
-  if (!headers.includes('email')) return {error:'Could not find an email column.'};
-  if (!headers.includes('company')) return {error:'Could not find a company column.'};
-  if (!headers.includes('first_name')) return {error:'Could not find a name column. Add a column called Name, First Name, or Contact.'};
+  if (!headers.includes('email')) return {error:'Could not find an email column. Make sure your file has a column named "Email".'};
+  const seen = new Set();
   const result = rows.map((row,i) => {
     const obj = {};
-    headers.forEach((h,idx) => { obj[h] = (row[idx]||'').toString().trim(); });
+    headers.forEach((h,idx) => { if(h) obj[h] = (row[idx]||'').toString().trim(); });
+    if (!obj.email || !obj.email.includes('@')) return null;
+    const emailLower = obj.email.toLowerCase().trim();
+    if (seen.has(emailLower)) return null; // deduplicate
+    seen.add(emailLower);
+    obj.email = emailLower;
+    // Split full name if no separate last_name
     if (!obj.last_name && obj.first_name && obj.first_name.includes(' ')) {
       const parts = obj.first_name.split(' ');
       obj.first_name = parts[0]; obj.last_name = parts.slice(1).join(' ');
     }
+    // Fallback first_name from email prefix
+    if (!obj.first_name) obj.first_name = emailLower.split('@')[0];
+    // Fallback company
+    if (!obj.company) obj.company = emailLower.split('@')[1]?.split('.')[0] || 'Unknown';
     const detected = (!obj.vertical || obj.vertical==='Other') ? detectVertical(obj.company) : null;
-    return {id:`${i}_${obj.email}`, ...obj, vertical:detected||obj.vertical||'Other', autoDetected:!!detected};
-  }).filter(c => c.email && c.first_name && c.company);
-  if (result.length===0) return {error:'No valid contacts found.'};
+    return {id:`c${i}_${emailLower.replace(/[^a-z0-9]/gi,'')}`, ...obj, vertical:detected||obj.vertical||'Other', autoDetected:!!detected};
+  }).filter(Boolean);
+  if (result.length===0) return {error:'No valid contacts found. Make sure your file has email addresses.'};
   return {contacts:result};
 }
 
@@ -895,9 +932,11 @@ function renderContactsPage() {
 }
 
 // ── Generate ────────────────────────────────────────────────────────────────
-async function generateOne(contact) {
+function generateById(id) { const c = contacts.find(x=>x.id===id); if(c) generateOne(c); }
+
+async function generateOne(contact, skipRender=false) {
   statuses[contact.id] = 'generating';
-  renderComposePage(); renderSendPage(); updateTopBar();
+  if (!skipRender) { renderComposePage(); renderSendPage(); updateTopBar(); }
 
   const vertical = contact.vertical || 'Other';
   const pain = PAIN_POINTS[vertical] || PAIN_POINTS['Other'];
@@ -978,7 +1017,7 @@ Under 160 words body only. NO em dashes. NO bullet points.`;
 
   try {
     const apiKey = cfg('apiKey');
-    if (!apiKey) { statuses[contact.id]='error'; renderComposePage(); updateTopBar(); alert('Add your Anthropic API key in the Setup tab first.'); return; }
+    if (!apiKey) { statuses[contact.id]='error'; if (!skipRender) { renderComposePage(); updateTopBar(); } return; }
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -988,7 +1027,7 @@ Under 160 words body only. NO em dashes. NO bullet points.`;
       const errBody = await res.json().catch(()=>({}));
       const msg = errBody?.error?.message || 'HTTP ' + res.status;
       console.error('Anthropic API error:', res.status, msg);
-      alert('Generation failed: ' + msg);
+      if (!skipRender) alert('Generation failed: ' + msg);
       throw new Error(msg);
     }
     const data = await res.json();
@@ -1004,42 +1043,61 @@ Under 160 words body only. NO em dashes. NO bullet points.`;
       }
     }
     if (!subject && lines.length>0) {subject=lines[0].replace(/\*\*/g,'').trim();bodyStart=1;}
-    const body = lines.slice(bodyStart).join('\n').trim();
+    // Strip signature if model included it
+    let bodyLines = lines.slice(bodyStart);
+    const fromName = cfg('fromName') || '';
+    if (fromName) {
+      const sigIdx = bodyLines.findIndex(l => l.trim().startsWith(fromName) || /^--\s*$/.test(l.trim()));
+      if (sigIdx > 0) bodyLines = bodyLines.slice(0, sigIdx);
+    }
+    const body = bodyLines.join('\n').trim();
     emails[contact.id] = {subject, body, stage:currentStage};
     statuses[contact.id] = 'ready';
   } catch(err) {
     console.error('generateOne error:', err);
     statuses[contact.id] = 'error';
   }
-  renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+  if (!skipRender) { renderComposePage(); renderSendPage(); updateTopBar(); renderNav(); }
 }
 
 async function generateAll() {
   if (generating) return;
+
+  // Check API key once before starting
+  if (!cfg('apiKey')) {
+    alert('Add your Anthropic API key in the Setup tab first.');
+    return;
+  }
+
   generating = true;
   document.getElementById('gen-all-btn').classList.add('pulse');
 
   const BATCH = 5; // run 5 in parallel
-  const queue = contacts.filter(c => statuses[c.id] !== 'sent');
+  const queue = contacts.filter(c => statuses[c.id] !== 'sent' && statuses[c.id] !== 'generating');
   let done = 0;
 
   for (let i = 0; i < queue.length; i += BATCH) {
     const batch = queue.slice(i, i + BATCH);
-    await Promise.all(batch.map(c => generateOne(c)));
+    // Run batch in parallel, skipRender=true to avoid DOM thrashing
+    await Promise.all(batch.map(c => generateOne(c, true)));
     done += batch.length;
+    // Render once after each batch completes
+    renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
     document.getElementById('gen-all-btn').textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
-    // Small pause between batches to respect rate limits
-    if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 1000));
+    // Pause between batches to respect Anthropic rate limits
+    if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 800));
   }
 
   generating = false;
   document.getElementById('gen-all-btn').textContent = `Generate All (${contacts.length})`;
   document.getElementById('gen-all-btn').classList.remove('pulse');
+  renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
 }
 
 // ── Compose page ────────────────────────────────────────────────────────────
 function renderComposePage() {
-  document.getElementById('gen-all-btn').textContent = generating ? 'Generating…' : `Generate All (${contacts.length})`;
+  const genBtn = document.getElementById('gen-all-btn');
+  if (genBtn && !generating) genBtn.textContent = contacts.length > 0 ? `Generate All (${contacts.length})` : 'Generate All';
   const list = document.getElementById('compose-list');
   list.innerHTML = contacts.map(c => {
     const s = statuses[c.id];
@@ -1047,10 +1105,12 @@ function renderComposePage() {
     const hr = history[c.email];
     const currentStage = hr ? (hr.sequences?.length||0)+1 : 1;
     const initials = (c.first_name?.[0]||'')+(c.last_name?.[0]||'');
-    const subjectHtml = em ? `<div class="subject-preview"><span class="subject-label">Subject</span><span class="subject-text">${em.subject}</span></div>` : '';
-    const actionBtns = !em && s!=='sent'
-      ? `<button class="btn btn-ghost btn-sm" onclick="generateOne(window._contacts.find(x=>x.id==='${c.id}'))">${s==='generating'?'…':'Generate'}</button>`
-      : em ? `<button class="btn btn-ghost btn-sm" onclick="openModal('${c.id}')">Preview</button>` : '';
+    const subjectHtml = em && s !== 'error' ? `<div class="subject-preview"><span class="subject-label">Subject</span><span class="subject-text">${em.subject}</span></div>`
+      : s === 'error' ? `<div class="subject-preview"><span class="subject-label" style="color:#ef4444">Error</span><span class="subject-text" style="color:#ef4444;font-style:normal">${em?.subject||'Generation failed — click Generate to retry'}</span></div>` : '';
+    const actionBtns = s === 'sent' ? ''
+      : s === 'error' ? `<button class="btn btn-ghost btn-sm" onclick="generateById('${c.id}')">↻ Retry</button>`
+      : !em ? `<button class="btn btn-ghost btn-sm" ${s==='generating'?'disabled':''} onclick="generateById('${c.id}')">${s==='generating'?'<span class=\'spin\'>↻</span>':'Generate'}</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="openModal('${c.id}')">Preview / Edit</button>`;
     return `<div class="compose-card ${s==='ready'?'ready':''}" id="cc-${c.id}">
       <div class="compose-card-main">
         <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
@@ -1094,8 +1154,19 @@ async function sendOne(contactId) {
     });
     statuses[contactId] = 'sent';
     const stage = email.stage||1;
-    if (!history[contact.email]) history[contact.email] = {firstName:contact.first_name,lastName:contact.last_name,company:contact.company,vertical:contact.vertical,sequences:[]};
-    history[contact.email].sequences.push({stage,sentAt:new Date().toISOString(),subject:email.subject});
+    if (!history[contact.email]) history[contact.email] = {
+      firstName:contact.first_name||'',
+      lastName:contact.last_name||'',
+      company:contact.company||'',
+      vertical:contact.vertical||'Other',
+      sequences:[]
+    };
+    history[contact.email].sequences.push({
+      stage,
+      sentAt:new Date().toISOString(),
+      subject:email.subject||'(no subject)',
+      sentFrom:cfg('fromEmail')||''
+    });
     await saveHistory();
   } catch(err) {
     statuses[contactId] = 'error';
@@ -1120,6 +1191,9 @@ function clearSendError() { document.getElementById('send-alerts').innerHTML='';
 
 function renderSendPage() {
   document.getElementById('send-subtitle').textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`;
+  const readyCount = countStatus('ready');
+  const sendAllBtn = document.getElementById('send-all-btn');
+  if (sendAllBtn && !sendAllBtn.disabled) sendAllBtn.textContent = readyCount > 0 ? `Send All Ready (${readyCount})` : 'Send All Ready';
   const alerts = document.getElementById('send-alerts');
   if (!canSend() && !alerts.querySelector('.alert-warn')) {
     alerts.innerHTML = `<div class="alert alert-warn">⚠ EmailJS not configured — go to Setup.</div>` + alerts.innerHTML;
@@ -1173,7 +1247,8 @@ function renderCadencePage() {
       ? `<span style="font-size:11px;color:#4EA72E;font-weight:600">✓ Complete</span>`
       : isDue
       ? `<span style="font-size:11px;color:#f59e0b;font-weight:700">⏰ Follow-up due</span>`
-      : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">Wait ${Math.max(1,3-(days||0))}d</span>`;
+      : days !== null && (3 - days) <= 1 ? `<span style="font-size:11px;color:#E97132;font-weight:600">Due today</span>`
+      : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">Wait ${3-(days||0)}d</span>`;
     return `<tr style="background:${isDue?'#f59e0b06':'transparent'}">
       <td><div style="font-weight:600">${rec.firstName} ${rec.lastName||''}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">${email}</div></td>
       <td style="color:rgba(255,255,255,0.5)">${rec.company}</td>
@@ -1188,7 +1263,11 @@ function renderCadencePage() {
 
 async function clearHistory() {
   if (!confirm('Clear all history? Cannot be undone.')) return;
-  history = {}; await saveHistory(); renderCadencePage(); updateTopBar(); renderNav();
+  history = {};
+  clearTimeout(_saveHistoryTimer); // cancel any pending debounced save
+  try { await fetch(API+'/user/history', {method:'PUT',headers:authHeaders(),body:JSON.stringify({history})}); }
+  catch {}
+  renderCadencePage(); updateTopBar(); renderNav();
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────
@@ -1201,7 +1280,7 @@ function openModal(contactId) {
   document.getElementById('modal-sub').innerHTML = `${contact.company} ${verticalPill(contact.vertical)}`;
   document.getElementById('modal-subject').value = em.subject;
   document.getElementById('modal-body').value = em.body;
-  document.getElementById('modal-regen-btn').onclick = () => { closeModal(); generateOne(contact); };
+  document.getElementById('modal-regen-btn').onclick = async () => { closeModal(); await generateOne(contact); };
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -1220,6 +1299,8 @@ function saveModal() {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 // Auto-login or show auth screen
+// Store auth screen HTML before cold-start loading state replaces it
+_authScreenHTML = document.getElementById('auth-screen').innerHTML;
 checkAutoLogin();
 </script>
 </body>
