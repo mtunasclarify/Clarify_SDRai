@@ -1947,39 +1947,39 @@ function personaPill(persona) {
 // ── Vertical-specific verified facts (2 lines max per vertical) ─────────
 const ALL_VERTICAL_FACTS = {
   'Cybersecurity': [
-    'Clarify has worked with cybersecurity organisations including Okta, Wiz, SentinelOne, Palo Alto Networks, CrowdStrike, CyberArk, Axonius, Zscaler, Mimecast, and Proofpoint.',
+    'Clarify has worked with cybersecurity organisations including Okta, Wiz, SentinelOne, Palo Alto Networks, Cyera, Mimecast, Entrust, ExtraHop, Ping Identity, SureCloud, Symantec, Veridium, and One Identity.',
     'Clarify Cybersecurity approach: multi-threaded account-based development reaching CISO, CIO, Legal, and Finance — not just the security buyer. Insight-led outreach leading with business risk, not product specs.',
   ],
   'BPO': [
-    'Clarify has worked with BPO organisations including Capita, Mastek, Xerox, DXC Technology, Genpact, Cognizant, Accenture, Kyndryl, and Tata Consultancy Services.',
+    'Clarify has worked with BPO organisations including Capita, Mastek, Xerox, DXC Technology, Genpact, Accenture, IBM, Deloitte, EXL Service, FirstSource, Hexaware, and Tata Consultancy Services.',
     'Capita: $234.5M pipeline across 8 business divisions. Xerox: $1.4B+ pipeline and $105M new logo revenue. Mastek: $800M+ pipeline and $150M+ revenue.',
   ],
   'Fintech': [
-    'Clarify has worked with fintech and financial services organisations including PayPal, Stripe, Adyen, Plaid, and Bottomline Technologies.',
+    'Clarify has worked with fintech and financial services organisations including PayPal, Collenda, and Digital Owl.',
     'Fintech client (leading global payment platform): $51M pipeline, 84% conversion, 91:1 pipeline ROI. BFSI (2025): $80.7M pipeline across 169 opportunities including Goldman Sachs, TD Bank, and Fidelity.',
   ],
   'AI & Data': [
-    'Clarify has worked with AI and data organisations including SAP, Salesforce, ServiceNow, Snowflake, Palantir, Databricks, Workday, and Datadog.',
+    'Clarify has worked with AI and data organisations including SAP, Sage, Beamery, Cohesity, Interactions, Moogsoft, Orgvue, PolyAI, Seldon, Pachyderm, and Unit4.',
     '$18M ACV in first 12 months for one AI and data client. 230% performance improvement vs prior year. 78% SAL to opportunity conversion. Access into over 20% of G50 accounts.',
   ],
   'Cloud & Infrastructure': [
-    'Clarify has worked with cloud and infrastructure organisations including Cisco, VMware, AWS, Red Hat, Rubrik, Dynatrace, Nutanix, Citrix, and Computacenter.',
+    'Clarify has worked with cloud and infrastructure organisations including Cisco, VMware, Computacenter, Integra, Sensedia, Software AG, Tech Data, and Veritas.',
     'Clarify approach: multi-threaded outreach covering IT, Operations, and Finance simultaneously — positioning clients ahead of vendor consolidation decisions before formal reviews begin.',
   ],
   'Enterprise Software': [
-    'Clarify has worked with enterprise software organisations including Adobe, Microsoft, Atlassian, Samsara, Infor, Zendesk, Monday.com, and Micro Focus.',
-    '$18M ACV in first 12 months. 230% performance improvement vs prior year. 78% SAL to opportunity conversion. Access into over 20% of G50 accounts.',
+    'Clarify has worked with enterprise software organisations including Adobe, Samsara, CA Technologies, Micro Focus, OutSystems, Sprout Social, Kodak Alaris, and Tryzens.',
+    '$18M ACV in first 12 months for one enterprise software client. 230% performance improvement vs prior year. 78% SAL to opportunity conversion.',
   ],
   'Automation & DevTools': [
-    'Clarify has worked with automation and developer tools organisations including UiPath, GitLab, Automation Anywhere, LaunchDarkly, Zapier, and Postman.',
+    'Clarify has worked with automation and developer tools organisations including OutSystems.',
     'Clarify approach: outbound designed around the full buying group — IT, Operations, Finance, and business sponsor — converting business case conversations into pipeline before procurement frames it as build-versus-buy.',
   ],
   'Cloud Communications': [
-    'Clarify has worked with cloud communications organisations including Vodafone, Twilio, Infobip, and Smart Communications.',
+    'Clarify has worked with cloud communications organisations including Vodafone, Infobip, and Smart Communications.',
     'Vodafone: $29M pipeline over 15 months, 23% increase in average deal size, $13.3M in first 6 months vs a target of $9.8M.',
   ],
   'Other': [
-    'Clarify has worked with organisations across cybersecurity, BPO, fintech, AI and data, cloud infrastructure, enterprise software, automation, and cloud communications.',
+    'Clarify has worked with organisations across cybersecurity, BPO, fintech, AI and data, cloud infrastructure, enterprise software, and cloud communications.',
     'Clarify approach: multi-threaded account-based development building pipeline into hard-to-reach strategic accounts — pre-RFP access, sustained senior stakeholder engagement, buying group coverage.',
   ],
 };
@@ -2521,7 +2521,7 @@ function normaliseHeaders(rawHeaders) {
 
   // Keywords that strongly suggest a field even if header doesn't exactly match
   const fuzzyPatterns = {
-    email:      (h) => h.includes('email') || h.includes('e-mail') || h.includes('@'),
+    email:      (h) => (h.includes('email') || h.includes('e-mail') || h.includes('@')) && !h.includes('verification') && !h.includes('status') && !h.includes('source') && !h.includes('secondary') && !h.includes('tertiary'),
     first_name: (h) => h.includes('first') && (h.includes('name') || h === 'first'),
     last_name:  (h) => h.includes('last') && (h.includes('name') || h === 'last') || h === 'surname',
     company:    (h) => (h.includes('company') || h.includes('organization') || h.includes('employer') || h.includes('account')) && !h.includes('email'),
