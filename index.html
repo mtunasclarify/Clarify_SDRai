@@ -2634,11 +2634,65 @@ function parseXLSX(buffer) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
     if (data.length < 2) return {error:'File needs a header row and at least one contact.'};
-    // Filter completely empty rows and rows where all cells are empty strings
+    const rawHeaders = data[0].map(h => (h||'').toString().trim());
     const rows = data.slice(1).filter(r => r.some(c => c !== null && c !== undefined && c.toString().trim() !== ''));
     if (rows.length === 0) return {error:'No data rows found in the spreadsheet.'};
-    return parseRows(data[0].map(h => (h||'').toString().trim()), rows);
-  } catch { return {error:'Could not read Excel file.'}; }
+
+    // ── Wide-format detection ──────────────────────────────────────────────
+    // Files with multiple people per row (e.g. CRO Name/Email, SVP Name/Email, RVP Name/Email)
+    const emailColIdxs = rawHeaders.map((h,i) => h.toLowerCase().includes('email') && !h.toLowerCase().includes('phone') ? i : -1).filter(i => i >= 0);
+    const nameColIdxs  = rawHeaders.map((h,i) => h.toLowerCase().includes('name') && !h.toLowerCase().includes('company') ? i : -1).filter(i => i >= 0);
+    const companyColIdx = rawHeaders.findIndex(h => h.toLowerCase().includes('company'));
+
+    if (emailColIdxs.length >= 2 || (nameColIdxs.length >= 2 && companyColIdx >= 0)) {
+      // Wide format — build person groups from name cols
+      const groups = [];
+      nameColIdxs.forEach(nameIdx => {
+        const prefix = rawHeaders[nameIdx].replace(/\s*name\s*/i,'').trim();
+        const titleIdx = rawHeaders.findIndex((h,i) => i > nameIdx && i <= nameIdx+3 && h.toLowerCase().includes('title'));
+        const emailIdx = rawHeaders.findIndex((h,i) => i > nameIdx && i <= nameIdx+3 && h.toLowerCase().includes('email'));
+        groups.push({prefix, nameIdx, titleIdx: titleIdx >= 0 ? titleIdx : -1, emailIdx: emailIdx >= 0 ? emailIdx : -1});
+      });
+
+      const contacts = [];
+      let uid = 0;
+      rows.forEach(row => {
+        const company = companyColIdx >= 0 ? (row[companyColIdx]||'').toString().trim() : '';
+        groups.forEach(g => {
+          const fullName = (row[g.nameIdx]||'').toString().trim();
+          if (!fullName) return;
+          const nameParts = fullName.trim().split(/\s+/);
+          const first_name = nameParts[0] || '';
+          const last_name  = nameParts.slice(1).join(' ');
+          const title = g.titleIdx >= 0 ? (row[g.titleIdx]||'').toString().trim() : '';
+          let email = g.emailIdx >= 0 ? (row[g.emailIdx]||'').toString().trim().toLowerCase() : '';
+          // Generate placeholder email if missing
+          if (!email || !email.includes('@')) {
+            const fn = first_name.toLowerCase().replace(/[^a-z]/g,'');
+            const ln = last_name.toLowerCase().replace(/[^a-z]/g,'');
+            const co = company.toLowerCase().replace(/[^a-z0-9]/g,'');
+            email = fn && co ? (ln ? `${fn}.${ln}@${co}.com` : `${fn}@${co}.com`) : '';
+          }
+          if (!email) return;
+          const vertical = detectVertical(company);
+          const persona  = detectPersona(title);
+          contacts.push({
+            id: `c${uid++}_${email.replace(/[^a-z0-9]/gi,'')}`,
+            first_name, last_name, email, company, title, vertical,
+            autoDetected: false, persona, _emailGenerated: !row[g.emailIdx],
+          });
+        });
+      });
+
+      if (contacts.length === 0) return {error:'Wide-format file detected but no contacts could be extracted. Check Name columns exist.'};
+      // Deduplicate by email
+      const seen = new Set();
+      return {contacts: contacts.filter(c => { if(seen.has(c.email)) return false; seen.add(c.email); return true; })};
+    }
+
+    // Standard flat format
+    return parseRows(rawHeaders, rows);
+  } catch(e) { console.error('parseXLSX error:', e); return {error:'Could not read Excel file: ' + e.message}; }
 }
 
 function handleDrop(e) {
@@ -2966,33 +3020,37 @@ ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
 STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following up" or "circling back". One client reference maximum. No fabricated stats.`
-    : `You are writing a short, direct cold email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
+    : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
 
-VERIFIED FACTS for ${vertical} — only use these, invent nothing:
+WHAT CLARIFY IS: Clarify is a B2B outsourced sales development and ABM agency. We embed alongside enterprise technology companies to generate pipeline into their most important strategic accounts — combining account-based development, multi-threaded outreach, and sales execution. We work with companies in ${vertical} to help them build qualified pipeline into accounts that are hard to reach through normal outbound.
+
+VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
 ${VERIFIED_FACTS}
 
-TONE GUIDE: ${VOICE_GUIDE}
+TONE: ${VOICE_GUIDE}
 
-Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company} (${vertical})
+Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company} (${vertical} industry)
+Persona: ${personaContext}
+Key challenge: ${pain}
 ${clientNote}
 
 ---
-Subject: [4-6 plain words — not starting with Re:, no hype, no question mark]
+Subject: [4-6 plain words — direct, no hype, not starting with Re:]
 
 Hi ${contact.first_name||'there'},
 
-[Sentence 1-2: What Clarify does in this space — one grounded, specific observation. NOT a dramatic theory about their problems. Example style: "Working with a number of [vertical] sales teams at the moment on building more predictable pipeline into hard-to-reach enterprise accounts."]
+[1-2 sentences: Introduce what Clarify does clearly and specifically for ${vertical} companies. The reader should immediately understand: Clarify is an outsourced sales development and ABM partner that generates pipeline into strategic accounts. Make it specific to their vertical — e.g. for cybersecurity it's about reaching CISO buying committees, for BPO it's about pre-RFP enterprise access. Do NOT use vague phrases like "hard-to-reach accounts" without context.]
 
-[Sentence 3-4: IF VERIFIED_FACTS has a stat with a number for this vertical, use it naturally with the client name. Example: "We helped [Client] generate [stat] through a coordinated account-based motion." If no stat exists, briefly describe what the methodology delivers instead. Never invent numbers.]
+[1-2 sentences: Reference ONE specific client or stat from VERIFIED_FACTS if it exists for this vertical. E.g. "We worked with [Client] to generate [stat]." If no relevant stat exists, skip the proof and stay methodology-focused. Never invent numbers or claim clients not in VERIFIED_FACTS.]
 
-[Sentence 5: One CTA — ask for 15 minutes, specific day or this week. Direct, no fluff.]
+[1 sentence: Ask for 15 minutes this week or a specific day. Direct, no fluff.]
 
 Thanks,
 
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body under 100 words. No em dashes. No bullet points. ONE client reference maximum. No fabricated stats. No "Hope you're doing well". No "I noticed" or "I came across".`;
+STRICT RULES: Body under 120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across", "just wanted to". ONE client maximum. No fabricated stats. The reader must understand what Clarify sells within the first sentence.`;
 
   try {
     const apiKey = cfg('apiKey');
