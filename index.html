@@ -2942,13 +2942,13 @@ async function generateOne(contact, skipRender=false) {
     : '';
 
   const VOICE_GUIDE = [
-    "Short, conversational, peer-to-peer. Sounds like a credible person who works in this space, not a vendor pitching.",
-    "Paragraph 1: grounded and specific — what Clarify does in this vertical, briefly. Not a dramatic hypothesis about their problems. One sentence of context, one sentence of what we do.",
-    "Paragraph 2: ONE stat or client name from VERIFIED_FACTS — only if it has a number attached. If no stat exists for this vertical, skip the client reference entirely and keep it methodology-focused.",
-    "Subject line: 4-6 words, plain language, no hype. Never starts with Re: or Fwd:.",
-    "CTA: one sentence, specific ask. Never 'would love to', 'happy to', 'hope this finds you well', 'just wanted to', 'reaching out because'.",
-    "TOTAL body: under 100 words. Short paragraphs. No lists. No em dashes. Read like a text from a trusted peer, not a sales email.",
-  ].join('\n');  // Nurture re-engagement uses completely fresh angle
+    "Write like a trusted peer who works in this space. Short sentences. Conversational. Not a pitch deck.",
+    "Sentence 1-2: Clarify works as an extension of sales and marketing teams to build predictable pipeline into strategic accounts. Keep it simple and direct — do not over-explain. Style guide: 'We work with [vertical] companies as an extension of their sales and marketing team to build pipeline into accounts that typical outreach does not reach.' Adapt naturally to the vertical and role.",
+    "Sentence 3-4: If VERIFIED_FACTS contains a relevant stat with a number, use it with the client name. If not, skip proof entirely — do not invent or imply results.",
+    "Subject: 4-6 words, plain language. Never starts with Re: or Fwd:.",
+    "CTA: ask for 15 minutes, specific day or this week. Never 'would love to', 'happy to', 'hope this finds you well'.",
+    "NEVER use these phrases: multi-threaded, buying groups, pre-RFP access, sustained engagement, hard-to-reach accounts, account-based development (use plain English instead). NEVER fabricate stats. NEVER list multiple clients.",
+  ].join('\n');// Nurture re-engagement uses completely fresh angle
   const isNurture = contact.isNurture || false;
   const nurtureAngleMap = persona === 'sales' ? NURTURE_ANGLES_SALES : NURTURE_ANGLES_MARKETING;
   const nurtureAngle = nurtureAngleMap[vertical] || nurtureAngleMap['Other'];
@@ -2996,14 +2996,12 @@ VOICE AND TONE:
 ${VOICE_GUIDE}
 
 Contact: ${contact.first_name||'there'} ${contact.last_name||''} at ${contact.company||'your company'} (${vertical})
-Persona context: ${personaContext}
+Persona: ${personaContext}
 Previous email subject: "${prevSubject}"
-Follow-up angle: ${followUpAngle}
-
-Contact: ${contact.first_name||'there'} ${contact.last_name||''} at ${contact.company||'your company'} (${vertical})
-Previous subject: "${prevSubject}"
-New angle: ${followUpAngle}
+New angle to lead with: ${followUpAngle}
 ${clientNote}
+
+REMINDER: Clarify is a specialist sales and marketing service that works as an extension of enterprise technology sales and marketing teams to build pipeline into strategic accounts. Not a tech product — a service.
 
 ---
 Subject: [4-6 words, fresh angle from previous subject, not starting with Re:]
@@ -3022,7 +3020,7 @@ ${cfg('title')} | Clarify B2B
 STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following up" or "circling back". One client reference maximum. No fabricated stats.`
     : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
 
-WHAT CLARIFY IS: Clarify is a B2B outsourced sales development and ABM agency. We embed alongside enterprise technology companies to generate pipeline into their most important strategic accounts — combining account-based development, multi-threaded outreach, and sales execution. We work with companies in ${vertical} to help them build qualified pipeline into accounts that are hard to reach through normal outbound.
+WHAT CLARIFY IS: Clarify helps enterprise sales and marketing teams build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult. We work as an extension of sales and marketing teams — running targeted outreach, ABM campaigns, and sales development into priority accounts to help teams engage the right people earlier and convert that into qualified pipeline. We are a service, not a technology product.
 
 VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
 ${VERIFIED_FACTS}
@@ -3039,7 +3037,7 @@ Subject: [4-6 plain words — direct, no hype, not starting with Re:]
 
 Hi ${contact.first_name||'there'},
 
-[1-2 sentences: Introduce what Clarify does clearly and specifically for ${vertical} companies. The reader should immediately understand: Clarify is an outsourced sales development and ABM partner that generates pipeline into strategic accounts. Make it specific to their vertical — e.g. for cybersecurity it's about reaching CISO buying committees, for BPO it's about pre-RFP enterprise access. Do NOT use vague phrases like "hard-to-reach accounts" without context.]
+[1-2 sentences: Open with what Clarify does. Use this as your style guide: "We work with [vertical] companies as an extension of their sales team to build pipeline into accounts that typical outreach doesn't reach." Adapt it naturally — make it specific to the contact's vertical and role. Do not copy it word for word. Do NOT use jargon like "multi-threaded", "buying groups", "pre-RFP", "account-based development".]
 
 [1-2 sentences: Reference ONE specific client or stat from VERIFIED_FACTS if it exists for this vertical. E.g. "We worked with [Client] to generate [stat]." If no relevant stat exists, skip the proof and stay methodology-focused. Never invent numbers or claim clients not in VERIFIED_FACTS.]
 
