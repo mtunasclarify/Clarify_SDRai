@@ -324,7 +324,7 @@ td{padding:13px 18px}
             <div class="drop-emoji">📂</div>
             <div class="drop-title">Drop file or click to browse</div>
             <div class="drop-sub">.xlsx or .csv · up to 1,000 contacts · drag & drop supported</div>
-            <input type="file" id="file-input" accept=".csv,.xlsx,.xls" onchange="handleFileInput(event)"/>
+            <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.xlsm" onchange="handleFileInput(event)"/>
           </div>
           <div id="file-error" style="display:none" class="alert alert-error"></div>
           <div id="contacts-table-wrap" style="display:none">
@@ -1886,23 +1886,43 @@ function detectVertical(company) {
 // Claude-powered fallback for unknown companies - called during import
 // ── Persona Detection ────────────────────────────────────────────────────
 const SALES_TITLES = [
+  // C-Suite / SVP / VP
   'cro','chief revenue','vp sales','vice president sales','head of sales',
-  'director of sales','sales director','vp of sales','svp sales','evp sales',
-  'chief sales','head of business development','vp business development',
-  'director business development','bd director','revenue leader','sales leader',
-  'commercial director','vp commercial','head of commercial','sales operations',
-  'revenue operations','revops','sales enablement','account executive','ae',
-  'enterprise ae','strategic account','key account','head of partnerships',
+  'svp sales','evp sales','chief sales','vp of sales','svp of sales',
+  'regional vice president','rvp','regional vp','area vice president',
+  // Director level
+  'director of sales','sales director','director of business development',
+  'director business development','commercial director','vp commercial',
+  'head of commercial','director of commercial',
+  // Account roles — all of these are sales
+  'account executive','account director','account manager','account development',
+  'ae','enterprise ae','senior ae','mid-market ae','strategic account',
+  'key account','named account','global account','major account',
+  'territory manager','territory','mid-market','smb',
+  // BD and partnerships
+  'business development','bd director','head of business development',
+  'vp business development','partnerships','alliances','channel',
+  // Revenue ops
+  'sales operations','revenue operations','revops','sales enablement',
+  'head of partnerships','revenue leader','sales leader',
+  // Exec / founder
+  'chief operating','coo','chief executive','ceo','president',
+  'founder','co-founder','managing director','managing partner',
+  'general manager','gm','gtm','go-to-market','commercial',
 ];
 
 const MARKETING_TITLES = [
-  'cmo','chief marketing','vp marketing','vice president marketing',
-  'head of marketing','marketing director','director of marketing',
-  'svp marketing','evp marketing','growth','demand gen','demand generation',
-  'head of demand','vp demand','director demand','marketing ops','marketing operations',
-  'performance marketing','digital marketing','brand','comms','communications',
-  'content marketing','abm','account based','field marketing','revenue marketing',
-  'growth marketing','product marketing','vp growth','head of growth',
+  'cmo','chief marketing','vp marketing','vp of marketing','vice president marketing',
+  'svp marketing','evp marketing','head of marketing','marketing director',
+  'director of marketing','director marketing','svp of marketing',
+  'demand gen','demand generation','head of demand','vp demand','director demand',
+  'growth marketing','vp growth','head of growth',
+  'marketing ops','marketing operations','performance marketing','digital marketing',
+  'paid media','paid social','seo','sem',
+  'brand','communications director','public relations','corporate comms',
+  'abm','account based','field marketing','revenue marketing',
+  'content marketing','social media','product marketing','pmm',
+  'campaign','events manager','events director',
 ];
 
 function detectPersona(title) {
@@ -2483,14 +2503,19 @@ function normaliseHeaders(rawHeaders) {
     ],
     title: [
       'title','job title','jobtitle','position','role','job role',
-      'designation','seniority','job function','person title','contact title',
+      'designation','job function','person title','contact title',
       'current title','primary title','work title','headline','linkedin headline',
       'job_title','job position','occupation','function','current position',
       'professional title','title/role','role/title','person\'s title',
+      'person job title','contact job title','employment title','work position','current role',
+      // NOTE: 'seniority' intentionally excluded — Apollo Seniority = level only (Director/Entry/Manager)
     ],
     vertical: [
       'vertical','industry','sector','segment','category','market',
       'industry vertical','business type','industry sector',
+    ],
+    departments: [
+      'departments','department','function','team','business function',
     ],
   };
 
@@ -2544,7 +2569,18 @@ function parseRows(rawHeaders, rows) {
     });
   }
 
-  if (!headers.includes('email')) return {error:'Could not find an email column. Check your file has an "Email" or "Work Email" column.'};
+  if (!headers.includes('email')) {
+    // Last resort: scan column values for anything containing @ to find email col
+    const emailColIdx = rawHeaders.findIndex((h, colIdx) => {
+      const vals = rows.slice(0,5).map(r => (r[colIdx]||'').toString().trim());
+      return vals.some(v => v.includes('@') && v.includes('.'));
+    });
+    if (emailColIdx >= 0) {
+      headers[emailColIdx] = 'email';
+    } else {
+      return {error:'No email column found. Columns detected: ' + rawHeaders.filter(Boolean).slice(0,10).join(', ')};
+    }
+  }
   const seen = new Set();
   const result = rows.map((row,i) => {
     const obj = {};
@@ -2564,7 +2600,13 @@ function parseRows(rawHeaders, rows) {
     // Fallback company
     if (!obj.company) obj.company = emailLower.split('@')[1]?.split('.')[0] || 'Unknown';
     const detected = (!obj.vertical || obj.vertical==='Other') ? detectVertical(obj.company) : null;
-    const detectedPersona = detectPersona(obj.title||'');
+    // Use departments field from Apollo if title-based detection is ambiguous
+    let detectedPersona = detectPersona(obj.title||'');
+    if (detectedPersona === 'other' && obj.departments) {
+      const dept = obj.departments.toLowerCase();
+      if (/sales|business dev|revenue|commercial|account/i.test(dept)) detectedPersona = 'sales';
+      else if (/marketing|demand|growth|brand|comms/i.test(dept)) detectedPersona = 'marketing';
+    }
     return {id:`c${i}_${emailLower.replace(/[^a-z0-9]/gi,'')}`, ...obj, vertical:detected||obj.vertical||'Other', autoDetected:!!detected, persona:detectedPersona};
   }).filter(Boolean);
   if (result.length===0) return {error:'No valid contacts found. Make sure your file has email addresses.'};
@@ -2611,7 +2653,7 @@ function handleFile(file) {
   if (!file) return;
   const errEl = document.getElementById('file-error');
   errEl.style.display = 'none';
-  const isXlsx = /\.xlsx?$/i.test(file.name);
+  const isXlsx = /\.(xlsx?|xlsm)$/i.test(file.name);
   const reader = new FileReader();
   reader.onload = async ev => {
     const result = isXlsx ? parseXLSX(new Uint8Array(ev.target.result)) : parseCSV(ev.target.result);
@@ -2839,6 +2881,12 @@ async function generateOne(contact, skipRender=false) {
 
   const VERIFIED_FACTS = (ALL_VERTICAL_FACTS[vertical] || ALL_VERTICAL_FACTS['Other']).join('\n');
 
+  // Known client flag — if contact's company is a Clarify client, note it for the prompt
+  const knownClient = typeof isKnownClient === 'function' && isKnownClient(contact.company || '');
+  const clientNote = knownClient
+    ? `NOTE: Clarify has worked with ${contact.company} previously. You may reference this naturally once — e.g. "Having worked with ${contact.company}..." — only if it fits naturally. Do not force it.`
+    : '';
+
   const VOICE_GUIDE = [
     "Short, conversational, peer-to-peer. Sounds like a credible person who works in this space, not a vendor pitching.",
     "Paragraph 1: grounded and specific — what Clarify does in this vertical, briefly. Not a dramatic hypothesis about their problems. One sentence of context, one sentence of what we do.",
@@ -3031,7 +3079,7 @@ async function generateAll() {
   if (genBtn) genBtn.classList.add('pulse');
 
   try {
-    const BATCH = 5;
+    const BATCH = 10;
     let done = 0;
 
     for (let i = 0; i < queue.length; i += BATCH) {
@@ -3040,7 +3088,7 @@ async function generateAll() {
       done += batch.length;
       renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
       if (genBtn) genBtn.textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
-      if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 800));
+      // No inter-batch delay needed
     }
   } catch(err) {
     console.error('generateAll error:', err);
@@ -3282,7 +3330,6 @@ async function runAutoSequence(fudOverride) {
     done += batch.length;
     renderComposePage(); renderSendPage(); updateTopBar();
     updateStatus(`Generating ${Math.min(done, queue.length)}/${queue.length}…`);
-    if (i + BATCH < queue.length) await new Promise(r => setTimeout(r, 800));
   }
   generating = false;
 
