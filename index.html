@@ -306,10 +306,18 @@ td{padding:13px 18px}
       <div class="page" id="page-1">
         <div style="max-width:100%">
           <div class="section-header">
-            <div><h2>Import Contacts</h2><p class="section-subtitle">Upload from Apollo or any spreadsheet. Vertical auto-detected from company name.</p></div>
+            <div><h2>Import Contacts</h2><p class="section-subtitle">Upload from Apollo or any spreadsheet. Vertical and persona auto-detected.</p></div>
             <div id="clear-contacts-btn" style="display:none">
               <button class="btn btn-danger btn-sm" onclick="confirmClearContacts()">✕ Remove List</button>
             </div>
+          </div>
+          <div id="contacts-filters" style="display:none;margin-bottom:16px;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="contacts-search" class="field-input" placeholder="Search name, company, email…" style="width:210px;padding:7px 12px;font-size:12px" oninput="renderContactsPage()"/>
+            <button class="btn btn-ghost btn-sm" onclick="setPersonaFilter('')" id="pf-all" style="opacity:1">All</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPersonaFilter('sales')" id="pf-sales">Sales</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPersonaFilter('marketing')" id="pf-marketing">Marketing</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPersonaFilter('other')" id="pf-other">Other</button>
+            <span id="contacts-filter-count" style="font-size:11px;color:rgba(255,255,255,0.3)"></span>
           </div>
           <div id="followup-banner" style="display:none;margin-bottom:20px"></div>
           <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleDrop(event)">
@@ -488,6 +496,7 @@ let history = loadHistory();
 let modalContact = null;
 let generating = false;
 let _autoRunning = false; // guard for runAutoSequence
+let _contactPersonaFilter = ''; // filter: empty=all, sales, marketing, other
 
 const TABS = [
   {label:'Setup', icon:'⚙'},
@@ -1557,6 +1566,8 @@ const FOLLOW_UP_ANGLES = {
   'Other':'the difficulty of generating pipeline in accounts that already have incumbent relationships',
 };
 
+
+
 function detectVertical(company) {
   if (!company) return null;
   const lower = company.toLowerCase().trim();
@@ -1592,6 +1603,7 @@ const MARKETING_TITLES = [
 ];
 
 function detectPersona(title) {
+  // Title-based detection only — never guess from company alone
   if (!title) return 'other';
   const t = title.toLowerCase();
   if (SALES_TITLES.some(k => t.includes(k))) return 'sales';
@@ -1607,6 +1619,64 @@ function personaPill(persona) {
   };
   const m = map[persona] || map.other;
   return `<span class="pill" style="background:${m.bg};color:${m.text};border:1px solid ${m.border}">${m.label}</span>`;
+}
+
+// ── Web search title lookup ──────────────────────────────────────────────
+const _titleCache = {};
+
+async function lookupTitleFromWeb(contact, apiKey) {
+  if (!apiKey) return null;
+  if (!contact.first_name || !contact.company) return null;
+
+  const cacheKey = `${contact.first_name} ${contact.last_name||''} ${contact.company}`.toLowerCase().trim();
+  if (_titleCache[cacheKey]) return _titleCache[cacheKey];
+
+  const query = `${contact.first_name} ${contact.last_name||''} ${contact.company} job title`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 60,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: `Search for the current job title of ${contact.first_name} ${contact.last_name||''} at ${contact.company}. Reply with ONLY their job title in 5 words or less. If not found, reply "unknown".`
+        }]
+      })
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    // Extract text from response
+    const textBlock = data.content?.find(b => b.type === 'text');
+    const title = textBlock?.text?.trim();
+
+    if (!title || title.toLowerCase() === 'unknown' || title.length > 60) return null;
+
+    // Clean up any preamble the model adds
+    const cleaned = title
+      .replace(/^(their|the|current|job|title|is|:|\s)+/gi, '')
+      .replace(/["'.]/g, '')
+      .trim();
+
+    if (cleaned.length > 2 && cleaned.length < 60) {
+      _titleCache[cacheKey] = cleaned;
+      return cleaned;
+    }
+    return null;
+  } catch(e) {
+    console.warn('Title lookup failed:', e);
+    return null;
+  }
 }
 
 // ── Persona-specific pain points ─────────────────────────────────────────
@@ -2023,26 +2093,90 @@ document.querySelectorAll('[id^=cfg-]').forEach(el => el.addEventListener('input
 // ── CSV/XLSX parsing ───────────────────────────────────────────────────────
 function normaliseHeaders(rawHeaders) {
   const aliases = {
-    email:['email','email address','e-mail','e mail','mail'],
-    first_name:['first_name','first name','firstname','first','name','full name','fullname','contact name','contact'],
-    last_name:['last_name','last name','lastname','last','surname'],
-    company:['company','company name','organization','organisation','account','account name','firm','employer'],
-    title:['title','job title','position','role','job role','designation','seniority','job function','department'],
-    vertical:['vertical','industry','sector','segment','category'],
+    email: [
+      'email','email address','e-mail','e mail','mail',
+      'work email','business email','corporate email','primary email',
+      'email (work)','contact email','email1','email_address','emailaddress',
+    ],
+    first_name: [
+      'first_name','first name','firstname','first','given name',
+      'full name','fullname','contact name','contact','person name',
+      'name','first (preferred)','preferred name','forename',
+    ],
+    last_name: [
+      'last_name','last name','lastname','last','surname','family name',
+      'second name',
+    ],
+    company: [
+      'company','company name','organization','organisation','account',
+      'account name','firm','employer','current company','workplace',
+      'business name','company (primary)','employer name','org',
+      'company_name','organization name','organisation name',
+    ],
+    title: [
+      'title','job title','jobtitle','position','role','job role',
+      'designation','seniority','job function','person title','contact title',
+      'current title','primary title','work title','headline','linkedin headline',
+      'job_title','job position','occupation','function','current position',
+      'professional title','title/role','role/title','person\'s title',
+    ],
+    vertical: [
+      'vertical','industry','sector','segment','category','market',
+      'industry vertical','business type','industry sector',
+    ],
   };
+
+  // Keywords that strongly suggest a field even if header doesn't exactly match
+  const fuzzyPatterns = {
+    email:      (h) => h.includes('email') || h.includes('e-mail') || h.includes('@'),
+    first_name: (h) => h.includes('first') && (h.includes('name') || h === 'first'),
+    last_name:  (h) => h.includes('last') && (h.includes('name') || h === 'last') || h === 'surname',
+    company:    (h) => (h.includes('company') || h.includes('organization') || h.includes('employer') || h.includes('account')) && !h.includes('email'),
+    title:      (h) => (h.includes('title') || h.includes('position') || h.includes('role') || h.includes('designation') || h.includes('headline') || h.includes('occupation')) && !h.includes('email') && !h.includes('company'),
+    vertical:   (h) => h.includes('industry') || h.includes('vertical') || h.includes('sector'),
+  };
+
   return rawHeaders.map(h => {
     if (!h) return '';
-    const clean = h.toString().toLowerCase().trim();
+    const clean = h.toString().toLowerCase().trim()
+      .replace(/[^a-z0-9 _()\-\']/g, '') // strip special chars
+      .replace(/\s+/g, ' ');
+
+    // 1. Exact alias match
     for (const [canonical, list] of Object.entries(aliases)) {
       if (list.includes(clean)) return canonical;
     }
+
+    // 2. Fuzzy pattern match
+    for (const [canonical, fn] of Object.entries(fuzzyPatterns)) {
+      if (fn(clean)) return canonical;
+    }
+
+    // 3. Return cleaned header as-is
     return clean;
   });
 }
 
 function parseRows(rawHeaders, rows) {
-  const headers = normaliseHeaders(rawHeaders);
-  if (!headers.includes('email')) return {error:'Could not find an email column. Make sure your file has a column named "Email".'};
+  let headers = normaliseHeaders(rawHeaders);
+
+  // Content-based fallback detection for unmapped columns
+  if (!headers.includes('email') || !headers.includes('first_name') || !headers.includes('company')) {
+    const sample = rows.slice(0, 5);
+    headers = headers.map((h, colIdx) => {
+      if (h === 'email' || h === 'first_name' || h === 'last_name' || h === 'company' || h === 'title') return h;
+      // Look at cell values in this column to infer type
+      const vals = sample.map(r => (r[colIdx]||'').toString().trim()).filter(Boolean);
+      if (!vals.length) return h;
+      // Email column: values contain @
+      if (!headers.includes('email') && vals.some(v => v.includes('@') && v.includes('.'))) return 'email';
+      // Company column: mostly title-case words, no @, reasonable length
+      if (!headers.includes('company') && vals.every(v => v.length > 2 && v.length < 60 && !v.includes('@') && /^[A-Z]/.test(v)) && colIdx > 0) return 'company';
+      return h;
+    });
+  }
+
+  if (!headers.includes('email')) return {error:'Could not find an email column. Check your file has an "Email" or "Work Email" column.'};
   const seen = new Set();
   const result = rows.map((row,i) => {
     const obj = {};
@@ -2062,7 +2196,8 @@ function parseRows(rawHeaders, rows) {
     // Fallback company
     if (!obj.company) obj.company = emailLower.split('@')[1]?.split('.')[0] || 'Unknown';
     const detected = (!obj.vertical || obj.vertical==='Other') ? detectVertical(obj.company) : null;
-    return {id:`c${i}_${emailLower.replace(/[^a-z0-9]/gi,'')}`, ...obj, vertical:detected||obj.vertical||'Other', autoDetected:!!detected};
+    const detectedPersona = detectPersona(obj.title||'');
+    return {id:`c${i}_${emailLower.replace(/[^a-z0-9]/gi,'')}`, ...obj, vertical:detected||obj.vertical||'Other', autoDetected:!!detected, persona:detectedPersona};
   }).filter(Boolean);
   if (result.length===0) return {error:'No valid contacts found. Make sure your file has email addresses.'};
   return {contacts:result};
@@ -2116,27 +2251,60 @@ function handleFile(file) {
     contacts = result.contacts; emails = {}; statuses = {};
     renderContactsPage(); renderComposePage(); renderSendPage();
     updateTopBar(); renderNav();
-    // AI vertical detection for unknowns (runs in background)
+    // Background enrichment: vertical + title detection for unknowns
     const apiKey = cfg('apiKey');
+    const dropSub = document.querySelector('.drop-sub');
+
     if (!apiKey) {
-      const dropSub = document.querySelector('.drop-sub');
-      if (dropSub && contacts.filter(c => c.vertical === 'Other').length > 0)
-        dropSub.textContent = `Add your Anthropic API key in Setup to auto-classify unknown verticals`;
+      const noTitle = contacts.filter(c => !c.title).length;
+      const noVertical = contacts.filter(c => c.vertical === 'Other').length;
+      if ((noTitle > 0 || noVertical > 0) && dropSub)
+        dropSub.textContent = `Add your Anthropic API key in Setup to auto-enrich ${noTitle} missing titles and ${noVertical} unknown verticals`;
     }
+
     if (apiKey) {
-      const unknowns = contacts.filter(c => c.vertical === 'Other' || c.autoDetected === false);
-      if (unknowns.length > 0) {
-        const dropSub = document.querySelector('.drop-sub');
-        if (dropSub) dropSub.textContent = `Identifying ${unknowns.length} companies…`;
-        // Process in small batches to avoid rate limits
-        for (let i = 0; i < unknowns.length; i += 3) {
-          const batch = unknowns.slice(i, i+3);
+      const verticalUnknowns = contacts.filter(c => c.vertical === 'Other' || c.autoDetected === false);
+      const titleUnknowns = contacts.filter(c => !c.title || c.title.trim() === '');
+
+      const totalToEnrich = verticalUnknowns.length + titleUnknowns.length;
+      if (totalToEnrich > 0 && dropSub) dropSub.textContent = `Enriching ${totalToEnrich} contacts…`;
+
+      // Step 1: Vertical detection
+      if (verticalUnknowns.length > 0) {
+        for (let i = 0; i < verticalUnknowns.length; i += 3) {
+          const batch = verticalUnknowns.slice(i, i+3);
           await Promise.all(batch.map(async c => {
             const v = await detectVerticalWithAI(c.company, apiKey);
             c.vertical = v; c.autoDetected = true;
           }));
           renderContactsPage();
+          if (dropSub) dropSub.textContent = `Enriching verticals… ${Math.min(i+3, verticalUnknowns.length)}/${verticalUnknowns.length}`;
         }
+      }
+
+      // Step 2: Title lookup for contacts with no title (max 50 to keep cost low)
+      if (titleUnknowns.length > 0) {
+        const toLookup = titleUnknowns;
+        if (dropSub) dropSub.textContent = `Looking up ${toLookup.length} missing job titles…`;
+        let found = 0;
+        for (let i = 0; i < toLookup.length; i += 3) {
+          const batch = toLookup.slice(i, i+3);
+          await Promise.all(batch.map(async c => {
+            const title = await lookupTitleFromWeb(c, apiKey);
+            if (title) {
+              c.title = title;
+              c.titleLookedUp = true;
+              c.persona = detectPersona(title);
+              found++;
+            }
+          }));
+          renderContactsPage();
+        }
+        if (dropSub) dropSub.textContent = `Found ${found} titles via web search`;
+        setTimeout(() => {
+          if (dropSub) dropSub.textContent = '.xlsx or .csv · up to 1,000 contacts · drag & drop supported';
+        }, 3000);
+      } else {
         if (dropSub) dropSub.textContent = '.xlsx or .csv · up to 1,000 contacts · drag & drop supported';
       }
     }
@@ -2152,6 +2320,9 @@ function confirmClearContacts() {
 
 function clearContacts() {
   contacts=[]; emails={}; statuses={};
+  _contactPersonaFilter = '';
+  const searchEl = document.getElementById('contacts-search');
+  if (searchEl) searchEl.value = '';
   const dropZone = document.getElementById('drop-zone');
   if (dropZone) dropZone.style.display = 'block';
   renderContactsPage(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
@@ -2189,6 +2360,16 @@ function loadFollowUps() {
 }
 
 // ── Contacts page ──────────────────────────────────────────────────────────
+function setPersonaFilter(val) {
+  _contactPersonaFilter = val;
+  // Update active button styles
+  ['all','sales','marketing','other'].forEach(f => {
+    const btn = document.getElementById('pf-' + (f === '' ? 'all' : f));
+    if (btn) btn.style.opacity = ((val === '' && f === 'all') || val === f) ? '1' : '0.4';
+  });
+  renderContactsPage();
+}
+
 function renderContactsPage() {
   const fud = followUpDue();
   const banner = document.getElementById('followup-banner');
@@ -2205,25 +2386,51 @@ function renderContactsPage() {
     wrap.style.display='none';
     const clearBtn = document.getElementById('clear-contacts-btn');
     if (clearBtn) clearBtn.style.display='none';
+    const filtersEl = document.getElementById('contacts-filters');
+    if (filtersEl) filtersEl.style.display='none';
     return;
   }
   wrap.style.display = 'block';
+
+  // Show filter bar
+  const filtersEl = document.getElementById('contacts-filters');
+  if (filtersEl) filtersEl.style.display = 'flex';
+
   const ccEl = document.getElementById('contact-count'); if (ccEl) ccEl.textContent = contacts.length;
   const clearBtn = document.getElementById('clear-contacts-btn');
-  if (clearBtn) clearBtn.style.display = contacts.length > 0 ? 'block' : 'none';
-  // Hide drop zone when contacts are loaded, show when empty
+  if (clearBtn) clearBtn.style.display = 'block';
   const dropZone = document.getElementById('drop-zone');
-  if (dropZone) dropZone.style.display = contacts.length > 0 ? 'none' : 'block';
+  if (dropZone) dropZone.style.display = 'none';
+
+  // Apply search + persona filter
+  const searchVal = (document.getElementById('contacts-search')?.value||'').toLowerCase().trim();
+  const filtered = contacts.filter(c => {
+    if (_contactPersonaFilter && (c.persona || detectPersona(c.title||'')) !== _contactPersonaFilter) return false;
+    if (searchVal) {
+      const haystack = [c.first_name, c.last_name, c.company, c.email, c.title].join(' ').toLowerCase();
+      if (!haystack.includes(searchVal)) return false;
+    }
+    return true;
+  });
+
+  // Update filter count
+  const filterCount = document.getElementById('contacts-filter-count');
+  if (filterCount) {
+    filterCount.textContent = filtered.length < contacts.length
+      ? `${filtered.length} of ${contacts.length} shown`
+      : `${contacts.length} contacts`;
+  }
 
   const tbody = document.getElementById('contacts-tbody');
-  tbody.innerHTML = contacts.slice(0,50).map(c => {
+  if (!tbody) return;
+  tbody.innerHTML = filtered.map(c => {
     const hr = history[c.email];
     const lastSeq = hr?.sequences?.[hr.sequences.length-1];
     const histHtml = lastSeq
       ? `<span style="font-size:11px;color:#0F9ED5;display:inline-flex;align-items:center;gap:5px">${stagePill(lastSeq.stage)} <span style="color:rgba(255,255,255,0.3)">${fmtDate(lastSeq.sentAt)}</span></span>`
       : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">New</span>`;
     return `<tr>
-      <td style="font-weight:600;font-size:13px">${esc(c.first_name)} ${esc(c.last_name)}<div style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:400">${esc(c.title)}</div></td>
+      <td style="font-weight:600;font-size:13px">${esc(c.first_name)} ${esc(c.last_name)}<div style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:400">${esc(c.title)}${c.titleLookedUp ? '<span style="font-size:9px;color:#0F9ED5;margin-left:4px">web</span>' : ''}</div></td>
       <td style="color:rgba(255,255,255,0.5)">${esc(c.company)}</td>
       <td style="color:#E97132;font-size:11px">${esc(c.email)}</td>
       <td>${verticalPill(c.vertical)}${c.autoDetected?'<span style="font-size:9px;color:rgba(255,255,255,0.3);margin-left:5px">auto</span>':''}</td>
@@ -2233,7 +2440,7 @@ function renderContactsPage() {
   }).join('');
 
   const more = document.getElementById('contacts-more');
-  if (more) { if (contacts.length > 50) { more.style.display='block'; more.textContent=`+${contacts.length-50} more contacts not shown`; } else more.style.display='none'; }
+  if (more) more.style.display = 'none'; // all contacts shown via filter
 }
 
 // ── Generate ────────────────────────────────────────────────────────────────
