@@ -2716,6 +2716,12 @@ function handleFile(file) {
     const result = isXlsx ? parseXLSX(new Uint8Array(ev.target.result)) : parseCSV(ev.target.result);
     if (result.error) { errEl.textContent = result.error; errEl.style.display='flex'; return; }
     contacts = result.contacts; emails = {}; statuses = {};
+
+    // ── A/B variant assignment — alternating 50/50, locked per contact ───
+    contacts.forEach((c, i) => {
+      if (!c.variant) c.variant = i % 2 === 0 ? 'A' : 'B';
+    });
+
     renderContactsPage(); renderComposePage(); renderSendPage();
     updateTopBar(); renderNav();
     // Background enrichment: vertical + title detection for unknowns
@@ -2880,12 +2886,15 @@ function renderContactsPage() {
     return true;
   });
 
-  // Update filter count
+  // Update filter count with A/B split
   const filterCount = document.getElementById('contacts-filter-count');
   if (filterCount) {
+    const aCount = contacts.filter(c => c.variant === 'A').length;
+    const bCount = contacts.filter(c => c.variant === 'B').length;
+    const splitInfo = aCount > 0 || bCount > 0 ? ` | A: ${aCount}  B: ${bCount}` : '';
     filterCount.textContent = filtered.length < contacts.length
-      ? `${filtered.length} of ${contacts.length} shown`
-      : `${contacts.length} contacts`;
+      ? `${filtered.length} of ${contacts.length} shown${splitInfo}`
+      : `${contacts.length} contacts${splitInfo}`;
   }
 
   const tbody = document.getElementById('contacts-tbody');
@@ -2965,11 +2974,11 @@ Are you free for 15 minutes this week to explore how this could work for [Compan
 
 Hi [First Name],
 
-We work with BPO companies as an extension of their sales team to build pipeline into strategic accounts where your typical BD motion doesn't get traction. The focus is engaging senior stakeholders early, well before the formal process starts, so you're shaping the opportunity instead of responding to it.
+We work with BPO and IT services companies as an extension of their sales team to build pipeline into strategic accounts where typical outreach doesn't land and deals are won long before a formal process begins.
 
-We worked with Xerox to generate $1.4B+ in pipeline and $105M in new logo revenue. We also helped Capita build $234.5M in pipeline across 8 business divisions.
+We work with companies including Capita, Mastek, and Xerox on this. Mastek saw $800M+ in pipeline developed through our work together. Xerox generated $1.4B+ in pipeline and $105M in new logo revenue.
 
-Are you open to 15 minutes this week to talk through how this could work for [Company]?`,
+Are you open to 15 minutes Thursday or Friday to talk through how this could work for [Company]?`,
       'marketing': `Subject: Turning ABM investment into pipeline
 
 Hi [First Name],
@@ -3093,8 +3102,77 @@ Are you free for 15 minutes this week?`,
     },
   };
 
-  // Get hardcoded example for this vertical/persona, fallback to user-approved, fallback to none
-  const hardcodedEx = HARDCODED_EXAMPLES[vertical]?.[persona] || HARDCODED_EXAMPLES[vertical]?.['sales'] || '';
+  // Get hardcoded example — Variant A gets proof-led style, Variant B gets Clarify-heavy style
+  const variant = contact.variant || 'A';
+  const VARIANT_B_EXAMPLES = {
+    'BPO': `Subject: How Clarify supports BPO sales teams
+
+Hi [First Name],
+
+Clarify helps enterprise sales and marketing teams build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult. We work as an extension of your team, combining account research, targeted outreach, and sales development to help you engage senior stakeholders earlier in the buying cycle.
+
+We have supported a number of BPO and IT services organisations on this, including Capita, Mastek, and Xerox.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    'Cybersecurity': `Subject: How Clarify supports cybersecurity sales teams
+
+Hi [First Name],
+
+Clarify helps enterprise security companies build predictable pipeline into strategic accounts where the buying decision spans CISO, CIO, Legal, and Finance. We work as an extension of your sales team, combining account research, targeted outreach, and coordinated coverage across the full buying committee.
+
+We have worked with organisations including Okta, Wiz, and Ping Identity on this.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    'Fintech': `Subject: How Clarify supports fintech sales teams
+
+Hi [First Name],
+
+Clarify helps fintech and financial services companies build predictable pipeline into strategic accounts where deal cycles are long and procurement is compliance-heavy. We work as an extension of your sales and marketing team, combining account research, ABM, and sales development to help you engage business buyers earlier in the cycle.
+
+We have worked with a leading global payment platform to generate $51M in pipeline at 91:1 ROI.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    'Cloud & Infrastructure': `Subject: How Clarify supports infrastructure sales teams
+
+Hi [First Name],
+
+Clarify helps cloud and infrastructure companies build predictable pipeline into strategic accounts, particularly where vendor consolidation decisions are made well before a formal process begins. We work as an extension of your sales team, combining account research, targeted outreach, and coordinated coverage across IT, Operations, and Finance.
+
+We have worked with organisations including Cisco and VMware on this.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    'Enterprise Software': `Subject: How Clarify supports enterprise software sales teams
+
+Hi [First Name],
+
+Clarify helps enterprise software companies build predictable pipeline into strategic accounts where typical outbound doesn't convert and the buying decision involves multiple stakeholders. We work as an extension of your sales and marketing team, combining account research, ABM, and sales development to engage the right people earlier in the cycle.
+
+We have worked with Adobe and other enterprise software organisations on exactly this.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    'AI & Data': `Subject: How Clarify supports AI and data sales teams
+
+Hi [First Name],
+
+Clarify helps AI and data companies build predictable pipeline into enterprise accounts where the buying decision involves Finance and Operations as much as IT. We work as an extension of your sales and marketing team, combining account research, targeted outreach, and coordinated coverage across the full buying committee.
+
+We have worked with organisations including SAP, Unit4, and Sage on this.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    'Cloud Communications': `Subject: How Clarify supports cloud communications sales teams
+
+Hi [First Name],
+
+Clarify helps cloud communications companies build predictable pipeline into strategic accounts, particularly where consolidation decisions are made well before a formal RFP begins. We work as an extension of your sales team, combining account research, targeted outreach, and coordinated coverage across IT, Operations, and business units.
+
+We worked with Vodafone to generate $29M in pipeline over 15 months with a 23% increase in average deal size.
+
+Are you open to 15 minutes Thursday or Friday?`,
+  };
+
+  const hardcodedEx = variant === 'B'
+    ? (VARIANT_B_EXAMPLES[vertical] || VARIANT_B_EXAMPLES['BPO'])
+    : (HARDCODED_EXAMPLES[vertical]?.[persona] || HARDCODED_EXAMPLES[vertical]?.['sales'] || '');
 
   const examplesBlock = ''; // reserved for future use
 
@@ -3188,6 +3266,10 @@ STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following
 
 WHAT CLARIFY IS: Clarify helps enterprise sales and marketing teams build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult. We work as an extension of sales and marketing teams — running targeted outreach, ABM campaigns, and sales development into priority accounts to help teams engage the right people earlier and convert that into qualified pipeline. We are a service, not a technology product.
 
+EMAIL VARIANT: ${contact.variant === 'B'
+  ? 'VARIANT B — Clarify-heavy opener. Start by explaining what Clarify does clearly (2 sentences), then reference 1-2 companies we have worked with in this vertical. Prioritise clarity about who Clarify is over leading with proof points.'
+  : 'VARIANT A — Proof-led opener. Lead with what Clarify does in one sentence, then go straight to the strongest proof point for this vertical. Proof first, context second.'}
+
 VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
 ${VERIFIED_FACTS}
 
@@ -3214,7 +3296,7 @@ Thanks,
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body under 120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across", "just wanted to". ONE proof point maximum. If VERIFIED_FACTS has a named stat (Capita, Xerox, Mastek, Vodafone, fintech client), use it. If only an anonymous stat exists, say "one of our [vertical] clients" — never invent a company name to attach it to. Do not list multiple company names without a stat — one name with a number beats a list of names with nothing. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`;
+STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across", "just wanted to". ONE proof point maximum. If VERIFIED_FACTS has a named stat (Capita, Xerox, Mastek, Vodafone, fintech client), use it. If only an anonymous stat exists, say "one of our [vertical] clients" — never invent a company name to attach it to. Do not list multiple company names without a stat — one name with a number beats a list of names with nothing. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`;
 
   try {
     const apiKey = cfg('apiKey');
@@ -3383,7 +3465,7 @@ function renderComposePage() {
           <div class="contact-avatar">${initials}</div>
           <div class="contact-info">
             <div class="contact-name">${esc(c.first_name)} ${esc(c.last_name)} <span class="contact-company">at ${esc(c.company)}</span></div>
-            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)} ${personaPill(c.persona || detectPersona(c.title||''))} ${c.isNurture ? '<span class="pill" style="background:rgba(15,158,213,0.12);color:#0F9ED5;border:1px solid rgba(15,158,213,0.25)">🌱 Nurture</span>' : ''}</div>
+            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)} ${personaPill(c.persona || detectPersona(c.title||''))} ${c.variant ? `<span class="pill" style="background:${c.variant==='A'?'rgba(233,113,50,0.12)':'rgba(15,158,213,0.12)'};color:${c.variant==='A'?'#E97132':'#0F9ED5'};border:1px solid ${c.variant==='A'?'rgba(233,113,50,0.3)':'rgba(15,158,213,0.3)'}">Test ${c.variant}</span>` : ''} ${c.isNurture ? '<span class="pill" style="background:rgba(15,158,213,0.12);color:#0F9ED5;border:1px solid rgba(15,158,213,0.25)">🌱 Nurture</span>' : ''}</div>
           </div>
         </div>
         <div class="compose-actions">
