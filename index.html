@@ -298,16 +298,7 @@ td{padding:13px 18px}
               </label>
             </div>
           </div>
-          <div class="card" style="margin-bottom:16px;padding:14px 16px" id="feedback-stats-card">
-            <div style="font-size:13px;font-weight:600;margin-bottom:8px">✍️ Email Feedback</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px">Thumbs up/down on generated emails. Approved emails are used as style examples for future generation in that vertical.</div>
-            <p id="feedback-stats" style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px">No feedback yet — rate emails in the Generate tab.</p>
-            <div id="approved-examples-list" style="font-size:11px;color:rgba(255,255,255,0.4)"></div>
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-            <button id="export-feedback-btn" class="btn btn-primary btn-sm" style="font-size:11px" onclick="exportFeedback()">📋 Export feedback to Claude</button>
-            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="clearFeedback()">Clear all feedback</button>
-          </div>
-          </div>
+
           <button class="btn btn-primary" onclick="goTab(1)">Continue to Contacts →</button>
         </div>
       </div>
@@ -506,8 +497,7 @@ let history = loadHistory();
 let modalContact = null;
 let generating = false;
 let _autoRunning = false; // guard for runAutoSequence
-let emailFeedback = {}; // contactId -> {rating: 'up'|'down', email, vertical, persona, stage, ts}
-let approvedExamples = {}; // vertical -> [{subject, body, persona, stage}]
+
 let _contactPersonaFilter = ''; // filter: empty=all, sales, marketing, other
 
 const TABS = [
@@ -1960,31 +1950,31 @@ function personaPill(persona) {
 const ALL_VERTICAL_FACTS = {
   'Cybersecurity': [
     'Clarify has worked with cybersecurity organisations including Okta, Wiz, SentinelOne, Palo Alto Networks, Cyera, Mimecast, Entrust, ExtraHop, Ping Identity, SureCloud, Symantec, Veridium, and One Identity.',
-    'Clarify Cybersecurity approach: multi-threaded account-based development reaching CISO, CIO, Legal, and Finance — not just the security buyer. Insight-led outreach leading with business risk, not product specs.',
+    'Ping Identity: $14.7M pipeline generated. One other cybersecurity client (cloud-native security): $27M pipeline and $3.5M revenue in approximately 8 months.',
   ],
   'BPO': [
     'Clarify has worked with BPO organisations including Capita, Mastek, Xerox, DXC Technology, Genpact, Accenture, IBM, Deloitte, EXL Service, FirstSource, Hexaware, and Tata Consultancy Services.',
-    'Capita: $234.5M pipeline across 8 business divisions. Xerox: $1.4B+ pipeline and $105M new logo revenue. Mastek: $800M+ pipeline and $150M+ revenue.',
+    'Capita: $234.5M pipeline across 8 business divisions. Xerox: $1.4B+ pipeline influenced and $105M in new logo revenue. Mastek: $800M+ pipeline and $150M+ revenue attributed.',
   ],
   'Fintech': [
     'Clarify has worked with fintech and financial services organisations including PayPal, Collenda, and Digital Owl.',
-    'Fintech client (leading global payment platform): $51M pipeline, 84% conversion, 91:1 pipeline ROI. BFSI (2025): $80.7M pipeline across 169 opportunities including Goldman Sachs, TD Bank, and Fidelity.',
+    'Fintech client (unnamed global payment platform): $51M pipeline, 84% conversion to pipeline, 91:1 pipeline ROI. BFSI programme (2025): $80.7M pipeline across 169 opportunities.',
   ],
   'AI & Data': [
     'Clarify has worked with AI and data organisations including SAP, Sage, Beamery, Cohesity, Interactions, Moogsoft, Orgvue, PolyAI, Seldon, Pachyderm, and Unit4.',
-    '$18M ACV in first 12 months for one AI and data client. 230% performance improvement vs prior year. 78% SAL to opportunity conversion. Access into over 20% of G50 accounts.',
+    'Clarify works as an extension of AI and data sales and marketing teams to build pipeline into enterprise accounts — reaching economic buyers in Finance and Operations, not just technical stakeholders.',
   ],
   'Cloud & Infrastructure': [
     'Clarify has worked with cloud and infrastructure organisations including Cisco, VMware, Computacenter, Integra, Sensedia, Software AG, Tech Data, and Veritas.',
-    'Clarify approach: multi-threaded outreach covering IT, Operations, and Finance simultaneously — positioning clients ahead of vendor consolidation decisions before formal reviews begin.',
+    'Clarify works as an extension of infrastructure sales teams to build pipeline into enterprise accounts — positioning clients ahead of vendor consolidation decisions before formal reviews begin.',
   ],
   'Enterprise Software': [
     'Clarify has worked with enterprise software organisations including Adobe, Samsara, CA Technologies, Micro Focus, OutSystems, Sprout Social, Kodak Alaris, and Tryzens.',
-    '$18M ACV in first 12 months for one enterprise software client. 230% performance improvement vs prior year. 78% SAL to opportunity conversion.',
+    'Clarify works as an extension of enterprise software sales and marketing teams to build pipeline into strategic accounts — reaching economic buyers and decision makers that standard outreach does not convert.',
   ],
   'Automation & DevTools': [
     'Clarify has worked with automation and developer tools organisations including OutSystems.',
-    'Clarify approach: outbound designed around the full buying group — IT, Operations, Finance, and business sponsor — converting business case conversations into pipeline before procurement frames it as build-versus-buy.',
+    'Clarify works as an extension of sales and marketing teams to build pipeline into enterprise accounts — reaching Operations and Finance alongside IT so the full buying group is engaged before formal procurement begins.',
   ],
   'Cloud Communications': [
     'Clarify has worked with cloud communications organisations including Vodafone, Infobip, and Smart Communications.',
@@ -1992,7 +1982,7 @@ const ALL_VERTICAL_FACTS = {
   ],
   'Other': [
     'Clarify has worked with organisations across cybersecurity, BPO, fintech, AI and data, cloud infrastructure, enterprise software, and cloud communications.',
-    'Clarify approach: multi-threaded account-based development building pipeline into hard-to-reach strategic accounts — pre-RFP access, sustained senior stakeholder engagement, buying group coverage.',
+    'Clarify works as an extension of enterprise sales and marketing teams to build predictable pipeline into strategic accounts — particularly where deal cycles are long and access to decision makers is difficult.',
   ],
 };
 
@@ -2290,8 +2280,7 @@ function showAuthScreen() {
 
 function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
-  emailFeedback = loadFeedback();
-  approvedExamples = loadApprovedExamples();
+
   document.getElementById('app').style.display = 'flex';
   document.getElementById('user-name-display').textContent = currentUser?.name || '';
   renderNav(); updateTopBar(); updateReadyStatus();
@@ -2323,154 +2312,6 @@ function logout() {
 // ── Storage — now backend-powered ─────────────────────────────────────────
 function loadHistory() { return {}; } // unused — history loaded from backend on login
 
-// ── Email feedback (thumbs up/down) ──────────────────────────────────────
-function loadFeedback() {
-  try { return JSON.parse(localStorage.getItem('clarify_feedback') || '{}'); } catch { return {}; }
-}
-function loadApprovedExamples() {
-  try { return JSON.parse(localStorage.getItem('clarify_approved_examples') || '{}'); } catch { return {}; }
-}
-function clearFeedback() {
-  if (!confirm('Clear all feedback and approved examples?')) return;
-  emailFeedback = {};
-  approvedExamples = {};
-  saveFeedback();
-  renderFeedbackStats();
-  renderComposePage();
-}
-
-function exportFeedback() {
-  const ups = Object.values(emailFeedback).filter(f => f.rating === 'up');
-  const downs = Object.values(emailFeedback).filter(f => f.rating === 'down');
-  if (ups.length === 0 && downs.length === 0) {
-    alert('No feedback yet — rate some emails first.');
-    return;
-  }
-  const output = {
-    exported: new Date().toISOString(),
-    approved: ups.map(f => ({
-      vertical: f.vertical,
-      persona: f.persona,
-      stage: f.stage,
-      company: f.company,
-      name: f.name,
-      subject: f.subject,
-      body: f.body,
-    })),
-    rejected: downs.map(f => ({
-      vertical: f.vertical,
-      persona: f.persona,
-      stage: f.stage,
-      company: f.company,
-      subject: f.subject,
-    })),
-    summary: {
-      totalApproved: ups.length,
-      totalRejected: downs.length,
-      approvedByVertical: ups.reduce((acc, f) => { acc[f.vertical] = (acc[f.vertical]||0)+1; return acc; }, {}),
-    }
-  };
-  const text = JSON.stringify(output, null, 2);
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('export-feedback-btn');
-    if (btn) { btn.textContent = '✅ Copied to clipboard!'; setTimeout(() => btn.textContent = '📋 Export feedback to Claude', 2000); }
-  }).catch(() => {
-    // Fallback: show in a textarea
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80vw;height:60vh;z-index:9999;padding:16px;font-size:11px;background:#0E2841;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:8px';
-    document.body.appendChild(ta);
-    ta.select();
-    const close = document.createElement('button');
-    close.textContent = '✕ Close';
-    close.style.cssText = 'position:fixed;top:calc(50% - 30vh - 30px);left:50%;transform:translateX(-50%);z-index:10000;padding:8px 16px;background:#E97132;color:#fff;border:none;border-radius:6px;cursor:pointer';
-    close.onclick = () => { document.body.removeChild(ta); document.body.removeChild(close); };
-    document.body.appendChild(close);
-  });
-}
-
-function renderFeedbackStats() {
-  const statsEl = document.getElementById('feedback-stats');
-  const listEl = document.getElementById('approved-examples-list');
-  if (!statsEl) return;
-  const total = Object.keys(emailFeedback).length;
-  const ups = Object.values(emailFeedback).filter(f => f.rating === 'up').length;
-  const downs = total - ups;
-  statsEl.textContent = total > 0 ? `${ups} 👍  ${downs} 👎  across ${total} emails` : 'No feedback yet — rate emails in the Generate tab.';
-  if (listEl) {
-    const verticals = Object.keys(approvedExamples).filter(v => approvedExamples[v].length > 0);
-    listEl.innerHTML = verticals.length > 0
-      ? '<div style="margin-top:6px;font-weight:600;margin-bottom:4px">Approved examples by vertical:</div>' +
-        verticals.map(v => `<div style="margin:2px 0">${v}: ${approvedExamples[v].length} example${approvedExamples[v].length > 1 ? 's' : ''} saved</div>`).join('')
-      : '';
-  }
-}
-
-function saveFeedback() {
-  try {
-    localStorage.setItem('clarify_feedback', JSON.stringify(emailFeedback));
-    localStorage.setItem('clarify_approved_examples', JSON.stringify(approvedExamples));
-  } catch(e) { console.warn('saveFeedback failed', e); }
-}
-function rateEmail(contactId, rating) {
-  const c = contacts.find(x => x.id === contactId);
-  const em = emails[contactId];
-  if (!c || !em) return;
-
-  // Toggle off if same rating clicked again
-  if (emailFeedback[contactId]?.rating === rating) {
-    delete emailFeedback[contactId];
-    // Remove from approved examples if un-thumbing
-    if (rating === 'up') {
-      const v = c.vertical || 'Other';
-      approvedExamples[v] = (approvedExamples[v] || []).filter(e => e.contactId !== contactId);
-    }
-    saveFeedback();
-    renderComposePage();
-    return;
-  }
-
-  emailFeedback[contactId] = {
-    rating,
-    contactId,
-    vertical: c.vertical || 'Other',
-    persona: c.persona || 'other',
-    stage: emails[contactId]?.stage || 1,
-    subject: em.subject,
-    body: em.body,
-    company: c.company,
-    name: `${c.first_name} ${c.last_name}`,
-    ts: Date.now(),
-  };
-
-  // Store approved examples for injection into future prompts
-  if (rating === 'up') {
-    const v = c.vertical || 'Other';
-    if (!approvedExamples[v]) approvedExamples[v] = [];
-    // Keep max 3 approved per vertical — replace oldest if full
-    approvedExamples[v] = approvedExamples[v].filter(e => e.contactId !== contactId);
-    approvedExamples[v].unshift({contactId, subject: em.subject, body: em.body, persona: c.persona, stage: em.stage});
-    if (approvedExamples[v].length > 3) approvedExamples[v] = approvedExamples[v].slice(0, 3);
-  } else {
-    // Remove from approved if downvoted
-    const v = c.vertical || 'Other';
-    approvedExamples[v] = (approvedExamples[v] || []).filter(e => e.contactId !== contactId);
-  }
-
-  saveFeedback();
-  renderComposePage();
-  updateFeedbackStats();
-  renderFeedbackStats();
-}
-
-function updateFeedbackStats() {
-  const total = Object.keys(emailFeedback).length;
-  const ups = Object.values(emailFeedback).filter(f => f.rating === 'up').length;
-  const downs = total - ups;
-  // Update any stats display
-  const statsEl = document.getElementById('feedback-stats');
-  if (statsEl) statsEl.textContent = `${ups} 👍  ${downs} 👎  across ${total} emails`;
-}
 
 let _saveHistoryTimer = null;
 async function saveHistory() {
@@ -3098,12 +2939,98 @@ async function generateOne(contact, skipRender=false) {
 
   const VERIFIED_FACTS = (ALL_VERTICAL_FACTS[vertical] || ALL_VERTICAL_FACTS['Other']).join('\n');
 
-  // Inject approved examples for this vertical — if user has thumbed-up emails, use them as style refs
-  const verticalExamples = (approvedExamples[vertical] || []).filter(e => e.stage === (isFollowUp ? (contact._inCadence ? contact._cadenceStage + 1 : (histRec?.sequences?.length||0)+1) : 1)).slice(0, 2);
-  const examplesBlock = verticalExamples.length > 0
-    ? `\n\nAPPROVED EXAMPLES — emails you rated highly for this vertical. Match this style closely:\n` +
-      verticalExamples.map((e, i) => `Example ${i+1}:\nSubject: ${e.subject}\n${e.body}`).join('\n\n')
-    : '';
+  // ── Hardcoded approved examples (from real approved emails) ─────────────
+  const HARDCODED_EXAMPLES = {
+    'Cybersecurity': {
+      'sales': `Subject: Building pipeline into security accounts
+
+Hi [First Name],
+
+We work with cybersecurity companies as an extension of their sales team to build pipeline into enterprise accounts where the buying process goes beyond the CISO to CIO, Legal, and Finance.
+
+We worked with Ping Identity to generate $14.7M in pipeline by running outreach that reached the full buying committee, not just the security buyer.
+
+Are you open to 15 minutes Thursday or Friday to talk through how this could work for your team?`,
+      'marketing': `Subject: Turning security campaigns into pipeline
+
+Hi [First Name],
+
+We work with cybersecurity companies as an extension of their marketing team to turn campaign engagement into qualified pipeline with the decision makers who actually control budget.
+
+We helped one of our cybersecurity clients generate $27M in pipeline in around 8 months by reaching CISOs, CIOs, Legal, and Finance simultaneously rather than relying on inbound alone.
+
+Are you free for 15 minutes Thursday or Friday?`,
+    },
+    'BPO': {
+      'marketing': `Subject: Turning ABM investment into pipeline
+
+Hi [First Name],
+
+We work with BPO organisations as an extension of their marketing team to convert ABM campaigns into qualified pipeline with the buyers who actually approve deals.
+
+We worked with Capita to build $234.5M in pipeline across 8 business divisions by embedding outreach directly into their ABM motion.
+
+Can we talk for 15 minutes Thursday or Friday?`,
+      'sales': `Subject: Building pipeline into strategic accounts
+
+Hi [First Name],
+
+We work with BPO companies as an extension of their sales team to build pipeline into strategic accounts where your typical BD motion does not get traction. The focus is engaging senior stakeholders early, well before the formal process starts, so you are shaping the opportunity instead of responding to it.
+
+We worked with Xerox to generate $1.4B+ pipeline and $105M in new logo revenue.
+
+Do you have 15 minutes Thursday or Friday to talk through how we could apply this to your target accounts?`,
+    },
+    'Fintech': {
+      'sales': `Subject: Building pipeline into enterprise accounts
+
+Hi [First Name],
+
+We work with fintech companies as an extension of their sales team to build pipeline into strategic accounts where typical outreach does not get traction.
+
+We worked with a leading global payment platform to generate $51M in pipeline at 84% conversion and 91:1 ROI.
+
+Are you open to 15 minutes Thursday or Friday to explore how this could work for your team?`,
+    },
+    'Cloud & Infrastructure': {
+      'sales': `Subject: Building pipeline into strategic accounts
+
+Hi [First Name],
+
+We work with cloud and infrastructure companies as an extension of their sales team to build pipeline into accounts where deal cycles are long and access to decision makers is difficult.
+
+We have done this with teams at Cisco and VMware by running outreach that covers IT, Operations, and Finance simultaneously, getting clients into conversations ahead of vendor consolidation decisions.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    },
+    'Enterprise Software': {
+      'marketing': `Subject: Turning ABM investment into pipeline
+
+Hi [First Name],
+
+We work with enterprise software companies as an extension of their marketing and sales teams to build pipeline into strategic accounts where your ABM motion has created awareness but sales has not activated it yet.
+
+We have worked with Adobe and other enterprise software organisations on exactly this, running the outbound motion that sits between campaigns and closed deals.
+
+Are you free for 15 minutes Thursday or Friday?`,
+    },
+    'AI & Data': {
+      'marketing': `Subject: Building pipeline into strategic accounts
+
+Hi [First Name],
+
+We work with AI and data companies as an extension of their sales and marketing teams to build predictable pipeline into the accounts that typical outreach does not reach.
+
+We have worked with organisations including SAP and Sage to build sustained coverage across target accounts where decision makers are hard to access.
+
+Are you open to 15 minutes Thursday or Friday?`,
+    },
+  };
+
+  // Get hardcoded example for this vertical/persona, fallback to user-approved, fallback to none
+  const hardcodedEx = HARDCODED_EXAMPLES[vertical]?.[persona] || HARDCODED_EXAMPLES[vertical]?.['sales'] || '';
+
+  const examplesBlock = ''; // reserved for future use
 
   // Known client flag — if contact's company is a Clarify client, note it for the prompt
   const knownClient = typeof isKnownClient === 'function' && isKnownClient(contact.company || '');
@@ -3154,7 +3081,7 @@ Thanks,
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body under 90 words. No em dashes. No bullet points. Never say: circling back, following up, reaching out again, as I mentioned, just wanted to. One client reference maximum. No fabricated stats.`
+STRICT RULES: Body under 90 words. No em dashes. No bullet points. Never say: circling back, following up, reaching out again, as I mentioned, just wanted to. One client reference maximum. No fabricated stats. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`
     : isFollowUp
     ? `You are writing follow-up cold email (touch ${currentStage} of 3) on behalf of ${cfg('fromName')}, ${cfg('title')}.
 Today: ${dateContext}.
@@ -3169,7 +3096,10 @@ Contact: ${contact.first_name||'there'} ${contact.last_name||''} at ${contact.co
 Persona: ${personaContext}
 Previous email subject: "${prevSubject}"
 New angle to lead with: ${followUpAngle}
-${clientNote}${examplesBlock}
+${clientNote}${examplesBlock}${hardcodedEx ? `
+
+APPROVED STYLE EXAMPLE — an email rated highly for this vertical and persona. Match the structure, length, and tone. Do not copy word for word — adapt to this specific contact:
+${hardcodedEx}` : ''}
 
 REMINDER: Clarify is a specialist sales and marketing service that works as an extension of enterprise technology sales and marketing teams to build pipeline into strategic accounts. Not a tech product — a service.
 
@@ -3187,7 +3117,7 @@ Thanks,
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following up" or "circling back". One client reference maximum. No fabricated stats.`
+STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following up" or "circling back". One client reference maximum. No fabricated stats. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`
     : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
 
 WHAT CLARIFY IS: Clarify helps enterprise sales and marketing teams build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult. We work as an extension of sales and marketing teams — running targeted outreach, ABM campaigns, and sales development into priority accounts to help teams engage the right people earlier and convert that into qualified pipeline. We are a service, not a technology product.
@@ -3218,7 +3148,7 @@ Thanks,
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body under 120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across", "just wanted to". ONE client maximum. No fabricated stats. The reader must understand what Clarify sells within the first sentence.`;
+STRICT RULES: Body under 120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across", "just wanted to". ONE proof point maximum. If VERIFIED_FACTS has a named stat (Capita, Xerox, Mastek, Vodafone, fintech client), use it. If only an anonymous stat exists, say "one of our [vertical] clients" — never invent a company name to attach it to. Do not list multiple company names without a stat — one name with a number beats a list of names with nothing. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`;
 
   try {
     const apiKey = cfg('apiKey');
@@ -3231,9 +3161,34 @@ STRICT RULES: Body under 120 words. No em dashes. No bullet points. No "Hope you
     if (!res.ok) {
       const errBody = await res.json().catch(()=>({}));
       const msg = errBody?.error?.message || 'HTTP ' + res.status;
-      console.error('Anthropic API error:', res.status, msg);
-      if (!skipRender) alert('Generation failed: ' + msg);
-      throw new Error(msg);
+      // Rate limited — wait 12s and retry once
+      if (res.status === 429) {
+        console.warn('Rate limited, retrying in 12s...');
+        await new Promise(r => setTimeout(r, 12000));
+        const retry = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,messages:[{role:'user',content:prompt}]}),
+        }).catch(()=>null);
+        if (retry && retry.ok) {
+          const rd = await retry.json();
+          const rt = (rd.content?.[0]?.text||'');
+          const rl = rt.split(/\r?\n/);
+          let rs='', rb=0;
+          for (let i=0;i<rl.length;i++){if(/^subject:/i.test(rl[i].trim())){rs=rl[i].replace(/^subject:\s*/i,'').trim();rb=i+1;while(rb<rl.length&&rl[rb].trim()==='')rb++;break;}}
+          if(!rs&&rl.length>0){rs=rl[0].replace(/^subject:\s*/i,'').trim();rb=1;}
+          let rb2=rl.slice(rb).join('\n').trim().replace(/ — /g,', ').replace(/—/g,' ').replace(/\*\*([^*]+)\*\*/g,'$1');
+          emails[contact.id]={subject:rs,body:rb2,stage:currentStage};
+          statuses[contact.id]='ready';
+          if(!skipRender){renderComposePage();renderSendPage();updateTopBar();renderNav();}
+          return;
+        }
+      }
+      console.error('API error:', res.status, msg);
+      statuses[contact.id] = 'error';
+      emails[contact.id] = {subject: 'Error: ' + msg, body: '', stage: currentStage};
+      if (!skipRender) { renderComposePage(); updateTopBar(); }
+      return; // don't throw — let other contacts in the batch continue
     }
     const data = await res.json();
     const text = data.content?.[0]?.text||'';
@@ -3310,7 +3265,11 @@ async function generateAll() {
 
     for (let i = 0; i < queue.length; i += BATCH) {
       const batch = queue.slice(i, i + BATCH);
-      await Promise.all(batch.map(c => generateOne(c, true)));
+      // Use allSettled-style wrapper so one failure doesn't kill the whole batch
+      await Promise.all(batch.map(c => generateOne(c, true).catch(err => {
+        console.warn('generateOne failed for', c.email, err);
+        statuses[c.id] = 'error';
+      })));
       done += batch.length;
       renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
       if (genBtn) genBtn.textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
@@ -3363,7 +3322,6 @@ function renderComposePage() {
         </div>
         <div class="compose-actions">
           ${statusPill(s)}
-          ${em ? `<button onclick="rateEmail('${c.id}','up')" title="Good email" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;opacity:${emailFeedback[c.id]?.rating==='up'?'1':'0.3'};transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${emailFeedback[c.id]?.rating==='up'?'1':'0.3'}'">👍</button><button onclick="rateEmail('${c.id}','down')" title="Needs work" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;opacity:${emailFeedback[c.id]?.rating==='down'?'1':'0.3'};transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${emailFeedback[c.id]?.rating==='down'?'1':'0.3'}'">👎</button>` : ''}
           ${actionBtns}
         </div>
       </div>
