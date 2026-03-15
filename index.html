@@ -298,6 +298,13 @@ td{padding:13px 18px}
               </label>
             </div>
           </div>
+          <div class="card" style="margin-bottom:16px;padding:14px 16px" id="feedback-stats-card">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px">✍️ Email Feedback</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px">Thumbs up/down on generated emails. Approved emails are used as style examples for future generation in that vertical.</div>
+            <p id="feedback-stats" style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px">No feedback yet — rate emails in the Generate tab.</p>
+            <div id="approved-examples-list" style="font-size:11px;color:rgba(255,255,255,0.4)"></div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:10px;font-size:11px" onclick="clearFeedback()">Clear all feedback</button>
+          </div>
           <button class="btn btn-primary" onclick="goTab(1)">Continue to Contacts →</button>
         </div>
       </div>
@@ -496,6 +503,8 @@ let history = loadHistory();
 let modalContact = null;
 let generating = false;
 let _autoRunning = false; // guard for runAutoSequence
+let emailFeedback = {}; // contactId -> {rating: 'up'|'down', email, vertical, persona, stage, ts}
+let approvedExamples = {}; // vertical -> [{subject, body, persona, stage}]
 let _contactPersonaFilter = ''; // filter: empty=all, sales, marketing, other
 
 const TABS = [
@@ -2051,7 +2060,7 @@ const PAIN_POINTS_SALES = {
   'Fintech':                'deals in financial services were influenced six to twelve months before entering formal procurement. Sales teams that build relationships with CFOs, risk committees, and operational leaders generate predictable enterprise pipeline.',
   'AI & Data':              'closing technical evaluations but losing deals at economic approval. CFOs and COOs are making budget decisions that IT is not surfacing. Multi-threaded account development reaching the full buying committee before requirements are formalised separates pipeline from stalled pilots.',
   'Cloud & Infrastructure': 'consolidation is accelerating and the accounts that matter are already in evaluation. Getting in before vendor reviews begin through economic buyers and operations leaders — not just IT — is the difference between influencing a deal and responding to an RFP.',
-  'Enterprise Software':    'pipeline dominated by inbound and referrals while net-new logo development is inconsistent. Dedicated account-based development that penetrates new buying groups before competitive evaluation starts drives predictable new logo growth.',
+  'Enterprise Software':    'enterprise software sales teams are typically good at managing existing accounts but struggle to build consistent net-new logo pipeline at scale. Sales cycles require engaging economic buyers, champions, and technical stakeholders — most outbound only hits one of them.',
   'Automation & DevTools':  'automation deals stall when only the IT champion is engaged. Operations, Finance, and the business sponsor need to see the ROI case before budget is released. Multi-threaded access before formal procurement converts more pipeline.',
   'Cloud Communications':   'enterprise communications deals are won or lost before RFP. Consolidation decisions are shaped by whoever built relationships with IT, Operations, and business unit leaders earliest.',
   'Other':                  'net-new pipeline from strategic accounts requires sustained outbound development. Sales teams lack capacity to execute multi-threaded ABD motions at the volume needed to build predictable new logo pipeline.',
@@ -2278,6 +2287,8 @@ function showAuthScreen() {
 
 function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
+  emailFeedback = loadFeedback();
+  approvedExamples = loadApprovedExamples();
   document.getElementById('app').style.display = 'flex';
   document.getElementById('user-name-display').textContent = currentUser?.name || '';
   renderNav(); updateTopBar(); updateReadyStatus();
@@ -2308,6 +2319,105 @@ function logout() {
 
 // ── Storage — now backend-powered ─────────────────────────────────────────
 function loadHistory() { return {}; } // unused — history loaded from backend on login
+
+// ── Email feedback (thumbs up/down) ──────────────────────────────────────
+function loadFeedback() {
+  try { return JSON.parse(localStorage.getItem('clarify_feedback') || '{}'); } catch { return {}; }
+}
+function loadApprovedExamples() {
+  try { return JSON.parse(localStorage.getItem('clarify_approved_examples') || '{}'); } catch { return {}; }
+}
+function clearFeedback() {
+  if (!confirm('Clear all feedback and approved examples?')) return;
+  emailFeedback = {};
+  approvedExamples = {};
+  saveFeedback();
+  renderFeedbackStats();
+  renderComposePage();
+}
+
+function renderFeedbackStats() {
+  const statsEl = document.getElementById('feedback-stats');
+  const listEl = document.getElementById('approved-examples-list');
+  if (!statsEl) return;
+  const total = Object.keys(emailFeedback).length;
+  const ups = Object.values(emailFeedback).filter(f => f.rating === 'up').length;
+  const downs = total - ups;
+  statsEl.textContent = total > 0 ? `${ups} 👍  ${downs} 👎  across ${total} emails` : 'No feedback yet — rate emails in the Generate tab.';
+  if (listEl) {
+    const verticals = Object.keys(approvedExamples).filter(v => approvedExamples[v].length > 0);
+    listEl.innerHTML = verticals.length > 0
+      ? '<div style="margin-top:6px;font-weight:600;margin-bottom:4px">Approved examples by vertical:</div>' +
+        verticals.map(v => `<div style="margin:2px 0">${v}: ${approvedExamples[v].length} example${approvedExamples[v].length > 1 ? 's' : ''} saved</div>`).join('')
+      : '';
+  }
+}
+
+function saveFeedback() {
+  try {
+    localStorage.setItem('clarify_feedback', JSON.stringify(emailFeedback));
+    localStorage.setItem('clarify_approved_examples', JSON.stringify(approvedExamples));
+  } catch(e) { console.warn('saveFeedback failed', e); }
+}
+function rateEmail(contactId, rating) {
+  const c = contacts.find(x => x.id === contactId);
+  const em = emails[contactId];
+  if (!c || !em) return;
+
+  // Toggle off if same rating clicked again
+  if (emailFeedback[contactId]?.rating === rating) {
+    delete emailFeedback[contactId];
+    // Remove from approved examples if un-thumbing
+    if (rating === 'up') {
+      const v = c.vertical || 'Other';
+      approvedExamples[v] = (approvedExamples[v] || []).filter(e => e.contactId !== contactId);
+    }
+    saveFeedback();
+    renderComposePage();
+    return;
+  }
+
+  emailFeedback[contactId] = {
+    rating,
+    contactId,
+    vertical: c.vertical || 'Other',
+    persona: c.persona || 'other',
+    stage: emails[contactId]?.stage || 1,
+    subject: em.subject,
+    body: em.body,
+    company: c.company,
+    name: `${c.first_name} ${c.last_name}`,
+    ts: Date.now(),
+  };
+
+  // Store approved examples for injection into future prompts
+  if (rating === 'up') {
+    const v = c.vertical || 'Other';
+    if (!approvedExamples[v]) approvedExamples[v] = [];
+    // Keep max 3 approved per vertical — replace oldest if full
+    approvedExamples[v] = approvedExamples[v].filter(e => e.contactId !== contactId);
+    approvedExamples[v].unshift({contactId, subject: em.subject, body: em.body, persona: c.persona, stage: em.stage});
+    if (approvedExamples[v].length > 3) approvedExamples[v] = approvedExamples[v].slice(0, 3);
+  } else {
+    // Remove from approved if downvoted
+    const v = c.vertical || 'Other';
+    approvedExamples[v] = (approvedExamples[v] || []).filter(e => e.contactId !== contactId);
+  }
+
+  saveFeedback();
+  renderComposePage();
+  updateFeedbackStats();
+  renderFeedbackStats();
+}
+
+function updateFeedbackStats() {
+  const total = Object.keys(emailFeedback).length;
+  const ups = Object.values(emailFeedback).filter(f => f.rating === 'up').length;
+  const downs = total - ups;
+  // Update any stats display
+  const statsEl = document.getElementById('feedback-stats');
+  if (statsEl) statsEl.textContent = `${ups} 👍  ${downs} 👎  across ${total} emails`;
+}
 
 let _saveHistoryTimer = null;
 async function saveHistory() {
@@ -2935,6 +3045,13 @@ async function generateOne(contact, skipRender=false) {
 
   const VERIFIED_FACTS = (ALL_VERTICAL_FACTS[vertical] || ALL_VERTICAL_FACTS['Other']).join('\n');
 
+  // Inject approved examples for this vertical — if user has thumbed-up emails, use them as style refs
+  const verticalExamples = (approvedExamples[vertical] || []).filter(e => e.stage === (isFollowUp ? (contact._inCadence ? contact._cadenceStage + 1 : (histRec?.sequences?.length||0)+1) : 1)).slice(0, 2);
+  const examplesBlock = verticalExamples.length > 0
+    ? `\n\nAPPROVED EXAMPLES — emails you rated highly for this vertical. Match this style closely:\n` +
+      verticalExamples.map((e, i) => `Example ${i+1}:\nSubject: ${e.subject}\n${e.body}`).join('\n\n')
+    : '';
+
   // Known client flag — if contact's company is a Clarify client, note it for the prompt
   const knownClient = typeof isKnownClient === 'function' && isKnownClient(contact.company || '');
   const clientNote = knownClient
@@ -2999,7 +3116,7 @@ Contact: ${contact.first_name||'there'} ${contact.last_name||''} at ${contact.co
 Persona: ${personaContext}
 Previous email subject: "${prevSubject}"
 New angle to lead with: ${followUpAngle}
-${clientNote}
+${clientNote}${examplesBlock}
 
 REMINDER: Clarify is a specialist sales and marketing service that works as an extension of enterprise technology sales and marketing teams to build pipeline into strategic accounts. Not a tech product — a service.
 
@@ -3029,8 +3146,8 @@ TONE: ${VOICE_GUIDE}
 
 Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company} (${vertical} industry)
 Persona: ${personaContext}
-Key challenge: ${pain}
-${clientNote}
+Background context (do NOT repeat this in the email — use it to inform tone and angle only): ${pain}
+${clientNote}${examplesBlock}
 
 ---
 Subject: [4-6 plain words — direct, no hype, not starting with Re:]
@@ -3191,7 +3308,11 @@ function renderComposePage() {
             <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)} ${personaPill(c.persona || detectPersona(c.title||''))} ${c.isNurture ? '<span class="pill" style="background:rgba(15,158,213,0.12);color:#0F9ED5;border:1px solid rgba(15,158,213,0.25)">🌱 Nurture</span>' : ''}</div>
           </div>
         </div>
-        <div class="compose-actions">${statusPill(s)} ${actionBtns}</div>
+        <div class="compose-actions">
+          ${statusPill(s)}
+          ${em ? `<button onclick="rateEmail('${c.id}','up')" title="Good email" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;opacity:${emailFeedback[c.id]?.rating==='up'?'1':'0.3'};transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${emailFeedback[c.id]?.rating==='up'?'1':'0.3'}'">👍</button><button onclick="rateEmail('${c.id}','down')" title="Needs work" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;opacity:${emailFeedback[c.id]?.rating==='down'?'1':'0.3'};transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${emailFeedback[c.id]?.rating==='down'?'1':'0.3'}'">👎</button>` : ''}
+          ${actionBtns}
+        </div>
       </div>
       ${subjectHtml}
     </div>`;
