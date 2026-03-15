@@ -3262,13 +3262,10 @@ ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
 STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following up" or "circling back". One client reference maximum. No fabricated stats. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`
-    : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
+    : contact.variant === 'B'
+    ? `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
 
-WHAT CLARIFY IS: Clarify helps enterprise sales and marketing teams build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult. We work as an extension of sales and marketing teams — running targeted outreach, ABM campaigns, and sales development into priority accounts to help teams engage the right people earlier and convert that into qualified pipeline. We are a service, not a technology product.
-
-EMAIL VARIANT: ${contact.variant === 'B'
-  ? 'VARIANT B — Clarify-heavy opener. Start by explaining what Clarify does clearly (2 sentences), then reference 1-2 companies we have worked with in this vertical. Prioritise clarity about who Clarify is over leading with proof points.'
-  : 'VARIANT A — Proof-led opener. Lead with what Clarify does in one sentence, then go straight to the strongest proof point for this vertical. Proof first, context second.'}
+WHAT CLARIFY IS: Clarify helps enterprise sales and marketing teams build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult. We work as an extension of sales and marketing teams, running targeted outreach, ABM campaigns, and sales development into priority accounts to help teams engage the right people earlier and convert that into qualified pipeline. We are a service, not a technology product.
 
 VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
 ${VERIFIED_FACTS}
@@ -3277,26 +3274,63 @@ TONE: ${VOICE_GUIDE}
 
 Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company} (${vertical} industry)
 Persona: ${personaContext}
-Background context (do NOT repeat this in the email — use it to inform tone and angle only): ${pain}
-${clientNote}${examplesBlock}
+Background context (do NOT repeat verbatim): ${pain}
+${clientNote}
+
+APPROVED STYLE EXAMPLE — match this structure and tone, adapt to this specific person:
+${VARIANT_B_EXAMPLES[vertical] || VARIANT_B_EXAMPLES['BPO']}
 
 ---
-Subject: [4-6 plain words — direct, no hype, not starting with Re:]
+Subject: [4-6 plain words, not starting with Re:]
 
 Hi ${contact.first_name||'there'},
 
-[1-2 sentences: Open with what Clarify does. Base structure: "We work with [vertical] companies as an extension of their sales and marketing team to build pipeline into strategic accounts." Adapt naturally — if the person's title or company suggests a specific angle (e.g. a CMO at a late-stage startup vs a VP Sales at an enterprise), sharpen it accordingly. Use plain English. No jargon.]
+[2 sentences: Open with what Clarify does. Lead with "Clarify helps [vertical] sales and marketing teams..." — make it clear we are a service working as an extension of their team. Specific to their vertical.]
 
-[1-2 sentences: One proof point from VERIFIED_FACTS. Use a named client with a stat if one exists. If only an anonymous stat exists, say "one of our [vertical] clients". If no stat exists, one sentence on what Clarify delivers in this vertical. Think about which proof point is most relevant to this specific person's likely priorities — a sales leader cares about pipeline numbers, a marketing leader cares about campaign-to-pipeline conversion. Never invent numbers.]
+[1-2 sentences: Reference 1-2 companies Clarify has worked with in this vertical. Use a stat if one exists in VERIFIED_FACTS. If no stat, company names alone are fine.]
 
-[1 sentence: Ask for 15 minutes this week or a specific day. Direct, no fluff.]
+[1 sentence CTA: 15 minutes, Thursday or Friday or this week.]
 
 Thanks,
 
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across", "just wanted to". ONE proof point maximum. If VERIFIED_FACTS has a named stat (Capita, Xerox, Mastek, Vodafone, fintech client), use it. If only an anonymous stat exists, say "one of our [vertical] clients" — never invent a company name to attach it to. Do not list multiple company names without a stat — one name with a number beats a list of names with nothing. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`;
+STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across". ONE client reference maximum. No fabricated stats. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift), Ping Identity ($14.7M pipeline). All other companies — names only, no numbers.`
+    : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
+
+WHAT CLARIFY IS: Clarify works as an extension of sales and marketing teams to build pipeline into strategic accounts. We are a service, not a technology product.
+
+VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
+${VERIFIED_FACTS}
+
+TONE: ${VOICE_GUIDE}
+
+Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company} (${vertical} industry)
+Persona: ${personaContext}
+Background context (do NOT repeat verbatim): ${pain}
+${clientNote}
+
+APPROVED STYLE EXAMPLE — use this as your floor. Same structure, same length, same directness. Adapt to this specific person:
+${HARDCODED_EXAMPLES[vertical]?.[persona] || HARDCODED_EXAMPLES[vertical]?.['sales'] || ''}
+
+---
+Subject: [4-6 plain words, not starting with Re:]
+
+Hi ${contact.first_name||'there'},
+
+[1-2 sentences: Open with what Clarify does in one sentence — "We work with [vertical] companies as an extension of their sales and marketing team to build pipeline into accounts that typical outreach doesn't reach." Adapt naturally. No jargon.]
+
+[1-2 sentences: Go straight to the strongest proof point for this vertical. Named client with stat if one exists. Anonymous if not. One name with a number beats a list of names.]
+
+[1 sentence CTA: 15 minutes, Thursday or Friday or this week.]
+
+Thanks,
+
+${cfg('fromName')}
+${cfg('title')} | Clarify B2B
+
+STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across". ONE proof point maximum. No fabricated stats. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift), Ping Identity ($14.7M pipeline). All other companies — names only, no numbers.`;
 
   try {
     const apiKey = cfg('apiKey');
