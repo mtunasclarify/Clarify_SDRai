@@ -513,6 +513,327 @@ function canSend() { return !!(cfg('serviceId') && cfg('templateId') && cfg('pub
 
 // ── Data ──────────────────────────────────────────────────────────────────
 const COMPANY_VERTICALS = {
+  // ── Clarify US TAM (255 accounts) ──────────────────────────────────────
+  '1password':'Cybersecurity',
+  'abnormal security':'Cybersecurity',
+  'accenture':'BPO',
+  'aci worldwide':'Fintech',
+  'adobe':'Enterprise Software',
+  'adyen':'Fintech',
+  'airtable':'Enterprise Software',
+  'akamai':'Cybersecurity',
+  'alation':'Cloud & Infrastructure',
+  'algolia':'AI & Data',
+  'alphasense':'Fintech',
+  'altamira.ai':'AI & Data',
+  'amplitude':'AI & Data',
+  'anaplan':'AI & Data',
+  'anduril':'AI & Data',
+  'anthropic':'AI & Data',
+  'anysphere':'AI & Data',
+  'appdynamics':'Cloud & Infrastructure',
+  'appnexus':'BPO',
+  'aptean':'Enterprise Software',
+  'aptum':'Enterprise Software',
+  'arctic wolf':'Cybersecurity',
+  'armis':'Cybersecurity',
+  'asana':'Enterprise Software',
+  'assima':'Enterprise Software',
+  'astranis':'Cloud & Infrastructure',
+  'atlassian':'Enterprise Software',
+  'automation anywhere':'Automation & DevTools',
+  'avaya communications':'BPO',
+  'aws':'Cloud & Infrastructure',
+  'axonius':'Cybersecurity',
+  'backbase':'Fintech',
+  'barracuda networks':'Cybersecurity',
+  'basware':'Enterprise Software',
+  'beamery':'AI & Data',
+  'beyond trust':'Cybersecurity',
+  'bigid':'Cybersecurity',
+  'blue prism/ss&c':'Automation & DevTools',
+  'bottomline technologies':'Fintech',
+  'bugcrowd':'Cybersecurity',
+  'c3.ai':'Fintech',
+  'casewise':'Automation & DevTools',
+  'cato':'Cybersecurity',
+  'cgi':'BPO',
+  'chainguard':'Cybersecurity',
+  'check point software':'Cybersecurity',
+  'chime':'Fintech',
+  'cisco':'Cloud & Infrastructure',
+  'citrix':'Cloud & Infrastructure',
+  'clickup':'Enterprise Software',
+  'cloudflare':'Cybersecurity',
+  'cognition ai':'AI & Data',
+  'cognito':'BPO',
+  'cognizant':'BPO',
+  'cohere':'AI & Data',
+  'cohesity':'Enterprise Software',
+  'collibra':'Fintech',
+  'confluent':'AI & Data',
+  'conga':'Enterprise Software',
+  'connectwise':'BPO',
+  'corelight':'Cybersecurity',
+  'coreweave':'Cloud & Infrastructure',
+  'corpay':'Fintech',
+  'coupa software':'AI & Data',
+  'creatio':'AI & Data',
+  'cresta':'AI & Data',
+  'crowdstrike':'Cybersecurity',
+  'cyberark':'Cybersecurity',
+  'cybereason':'Cybersecurity',
+  'darktrace':'Cybersecurity',
+  'databricks':'Cloud & Infrastructure',
+  'datadog':'AI & Data',
+  'dataiku':'AI & Data',
+  'datarobot':'Cloud & Infrastructure',
+  'deloitte':'BPO',
+  'delphix':'Cloud & Infrastructure',
+  'devrev':'AI & Data',
+  'druva':'Fintech',
+  'dxc technology':'BPO',
+  'dynatrace':'Cybersecurity',
+  'e2open':'Enterprise Software',
+  'elastic':'AI & Data',
+  'entrust datacard':'Cybersecurity',
+  'epam systems':'BPO',
+  'everbridge':'Enterprise Software',
+  'exelatech':'Automation & DevTools',
+  'experis':'BPO',
+  'ey':'BPO',
+  'f5 networks':'Cybersecurity',
+  'feedzai':'Cybersecurity',
+  'figma':'Enterprise Software',
+  'firstsource':'BPO',
+  'fiserv':'BPO',
+  'five9':'BPO',
+  'flexera':'Automation & DevTools',
+  'forgerock':'Cybersecurity',
+  'fortinet':'Cybersecurity',
+  'gcp':'Cloud & Infrastructure',
+  'gitlab':'Automation & DevTools',
+  'glean':'AI & Data',
+  'global 360':'BPO',
+  'glue':'AI & Data',
+  'groq':'AI & Data',
+  'h2o.ai':'Fintech',
+  'halcyon':'Cybersecurity',
+  'hebbia':'AI & Data',
+  'hexagon (formerly pas)':'AI & Data',
+  'hpe':'Cloud & Infrastructure',
+  'hugging face':'AI & Data',
+  'hyland software':'Enterprise Software',
+  'ibm':'BPO',
+  'illumio':'Cybersecurity',
+  'imperva':'Cybersecurity',
+  'infor':'Enterprise Software',
+  'instructure':'Enterprise Software',
+  'interactions llc':'AI & Data',
+  'iqnavigator':'Enterprise Software',
+  'iris software':'BPO',
+  'iron mountain':'BPO',
+  'island.io':'Cybersecurity',
+  'jda software':'Enterprise Software',
+  'jfrog':'Cloud & Infrastructure',
+  'juniper networks':'Cloud & Infrastructure',
+  'knowbe4':'Cybersecurity',
+  'kodak alaris':'BPO',
+  'kofax':'Automation & DevTools',
+  'kooth':'BPO',
+  'kpmg':'BPO',
+  'kyndryl':'BPO',
+  'lacework':'Cybersecurity',
+  'lambda':'AI & Data',
+  'launchdarkly':'Automation & DevTools',
+  'lightmatter':'AI & Data',
+  'liquid ai':'AI & Data',
+  'loglogic':'Cybersecurity',
+  'marklogic':'AI & Data',
+  'mastercard':'BPO',
+  'medallia':'AI & Data',
+  'microsoft':'Enterprise Software',
+  'miro':'Enterprise Software',
+  'mixpanel':'AI & Data',
+  'monday.com':'Enterprise Software',
+  'mongodb':'AI & Data',
+  'ncino':'Fintech',
+  'neptune software':'Enterprise Software',
+  'netapp':'Cloud & Infrastructure',
+  'netlify':'Cloud & Infrastructure',
+  'netskope':'Cybersecurity',
+  'netsuite':'AI & Data',
+  'new relic':'Fintech',
+  'nextgen healthcare':'Enterprise Software',
+  'ninjaone':'Cybersecurity',
+  'nintex':'Automation & DevTools',
+  'notion':'Enterprise Software',
+  'ntt':'Cloud & Infrastructure',
+  'nutanix':'Cloud & Infrastructure',
+  'nvidia':'AI & Data',
+  'okta':'Cybersecurity',
+  'onetrust':'Cybersecurity',
+  'opentext':'AI & Data',
+  'oracle corporation':'AI & Data',
+  'orca security':'Cybersecurity',
+  'outsystems':'Enterprise Software',
+  'pagerduty':'Cloud & Infrastructure',
+  'palantir':'AI & Data',
+  'palo alto':'Cybersecurity',
+  'physical intelligence':'AI & Data',
+  'ping identity':'Cybersecurity',
+  'plaid':'Fintech',
+  'planview':'Enterprise Software',
+  'polyai':'AI & Data',
+  'postman':'Cloud & Infrastructure',
+  'privitar':'AI & Data',
+  'proofpoint':'Cybersecurity',
+  'pure storage':'Cloud & Infrastructure',
+  'purestorage':'Cloud & Infrastructure',
+  'pwc':'BPO',
+  'qlik':'AI & Data',
+  'rapid7':'Cybersecurity',
+  'realpage':'Enterprise Software',
+  'recorded future':'Cybersecurity',
+  'red hat (ibm)':'Cloud & Infrastructure',
+  'reliaquest':'Cybersecurity',
+  'reltio':'Fintech',
+  'res software':'Enterprise Software',
+  'retool':'Automation & DevTools',
+  'rubrik':'Cloud & Infrastructure',
+  'safe security':'Cybersecurity',
+  'sage':'AI & Data',
+  'sailpoint':'Cybersecurity',
+  'salesforce':'AI & Data',
+  'samsara':'Enterprise Software',
+  'sap':'AI & Data',
+  'saviynt':'Cybersecurity',
+  'scale ai':'AI & Data',
+  'schoox':'BPO',
+  'segment':'AI & Data',
+  'seldon':'BPO',
+  'sendgrid':'Cloud & Infrastructure',
+  'senseida':'Cybersecurity',
+  'sentinelone':'Cybersecurity',
+  'sentry':'Cloud & Infrastructure',
+  'servicenow':'AI & Data',
+  'servicetitan':'Enterprise Software',
+  'sierra':'AI & Data',
+  'sigma computing':'AI & Data',
+  'snowflake':'AI & Data',
+  'snyk':'Cybersecurity',
+  'software ag':'Cloud & Infrastructure',
+  'solarwinds':'Cybersecurity',
+  'splunk':'Enterprise Software',
+  'square (block)':'Fintech',
+  'starburst':'Fintech',
+  'stripe':'Fintech',
+  'sumo logic':'Cloud & Infrastructure',
+  'surecloud':'Cybersecurity',
+  'sysdig':'Cybersecurity',
+  'talend':'AI & Data',
+  'tanium':'Cybersecurity',
+  'tata consultancy services':'BPO',
+  'tata tcs':'BPO',
+  'tegile systems':'Enterprise Software',
+  'temenos':'Fintech',
+  'temporal':'Cloud & Infrastructure',
+  'tenable':'Cybersecurity',
+  'tenstorrent':'AI & Data',
+  'together ai':'AI & Data',
+  'towers associates':'BPO',
+  'twilio':'Cloud & Infrastructure',
+  'uipath':'Automation & DevTools',
+  'unify':'BPO',
+  'unisys':'BPO',
+  'usertesting':'AI & Data',
+  'vanta':'Cybersecurity',
+  'varonis':'Cybersecurity',
+  'vectra ai':'Cybersecurity',
+  'veracode':'Cybersecurity',
+  'vercel':'Cloud & Infrastructure',
+  'veridium':'Cybersecurity',
+  'visa':'BPO',
+  'vmware (broadcom)':'Cloud & Infrastructure',
+  'vmware/broadcom':'Cloud & Infrastructure',
+  'vultr':'Cloud & Infrastructure',
+  'watchguard':'Cybersecurity',
+  'weights & biases':'AI & Data',
+  'weka':'Cloud & Infrastructure',
+  'wiz':'Cybersecurity',
+  'workato':'Fintech',
+  'workday':'AI & Data',
+  'writer':'AI & Data',
+  'xai':'AI & Data',
+  'xceedance':'BPO',
+  'zapier':'Automation & DevTools',
+  'zendesk':'Enterprise Software',
+  'zscaler':'Cybersecurity',
+  // ── EMEA / additional Clarify clients ──────────────────────────────────
+  'a24':'Fintech',
+  'adobe':'Enterprise Software',
+  'atech cloud':'BPO',
+  'beamery':'AI & Data',
+  'ca technologies':'Enterprise Software',
+  'capita':'BPO',
+  'cisco':'Cloud & Infrastructure',
+  'citrusad':'Enterprise Software',
+  'cohesity':'AI & Data',
+  'collenda':'Fintech',
+  'computacenter':'Cloud & Infrastructure',
+  'cyberfort':'Cybersecurity',
+  'deloitte':'BPO',
+  'digital owl':'Fintech',
+  'dxc technology':'BPO',
+  'enterprise alumni':'Enterprise Software',
+  'entrust':'Cybersecurity',
+  'exl service':'BPO',
+  'extrahop':'Cybersecurity',
+  'firstsource':'BPO',
+  'genpact':'BPO',
+  'hexaware':'BPO',
+  'ibm':'BPO',
+  'incopro':'Cybersecurity',
+  'infobip':'Cloud Communications',
+  'integra':'Cloud & Infrastructure',
+  'interactions':'AI & Data',
+  'kodak alaris':'Enterprise Software',
+  'mastek':'BPO',
+  'micro focus':'Enterprise Software',
+  'moogsoft':'AI & Data',
+  'okta':'Cybersecurity',
+  'one identity':'Cybersecurity',
+  'orgvue':'AI & Data',
+  'outseer':'Cybersecurity',
+  'outsystems':'Automation & DevTools',
+  'pachyderm':'AI & Data',
+  'pas':'Enterprise Software',
+  'paypal':'Fintech',
+  'ping identity':'Cybersecurity',
+  'polyai':'AI & Data',
+  'sage':'AI & Data',
+  'sap':'AI & Data',
+  'seldon':'AI & Data',
+  'sensedia':'Cloud & Infrastructure',
+  'smart communications':'Cloud Communications',
+  'software ag':'Cloud & Infrastructure',
+  'sprout social':'Enterprise Software',
+  'sullivan & stanley':'BPO',
+  'surecloud':'Cybersecurity',
+  'suzohapp':'Enterprise Software',
+  'symantec':'Cybersecurity',
+  'tata consultancy services (tcs)':'BPO',
+  'tcs':'BPO',
+  'tech data':'Cloud & Infrastructure',
+  'towers associates':'BPO',
+  'tryzens':'Enterprise Software',
+  'unit4':'AI & Data',
+  'veridium':'Cybersecurity',
+  'veritas':'Cloud & Infrastructure',
+  'vmware':'Cloud & Infrastructure',
+  'vodafone':'Cloud Communications',
+  'wiz':'Cybersecurity',
+  'xerox':'BPO',
   // ── Clarify known accounts ─────────────────────────────────────────────
   teleperformance:'BPO',concentrix:'BPO',conduent:'BPO',convergys:'BPO',sitel:'BPO',
   synnex:'BPO',hcltech:'BPO',hcl:'BPO',wipro:'BPO',infosys:'BPO',capgemini:'BPO',
@@ -1547,23 +1868,27 @@ const VERTICAL_COLORS = {
 
 
 const PAIN_POINTS = {
-  'BPO':'scaling delivery capacity without proportional headcount growth, shrinking margins from client renegotiations, and pressure to differentiate beyond cost arbitrage',
-  'IT Services':'pipeline generation in an increasingly crowded market, positioning against offshore-first competitors, and reaching enterprise buyers inundated with vendor outreach',
-  'Enterprise SaaS':'breaking into enterprise accounts, standing out in a saturated category, and moving beyond product-led growth into strategic account development',
-  'Fintech':'navigating compliance-heavy buying cycles, building trust with risk-averse decision-makers, and shortening lengthy procurement timelines',
-  'Cybersecurity':'standing out in a crowded vendor landscape, reaching CISOs and security leaders overwhelmed with pitches, and demonstrating ROI beyond checkbox compliance',
-  'Cloud Communications':'differentiating in a commoditising CPaaS market, winning enterprise deals against hyperscaler competition, and convincing telco buyers to consolidate platforms',
-  'Other':'generating qualified pipeline from strategic accounts and breaking through to senior decision-makers with relevant, insight-led outreach',
+  'Cybersecurity':          'security leaders are overwhelmed by vendor volume — outreach that leads with product specs and threat landscape gets ignored. Buying decisions span CISO, CIO, Legal, and Finance. Single-threaded engagement and late entry into budget cycles means most outreach never reaches the economic buyer before the decision is made.',
+  'BPO':                    'deals decided long before RFP — preferred partners shaped through informal influence and senior access established months earlier. Multi-service organisations face price-led procurement perceptions, reactive RFP participation, and late entry into buying cycles already leaning toward an incumbent.',
+  'Fintech':                'enterprise sales cycles in financial services are long, compliance-heavy, and involve risk committees that slow every stage. Marketing investment in ABM goes unactivated. Access to business buyers rather than IT procurement is the difference between a strategic deal and a price negotiation.',
+  'AI & Data':              'fast-moving AI and data organisations win technically but struggle to build predictable enterprise pipeline. The buying committee has expanded to Finance, Operations, and C-Suite — outreach that only hits technical buyers misses where the budget decision is made. Competitive pressure from hyperscalers means enterprise deals require multi-threaded engagement before requirements are formalised.',
+  'Cloud & Infrastructure': 'infrastructure and platform organisations face commoditisation pressure as hyperscalers dominate mindshare. Enterprise buyers are consolidating vendors — creating urgency to get into accounts before those consolidation decisions are made. Sales teams focused on existing accounts while net-new logo pipeline suffers.',
+  'Enterprise Software':    'enterprise software organisations compete in saturated categories where differentiation is hard and buyers receive high volumes of outreach. Sales cycles require engaging economic buyers, champions, and technical stakeholders simultaneously — most outbound programs engage only one thread.',
+  'Automation & DevTools':  'automation and developer tools organisations sell a business case that requires alignment across IT, Operations, and Finance before a deal progresses. Getting in front of business decision makers before procurement frames it as build-versus-buy is where pipeline is won or lost.',
+  'Cloud Communications':   'enterprise communications organisations face consolidation pressure as buyers reduce vendor count. Winning deals requires multi-threaded engagement across IT, Operations, and business units. Getting in before the consolidation decision — not responding to RFPs after — is where pipeline is won or lost.',
+  'Other':                  'generating qualified pipeline from strategic accounts by engaging buying groups before formal procurement begins. Most outbound programs rely on single-threaded outreach that hits the wrong person at the wrong time and fails to create access before requirements are fixed.',
 };
 
 const FOLLOW_UP_ANGLES = {
-  'BPO':'the challenge of differentiating your delivery model when clients are comparing on cost alone',
-  'IT Services':'the reality that most SDR outreach gets ignored because it leads with product rather than business impact',
-  'Enterprise SaaS':'the gap between product-led growth and the enterprise deals that actually move the needle',
-  'Fintech':'how long enterprise sales cycles are getting and what that means for pipeline predictability',
-  'Cybersecurity':'how security leaders are overwhelmed by vendor pitches and what actually cuts through',
-  'Cloud Communications':'how enterprise buyers are consolidating cloud communications vendors and what that means for mid-tier providers',
-  'Other':'the difficulty of generating pipeline in accounts that already have incumbent relationships',
+  'Cybersecurity':          'how security vendors cutting through are leading with board-level business risk rather than product specs — and what that means for pipeline in accounts where CISOs have stopped taking vendor calls',
+  'BPO':                    'how BPO organisations winning net-new enterprise logos get into accounts six to twelve months before RFP through senior stakeholder engagement — not responding to procurement processes already shaped by incumbents',
+  'Fintech':                'the gap between ABM investment and qualified pipeline in financial services — and how integrated outbound is closing it for Fintech GTM teams navigating compliance-heavy buying cycles',
+  'AI & Data':              'how AI and data organisations build enterprise pipeline by engaging economic and operational buyers before technical evaluation begins — reaching CFOs and COOs before the CTO defines requirements',
+  'Cloud & Infrastructure': 'how infrastructure vendors win consolidation decisions by getting into accounts before vendor reviews start — covering economic buyers and operations leaders, not just IT',
+  'Enterprise Software':    'how enterprise software companies stand out in saturated categories by leading with account-based development — engaging buying groups earlier and building influence before competitive evaluations start',
+  'Automation & DevTools':  'how automation vendors convert business case conversations into pipeline by engaging Operations and Finance alongside IT — what changes when outbound is designed around the full buying group',
+  'Cloud Communications':   'how cloud communications vendors win consolidation decisions by reaching enterprise buying committees before procurement-led reviews begin — covering IT, Operations, and business units simultaneously',
+  'Other':                  'the difference between reactive pipeline and built pipeline — and how account-based development changes the revenue equation when sales teams are already stretched',
 };
 
 
@@ -1620,6 +1945,54 @@ function personaPill(persona) {
   const m = map[persona] || map.other;
   return `<span class="pill" style="background:${m.bg};color:${m.text};border:1px solid ${m.border}">${m.label}</span>`;
 }
+
+// ── Vertical-specific verified facts ────────────────────────────────────
+const ALL_VERTICAL_FACTS = {
+  'Cybersecurity': [
+    'Clarify has worked with cybersecurity organisations including: Okta, Wiz, SentinelOne, Cyera, Palo Alto Networks, Mimecast, Proofpoint, CrowdStrike, CyberArk, Axonius, Zscaler, Armis, BigID, Entrust, ExtraHop, Ping Identity, SureCloud, Symantec, Veridium, and others.',
+    'Clarify Cybersecurity approach: account-based development into enterprise accounts where security leaders are overwhelmed by vendor volume. Insight-led outreach leading with board-level business risk rather than threat landscape. Multi-threaded engagement across CISO, CIO, Legal, Finance, and Operations — not just the security buyer.',
+  ],
+  'BPO': [
+    'Clarify has worked with BPO and services organisations including: Capita, Mastek, Xerox, DXC Technology, Genpact, Cognizant, Accenture, IBM, Deloitte, EXL Service, FirstSource, Hexaware, Kyndryl, Tata Consultancy Services, and others.',
+    'Capita: $234.5M total pipeline, $34.2M revenue, 510 opportunities across 8 business divisions. Partnership since 2012.',
+    'Mastek: $800M+ pipeline and $150M+ revenue attributed. Shifted from reactive pursuit to proactive account development.',
+    'Xerox: $1.4B+ pipeline influenced and $105M+ new logo revenue. Narrative moved from unit cost to strategic value.',
+    'Clarify BPO approach: pre-RFP access, multi-threaded region-aware outreach engaging economic buyers, operational leaders, and regional decision makers before procurement defines requirements.',
+  ],
+  'Fintech': [
+    'Clarify has worked with fintech and financial services organisations including: PayPal, Stripe, Adyen, Plaid, Bottomline Technologies, Chime, nCino, and others.',
+    'Fintech client (leading global online payment platform): $51M pipeline. 84% conversion to pipeline. 28 new logos engaged. Pipeline ROI of 91:1.',
+    'BFSI (2025): $80.7M in qualified pipeline across 169 enterprise opportunities including TD Bank, Fidelity Investments, Scotiabank, and Goldman Sachs.',
+    'Clarify Fintech approach: integrated ABM motion bridging the gap between marketing investment and qualified pipeline. Engages CFOs, risk committees, and operational decision makers before formal procurement begins.',
+  ],
+  'AI & Data': [
+    'Clarify has worked with AI and data organisations including: SAP, Salesforce, ServiceNow, Oracle, Workday, Snowflake, Palantir, Databricks, MongoDB, Datadog, Elastic, Confluent, Beamery, Cohesity, PolyAI, Sage, and others.',
+    'IT Services client: $18M ACV in first 12 months. 230% performance improvement vs prior year without Clarify. 78% SAL to opportunity conversion rate.',
+    'Clarify AI and Data approach: account-based development reaching economic buyers — CFOs, COOs, and Operations leaders — before technical evaluation locks in requirements.',
+  ],
+  'Cloud & Infrastructure': [
+    'Clarify has worked with cloud and infrastructure organisations including: Cisco, VMware, AWS, Red Hat, Rubrik, Dynatrace, Nutanix, Pure Storage, NetApp, Citrix, Computacenter, Software AG, Veritas, and others.',
+    'Clarify Cloud and Infrastructure approach: multi-threaded outreach covering IT, Operations, Finance, and business unit leaders simultaneously. Positions clients ahead of vendor consolidation decisions by building relationships before formal reviews begin.',
+  ],
+  'Enterprise Software': [
+    'Clarify has worked with enterprise software organisations including: Adobe, Microsoft, Workday, Atlassian, Samsara, Infor, Zendesk, Monday.com, CA Technologies, Micro Focus, OutSystems, Sprout Social, Kodak Alaris, and others.',
+    'IT Services client: $18M ACV in first 12 months. 230% performance improvement vs prior year without Clarify. 78% SAL to opportunity conversion.',
+    'Clarify Enterprise Software approach: account-based development penetrating buying groups before competitive evaluation starts. Engages economic buyers, champions, and technical stakeholders simultaneously.',
+  ],
+  'Automation & DevTools': [
+    'Clarify has worked with automation and developer tools organisations including: UiPath, GitLab, Automation Anywhere, LaunchDarkly, Zapier, and OutSystems.',
+    'Clarify Automation approach: outbound designed around the full buying group — IT, Operations, Finance, and business sponsor — not just the technical champion. Converts business case conversations into qualified pipeline before procurement frames it as build-versus-buy.',
+  ],
+  'Cloud Communications': [
+    'Clarify has worked with cloud communications organisations including: Vodafone, Twilio, Infobip, and Smart Communications.',
+    'Vodafone: $13.3M pipeline in first 6 months vs target of $9.8M. $29M pipeline over 15 months. 79 selling opportunities. Average pipeline entry increased from $635K to $782K — a 23% uplift. C-Suite opportunities at Lidl, Saga, and Easyjet.',
+    'Clarify Cloud Communications approach: multi-threaded outreach across IT, Operations, and business units. Transitions conversations from product features to complete business capabilities before consolidation decisions are made.',
+  ],
+  'Other': [
+    'Clarify has worked with organisations across cybersecurity, BPO, fintech, AI and data, cloud infrastructure, enterprise software, automation, and cloud communications.',
+    'Clarify approach: embedded alongside sales teams, multi-threaded outreach across buying groups, pre-RFP access, sustained senior stakeholder engagement to generate predictable pipeline into hard-to-reach strategic accounts.',
+  ],
+};
 
 // ── Web search title lookup ──────────────────────────────────────────────
 const _titleCache = {};
@@ -1681,64 +2054,75 @@ async function lookupTitleFromWeb(contact, apiKey) {
 
 // ── Persona-specific pain points ─────────────────────────────────────────
 const PAIN_POINTS_SALES = {
-  'BPO':'building an account-based development motion that generates predictable pipeline into strategic accounts — not just reactive RFP responses. Most BD teams are stretched too thin to execute multi-threaded outreach across hundreds of target logos.',
-  'IT Services':'breaking into enterprise accounts where incumbents are entrenched. Sales teams need a systematic way to engage buying groups before procurement gets involved and the deal becomes a price negotiation.',
-  'Enterprise SaaS':'moving beyond inbound and product-led motion into strategic account development. Enterprise deals require a dedicated outbound function that can open doors before the formal buying process starts.',
-  'Fintech':'generating qualified pipeline in enterprise accounts where risk committees and procurement add six to twelve months to sales cycles. Sales teams need early access to business buyers, not just IT.',
-  'Cybersecurity':'reaching CISO and security leadership who are overwhelmed with vendor outreach. Standing out requires account-based development that leads with business impact, not feature specs.',
-  'Cloud Communications':'winning enterprise deals against hyperscaler competition when buyers are consolidating vendors. Sales teams need multi-threaded coverage across IT, procurement, and business units simultaneously.',
-  'Other':'building predictable pipeline into strategic accounts through a dedicated account-based development motion that engages buying groups before formal RFPs exist.',
+  'Cybersecurity':          'pipeline stalling because outreach leads with product capability not business risk. CISO access alone is not enough — buying committees include Legal, Finance, and Operations. Account-based development building multi-threaded relationships before budget cycles open is where security sales teams gain ground.',
+  'BPO':                    'net-new logo pipeline is reactive — most BD activity responds to RFPs already shaped by incumbents. Getting in twelve months before formal process begins requires sustained senior-level account development across economic buyers and operational stakeholders.',
+  'Fintech':                'deals in financial services were influenced six to twelve months before entering formal procurement. Sales teams that build relationships with CFOs, risk committees, and operational leaders — rather than waiting for IT — generate predictable enterprise pipeline.',
+  'AI & Data':              'closing technical evaluations but losing deals at economic approval. CFOs and COOs are making budget decisions that IT is not surfacing. Multi-threaded account development reaching the full buying committee before requirements are formalised separates pipeline from stalled pilots.',
+  'Cloud & Infrastructure': 'consolidation is accelerating and the accounts that matter are already in evaluation. Getting in before vendor reviews begin through economic buyers and operations leaders — not just IT — is the difference between influencing a deal and responding to an RFP.',
+  'Enterprise Software':    'pipeline dominated by inbound and referrals while net-new logo development is inconsistent. Sales teams stretched across existing accounts. Dedicated account-based development that penetrates new buying groups before competitive evaluation starts drives predictable new logo growth.',
+  'Automation & DevTools':  'automation deals stall when only the IT champion is engaged. Operations, Finance, and the business sponsor need to see the ROI case before budget is released. Multi-threaded access before formal procurement converts more pipeline and reduces build-versus-buy losses.',
+  'Cloud Communications':   'enterprise communications deals are won or lost before RFP. Consolidation decisions are shaped by whoever built relationships with IT, Operations, and business unit leaders earliest. Without proactive account development you are constantly responding to processes already leaning toward a competitor.',
+  'Other':                  'net-new pipeline from strategic accounts requires sustained outbound development — not one-off outreach. Sales teams lack capacity to execute multi-threaded ABD motions at the volume needed to build predictable new logo pipeline.',
 };
 
 const PAIN_POINTS_MARKETING = {
-  'BPO':'investing in ABM and account-based campaigns but struggling to convert marketing engagement into qualified sales conversations. Without an embedded sales development resource, campaign ROI stalls at awareness.',
-  'IT Services':'running sophisticated demand gen programs but losing pipeline at the handoff to sales. Marketing needs an integrated motion — embedded SDR resources that convert content engagement into qualified pipeline.',
-  'Enterprise SaaS':'building ABM programmes that generate engagement but not pipeline. Marketing leaders need a sales development layer that activates the accounts their campaigns have warmed, before the intent window closes.',
-  'Fintech':'creating strong content and campaign engines but struggling to translate that into enterprise pipeline. ABM without a coordinated outbound motion leaves marketing investment on the table.',
-  'Cybersecurity':'running events, content, and digital campaigns but seeing weak conversion to qualified pipeline. Integrated marketing requires an outbound function that converts marketing-qualified accounts into sales conversations.',
-  'Cloud Communications':'investing in account-based marketing programs but lacking the sales development bandwidth to activate target accounts at scale. Campaigns create awareness — embedded outbound converts it to pipeline.',
-  'Other':'investing in marketing programmes that generate awareness and engagement without a coordinated sales development motion to convert that interest into qualified pipeline and enterprise conversations.',
+  'Cybersecurity':          'running events, content, and digital campaigns but seeing weak conversion into qualified security pipeline. ABM creates awareness but without an outbound motion to activate accounts, intent signals go unacted on before the budget window closes.',
+  'BPO':                    'investing in ABM and account-based campaigns but struggling to convert marketing engagement into qualified sales conversations. Without embedded sales development, campaign ROI stalls at awareness and never reaches the economic buyers who approve large outsourcing decisions.',
+  'Fintech':                'strong content and campaign engines generating engagement in financial services accounts but unable to translate that into enterprise pipeline. ABM without coordinated outbound leaves marketing investment on the table in compliance-heavy accounts where trust is built through human conversation.',
+  'AI & Data':              'generating high intent but struggling to convert it to pipeline. Buying committees have expanded beyond IT to Finance and Operations — marketing programmes that only reach technical audiences miss where budget decisions are made.',
+  'Cloud & Infrastructure': 'investing in category-level content and field events but not converting engagement into pipeline before vendors consolidate. Without coordinated sales outreach, marketing-generated intent sits unactivated.',
+  'Enterprise Software':    'marketing-qualified accounts and sales-accepted pipeline gap is widening. ABM without embedded sales development means accounts campaigns have warmed are not being activated before competitors engage them.',
+  'Automation & DevTools':  'automation marketing builds strong business case content but without outbound follow-through ROI conversations stall at awareness. Coordinated outbound converting content engagement into multi-threaded buying group conversations turns marketing investment into pipeline.',
+  'Cloud Communications':   'cloud communications marketing invests in ABM and brand but lacks the sales development bandwidth to activate target accounts at scale. Campaigns create awareness — embedded outbound converts that awareness to pipeline before the consolidation decision.',
+  'Other':                  'investing in marketing programmes that generate awareness and engagement without a coordinated sales development motion to convert that interest into qualified pipeline and enterprise conversations.',
 };
 
 const FOLLOW_UP_ANGLES_SALES = {
-  'BPO':'how your competitors are using outsourced account-based development to cover more accounts without adding headcount — and what that means for your pipeline targets',
-  'IT Services':'the pattern we see across IT services firms where the most capable delivery teams lose deals because pipeline generation is still reactive rather than account-led',
-  'Enterprise SaaS':'how the fastest-growing enterprise SaaS companies are separating pipeline generation from AE capacity — and using dedicated ABD to get into accounts before the formal buying process starts',
-  'Fintech':'what happens to win rates when you engage the business buyer six months before procurement — and how account-based development makes that systematically possible',
-  'Cybersecurity':'how security vendors who lead with business impact rather than threat landscape are cutting through the noise and getting in front of CISOs who have stopped taking vendor calls',
-  'Cloud Communications':'how the enterprise comms vendors winning consolidation deals are engaging IT, procurement, and business units simultaneously rather than starting at the top and hoping it cascades',
-  'Other':'the difference between reactive pipeline and built pipeline — and how account-based development changes the revenue equation when sales teams are already stretched',
+  'Cybersecurity':          'how security vendors cutting through the noise are leading with board-level business risk rather than product specs — and what that means for pipeline in accounts where CISOs have stopped taking vendor calls',
+  'BPO':                    'how BPO organisations winning net-new enterprise logos get into accounts six to twelve months before RFP through senior stakeholder engagement — not responding to procurement processes already shaped by incumbents',
+  'Fintech':                'what happens to win rates in financial services when you engage the business buyer six months before procurement — and how account-based development makes that systematically possible',
+  'AI & Data':              'how AI and data organisations build enterprise pipeline by reaching CFOs and COOs before technical evaluation begins — and what changes when the economic buyer is engaged before requirements are fixed',
+  'Cloud & Infrastructure': 'how infrastructure vendors win consolidation decisions by getting into accounts before vendor reviews start — covering economic buyers and operations leaders, not just IT',
+  'Enterprise Software':    'how enterprise software companies drive net-new logo pipeline by leading with account-based development — engaging buying groups earlier and building influence before evaluations begin',
+  'Automation & DevTools':  'how automation vendors convert business case conversations into pipeline by engaging Operations and Finance alongside IT — what changes when outbound is designed around the full buying group',
+  'Cloud Communications':   'how cloud communications vendors win consolidation decisions by reaching enterprise buying committees before procurement-led reviews begin',
+  'Other':                  'the difference between reactive pipeline and built pipeline — and how account-based development changes the revenue equation when sales teams are already stretched',
 };
 
 const FOLLOW_UP_ANGLES_MARKETING = {
-  'BPO':'the gap between ABM investment and pipeline output — and how integrated marketing programmes with embedded sales development are closing that gap for BPO marketing leaders',
-  'IT Services':'how marketing leaders at IT services firms are turning content engagement and campaign activity into qualified pipeline by embedding sales development into their ABM motion',
-  'Enterprise SaaS':'what it looks like when ABM and outbound are genuinely integrated — same target account list, coordinated messaging, and a shared pipeline metric',
-  'Fintech':'how fintech marketing teams are extending the impact of their compliance-aware content by pairing it with account-based outreach that converts intent into pipeline',
-  'Cybersecurity':'how security marketing leaders are turning CISO event attendance and content downloads into pipeline by coupling their ABM with a coordinated outbound motion',
-  'Cloud Communications':'how marketing-led account based programmes are delivering pipeline ROI when they are backed by an outbound motion that converts campaign engagement before the intent window closes',
-  'Other':'how integrated marketing and sales development can turn your existing ABM investment into measurable pipeline — without adding headcount to your sales team',
+  'Cybersecurity':          'how security marketing leaders turn CISO event attendance and content engagement into pipeline by coupling ABM with coordinated outbound that activates accounts before the budget window closes',
+  'BPO':                    'the gap between ABM investment and pipeline output in BPO — and how integrated marketing with embedded sales development closes it for marketing leaders whose campaigns reach awareness but not economic buyers',
+  'Fintech':                'how fintech marketing teams extend compliance-aware content by pairing it with account-based outreach that converts intent into pipeline before procurement defines requirements',
+  'AI & Data':              'how AI and data marketing teams convert high intent into enterprise pipeline by adding an outbound motion that reaches CFOs and COOs — not just the technical buyers their content naturally attracts',
+  'Cloud & Infrastructure': 'how infrastructure marketing teams activate field event and content engagement with coordinated outbound before vendor consolidation decisions close the pipeline window',
+  'Enterprise Software':    'what it looks like when ABM and outbound are genuinely integrated — same target account list, coordinated messaging, and a shared pipeline metric that marketing and sales both own',
+  'Automation & DevTools':  'how automation marketing teams turn business case content into pipeline by coupling it with outbound that reaches Operations and Finance alongside IT',
+  'Cloud Communications':   'how cloud communications marketing programmes deliver pipeline ROI when backed by outbound that converts campaign engagement before consolidation decisions are made',
+  'Other':                  'how integrated marketing and sales development can turn existing ABM investment into measurable pipeline — without adding headcount to the sales team',
 };
 
-// ── Nurture re-engagement angles ─────────────────────────────────────────
 const NURTURE_ANGLES_SALES = {
-  'BPO':'a specific development in the BPO market that has changed the pipeline calculus since we last spoke',
-  'IT Services':'a shift in how enterprise buyers are evaluating IT services partners that is worth a brief conversation',
-  'Enterprise SaaS':'something specific we have done in your category since we last connected that may be directly relevant to your pipeline challenge',
-  'Fintech':'a pattern we are seeing in fintech pipeline generation that seems worth sharing given where you were focused',
-  'Cybersecurity':'a new approach to opening security accounts that is cutting through where traditional outreach has stopped working',
-  'Cloud Communications':'a development in the enterprise comms market that has shifted how the best vendors are building pipeline',
-  'Other':'something we have been working on that is directly relevant to the pipeline conversation we started',
+  'Cybersecurity':          'a new approach to opening security accounts that is cutting through where traditional vendor outreach has stopped working — worth fifteen minutes to walk through given where you were focused',
+  'BPO':                    'a specific development in the BPO market that has changed the pipeline calculus since we last spoke — relevant to the pre-RFP access challenge you were working through',
+  'Fintech':                'a pattern we are seeing in financial services pipeline generation that seems directly relevant to where you were focused when we last connected',
+  'AI & Data':              'something specific we have seen work in AI and data pipeline generation since we last spoke — particularly around reaching economic buyers before technical evaluations lock in requirements',
+  'Cloud & Infrastructure': 'a development in how infrastructure vendors are approaching consolidation decisions — worth a brief conversation given the market shift happening in your category',
+  'Enterprise Software':    'something specific we have done in your category since we last connected that may be directly relevant to the net-new pipeline challenge you were working through',
+  'Automation & DevTools':  'a new approach to engaging the full buying group for automation investments that is converting more pipeline — relevant to the challenge you were working through',
+  'Cloud Communications':   'a development in the enterprise communications market that has shifted how the best vendors are building pipeline ahead of consolidation decisions',
+  'Other':                  'something we have been working on that is directly relevant to the pipeline conversation we started — worth fifteen minutes to share',
 };
 
 const NURTURE_ANGLES_MARKETING = {
-  'BPO':'a specific integrated marketing case study from the BPO space that closes the gap between ABM spend and pipeline output',
-  'IT Services':'a new way we are helping IT services marketing teams convert campaign engagement into qualified enterprise pipeline',
-  'Enterprise SaaS':'how we have evolved our ABM integration model since we last connected — and what it means for marketing ROI',
-  'Fintech':'a fintech-specific approach to integrated marketing that converts intent signals into sales pipeline without increasing headcount',
-  'Cybersecurity':'a security marketing case study that shows what happens when ABM and outbound are genuinely unified',
-  'Cloud Communications':'a specific way we are helping cloud comms marketing teams close the loop between campaign activity and pipeline',
-  'Other':'an update on how we are helping marketing teams convert their account-based investment into qualified pipeline',
+  'Cybersecurity':          'a security marketing case study showing what happens when ABM and outbound are genuinely unified — converting CISO engagement into pipeline before intent fades',
+  'BPO':                    'a specific integrated marketing case study from BPO that closes the gap between ABM spend and pipeline output — reaching economic buyers that campaigns alone do not convert',
+  'Fintech':                'a fintech-specific approach to integrated marketing that converts compliance-aware content engagement into sales pipeline without increasing headcount',
+  'AI & Data':              'how we are helping AI and data marketing teams convert high intent into enterprise pipeline by reaching the economic buyers their content naturally misses',
+  'Cloud & Infrastructure': 'how we are helping infrastructure marketing teams activate field and content engagement before consolidation decisions close the pipeline window',
+  'Enterprise Software':    'how we have evolved our ABM integration model since we last connected — and what it means for marketing ROI when pipeline attribution is shared',
+  'Automation & DevTools':  'how we are helping automation marketing teams convert business case content into pipeline by reaching Operations and Finance alongside IT',
+  'Cloud Communications':   'a specific way we are helping cloud communications marketing teams close the loop between campaign activity and pipeline before consolidation decisions are made',
+  'Other':                  'an update on how we are helping marketing teams convert their account-based investment into qualified pipeline — worth sharing given where you were focused',
 };
 
 const _verticalCache = {};
@@ -1755,13 +2139,13 @@ async function detectVerticalWithAI(company, apiKey) {
       body:JSON.stringify({
         model:'claude-haiku-4-5-20251001',
         max_tokens:20,
-        messages:[{role:'user',content:`Classify "${company}" into exactly one of these: BPO, IT Services, Enterprise SaaS, Fintech, Cybersecurity, Cloud Communications, Other. Reply with the category name only, nothing else.`}]
+        messages:[{role:'user',content:`Classify the company "${company}" into exactly one of these categories: Cybersecurity, BPO, Fintech, AI & Data, Cloud & Infrastructure, Enterprise Software, Automation & DevTools, Cloud Communications, Other. Reply with only the category name, nothing else.`}]
       })
     });
     if (res.ok) {
       const data = await res.json();
       const v = data.content?.[0]?.text?.trim();
-      const valid = ['BPO','IT Services','Enterprise SaaS','Fintech','Cybersecurity','Cloud Communications','Other'];
+      const valid = ['Cybersecurity','BPO','Fintech','AI & Data','Cloud & Infrastructure','Enterprise Software','Automation & DevTools','Cloud Communications','Other'];
       const result = valid.find(x => v?.includes(x)) || 'Enterprise SaaS';
       _verticalCache[lower] = result;
       return result;
@@ -1961,8 +2345,20 @@ function fmtDate(d) {
 
 // ── Pills HTML ─────────────────────────────────────────────────────────────
 function verticalPill(v) {
-  const c = VERTICAL_COLORS[v] || VERTICAL_COLORS['Other'];
-  return `<span class="pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border}">${v}</span>`;
+  const map = {
+    'Cybersecurity':          {bg:'rgba(239,68,68,0.1)',   text:'#f87171', border:'rgba(239,68,68,0.25)'},
+    'BPO':                    {bg:'rgba(34,197,94,0.1)',   text:'#4ade80', border:'rgba(34,197,94,0.25)'},
+    'Fintech':                {bg:'rgba(168,85,247,0.1)',  text:'#c084fc', border:'rgba(168,85,247,0.25)'},
+    'AI & Data':              {bg:'rgba(6,182,212,0.1)',   text:'#22d3ee', border:'rgba(6,182,212,0.25)'},
+    'Cloud & Infrastructure': {bg:'rgba(59,130,246,0.1)', text:'#60a5fa', border:'rgba(59,130,246,0.25)'},
+    'Enterprise Software':    {bg:'rgba(245,158,11,0.1)', text:'#fbbf24', border:'rgba(245,158,11,0.25)'},
+    'Automation & DevTools':  {bg:'rgba(236,72,153,0.1)', text:'#f472b6', border:'rgba(236,72,153,0.25)'},
+    'Cloud Communications':   {bg:'rgba(251,146,60,0.1)', text:'#fb923c', border:'rgba(251,146,60,0.25)'},
+    'IT Services':            {bg:'rgba(99,102,241,0.1)', text:'#818cf8', border:'rgba(99,102,241,0.25)'},
+    'Other':                  {bg:'rgba(255,255,255,0.06)',text:'rgba(255,255,255,0.5)',border:'rgba(255,255,255,0.12)'},
+  };
+  const m = map[v] || map['Other'];
+  return `<span class="pill" style="background:${m.bg};color:${m.text};border:1px solid ${m.border}">${v||'Other'}</span>`;
 }
 
 function stagePill(stage) {
@@ -2249,6 +2645,32 @@ function handleFile(file) {
     const result = isXlsx ? parseXLSX(new Uint8Array(ev.target.result)) : parseCSV(ev.target.result);
     if (result.error) { errEl.textContent = result.error; errEl.style.display='flex'; return; }
     contacts = result.contacts; emails = {}; statuses = {};
+
+    // ── Cadence deduplication ─────────────────────────────────────────────
+    // If a contact is already in history (active cadence), restore their state
+    // so they don't receive a duplicate first-touch email
+    let alreadyInCadence = 0;
+    contacts.forEach(c => {
+      const hr = history[c.email];
+      if (!hr) return; // never contacted — treat as new
+      const seqCount = hr.sequences?.length || 0;
+      if (seqCount === 0) return; // in history but no emails sent yet — treat as new
+      // Restore their cadence state so the app knows where they are
+      c._inCadence = true;
+      c._cadenceStage = seqCount;
+      c._cadenceStatus = hr.reEngaging ? 'Re-engage' : seqCount >= 3 ? 'Nurture' : `Touch ${seqCount} sent`;
+      alreadyInCadence++;
+    });
+    if (alreadyInCadence > 0) {
+      const banner = document.getElementById('followup-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = `<div style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#fb923c">
+          ⚡ <strong>${alreadyInCadence} contact${alreadyInCadence>1?'s are':' is'} already in an active cadence</strong> — their sequence has been restored. They won't receive a duplicate first-touch email.
+        </div>`;
+      }
+    }
+
     renderContactsPage(); renderComposePage(); renderSendPage();
     updateTopBar(); renderNav();
     // Background enrichment: vertical + title detection for unknowns
@@ -2425,6 +2847,9 @@ function renderContactsPage() {
   if (!tbody) return;
   tbody.innerHTML = filtered.map(c => {
     const hr = history[c.email];
+    const inCadenceBadge = c._inCadence
+      ? `<span style="font-size:10px;background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);border-radius:4px;padding:1px 6px;margin-left:4px">Touch ${c._cadenceStage} sent</span>`
+      : '';
     const lastSeq = hr?.sequences?.[hr.sequences.length-1];
     const histHtml = lastSeq
       ? `<span style="font-size:11px;color:#0F9ED5;display:inline-flex;align-items:center;gap:5px">${stagePill(lastSeq.stage)} <span style="color:rgba(255,255,255,0.3)">${fmtDate(lastSeq.sentAt)}</span></span>`
@@ -2432,7 +2857,7 @@ function renderContactsPage() {
     return `<tr>
       <td style="font-weight:600;font-size:13px">${esc(c.first_name)} ${esc(c.last_name)}<div style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:400">${esc(c.title)}${c.titleLookedUp ? '<span style="font-size:9px;color:#0F9ED5;margin-left:4px">web</span>' : ''}</div></td>
       <td style="color:rgba(255,255,255,0.5)">${esc(c.company)}</td>
-      <td style="color:#E97132;font-size:11px">${esc(c.email)}</td>
+      <td style="color:#E97132;font-size:11px">${esc(c.email)}${inCadenceBadge}</td>
       <td>${verticalPill(c.vertical)}${c.autoDetected?'<span style="font-size:9px;color:rgba(255,255,255,0.3);margin-left:5px">auto</span>':''}</td>
       <td>${personaPill(detectPersona(c.title||''))}</td>
       <td>${histHtml}</td>
@@ -2446,6 +2871,16 @@ function renderContactsPage() {
 // ── Generate ────────────────────────────────────────────────────────────────
 function generateById(id) { const c = contacts.find(x=>x.id===id); if(c) generateOne(c); }
 
+const CLARIFY_CLIENTS = new Set(['a24','accenture','adobe','adyen','armis','atech cloud','atlassian','automation anywhere','aws','axonius','beamery','bigid','bottomline technologies','ca technologies','capita','chime','cisco','citrix','cognizant','cohesity','collenda','computacenter','confluent','crowdstrike','cyberark','cyberfort','cyera','databricks','datadog','deloitte','digital owl','dxc technology','dynatrace','elastic','entrust','exl service','extrahop','ey','firstsource','genpact','gitlab','hexaware','ibm','incopro','infobip','infor','integra','interactions','kodak alaris','kpmg','kyndryl','launchdarkly','mastek','micro focus','microsoft','mimecast','monday.com','mongodb','moogsoft','ncino','netapp','nutanix','okta','one identity','oracle','orgvue','outseer','outsystems','pachyderm','palantir','palo alto','palo alto networks','paypal','ping identity','plaid','polyai','proofpoint','pure storage','pwc','red hat','rubrik','sage','salesforce','samsara','sap','seldon','sensedia','sentinelone','servicenow','smart communications','snowflake','software ag','sprout social','stripe','sullivan & stanley','surecloud','symantec','tata consultancy services','tata tcs','tcs','tech data','towers associates','tryzens','twilio','uipath','unit4','veridium','veritas','vmware','vodafone','wiz','workday','xerox','zapier','zendesk','zscaler']);
+function isKnownClient(company) {
+  if (!company) return false;
+  const lower = company.toLowerCase().trim();
+  for (const c of CLARIFY_CLIENTS) {
+    if (lower === c || lower.startsWith(c) || c.startsWith(lower)) return true;
+  }
+  return false;
+}
+
 async function generateOne(contact, skipRender=false) {
   statuses[contact.id] = 'generating';
   if (!skipRender) { renderComposePage(); renderSendPage(); updateTopBar(); }
@@ -2457,7 +2892,10 @@ async function generateOne(contact, skipRender=false) {
   const followMap = persona === 'sales' ? FOLLOW_UP_ANGLES_SALES : persona === 'marketing' ? FOLLOW_UP_ANGLES_MARKETING : FOLLOW_UP_ANGLES;
   const pain = painMap[vertical] || painMap['Other'] || PAIN_POINTS['Other'];
   const histRec = history[contact.email];
-  const currentStage = histRec ? (histRec.sequences?.length||0)+1 : 1;
+  // If contact was flagged as already in cadence on import, use their restored stage
+  const currentStage = contact._inCadence && contact._cadenceStage
+    ? contact._cadenceStage + 1
+    : histRec ? (histRec.sequences?.length||0)+1 : 1;
   const isFollowUp = currentStage > 1;
   const followUpAngle = followMap[vertical] || followMap['Other'];
   const prevSubject = histRec?.sequences?.[histRec.sequences.length-1]?.subject||'';
@@ -2469,12 +2907,14 @@ async function generateOne(contact, skipRender=false) {
     ? `MARKETING LEADER (${contact.title||'marketing'}): Lead with ABM, integrated marketing with embedded sales development, converting campaign investment into qualified pipeline. Language: ABM motion, integrated outbound, marketing-to-pipeline conversion, embedded SDR resources.`
     : `DECISION MAKER (${contact.title||'senior leader'}): Use Clarify's general pipeline generation and account-based outreach messaging.`;
 
-  const VERIFIED_FACTS = [
-    'Adobe: 9-year partnership. Generated approximately $69.4M in pipeline. 88% Stage 2 to pipeline conversion.',
-    'Adobe scope: U.S. Higher Education, Digital Media and Digital Experience across EMEA.',
-    'Methodology with Adobe: account-based motion combining personalised outreach, multi-threaded follow-up, and sustained engagement into hard-to-access buying groups.',
-    'Other clients (reference by name only, no fabricated stats): PayPal, TCS, Tata Communications, Zellis, Wiz, DXC Technology, SAP, Reprise, Syniverse, Cyera, Palo Alto Networks.',
-  ].join('\n');
+  // Select facts relevant to this vertical only — no cross-industry references
+  const VERIFIED_FACTS = (ALL_VERTICAL_FACTS[vertical] || ALL_VERTICAL_FACTS['Other']).join('\n');
+
+  // Known client flag — inject into prompt if contact's company is a Clarify client
+  const knownClient = isKnownClient(contact.company || '');
+  const clientNote = knownClient
+    ? `NOTE: We have worked with ${contact.company} previously. You may reference this naturally — e.g. "Having worked with ${contact.company}..." or "Given our work with ${contact.company}..." — but only once and only if it fits naturally. Do not force it.`
+    : '';
 
   const VOICE_GUIDE = [
     "Write peer-to-peer. You are a trusted advisor who understands this person's world. Not a vendor pitching.",
@@ -2517,7 +2957,12 @@ Hi ${contact.first_name||'there'},
 
 [CTA sentence: Ask for 15 minutes to share something specific. Confident, not apologetic.]
 
-${cfg('fromName')} | ${cfg('title')}
+Thanks,
+
+${cfg('fromName')}
+${cfg('title')} | Clarify B2B
+
+${clientNote}
 
 RULES: Body under 110 words. No em dashes. No bullet points. Never say: "circling back", "following up", "reaching out again", "as I mentioned", "just wanted to". No placeholders in the output.`
     : isFollowUp
@@ -2543,7 +2988,12 @@ Hi ${contact.first_name||'there'},
 [2 short paragraphs - new angle, not a rehash, no fabricated stats]
 [1 sentence CTA - direct, ask for 15 min or specific day. No content-offer language.]
 [blank line]
-${cfg('fromName')} | ${cfg('title')}
+Thanks,
+
+${cfg('fromName')}
+${cfg('title')} | Clarify B2B
+
+${clientNote}
 
 Under 90 words body only. NO em dashes. NO bullet points.`
     : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')}.
@@ -2570,7 +3020,12 @@ Hi ${contact.first_name||'there'},
 
 [Single CTA sentence: Direct, confident. Ask for 15 minutes on a specific day or this week. No offer of content, case studies, or resources.]
 
-${cfg('fromName')} | ${cfg('title')}
+Thanks,
+
+${cfg('fromName')}
+${cfg('title')} | Clarify B2B
+
+${clientNote}
 
 RULES: Body under 160 words. No em dashes. No bullet points. No placeholders in the output.`;
 
@@ -2602,20 +3057,31 @@ RULES: Body under 160 words. No em dashes. No bullet points. No placeholders in 
       }
     }
     if (!subject && lines.length>0) {subject=lines[0].replace(/\*\*/g,'').replace(/^subject:\s*/i,'').replace(/—/g,' ').trim();bodyStart=1;}
-    // Strip signature and common sign-offs if model included them
+    // Strip only raw bare signatures (Name | Title without a proper sign-off)
+    // We KEEP "Thanks, \n\n Name \n Title" — only strip if model echoes name without sign-off
     let bodyLines = lines.slice(bodyStart);
     const fromName = cfg('fromName') || '';
-    const signOffPatterns = /^(best|regards|thanks|cheers|sincerely|kind regards|warm regards|best wishes|talk soon|looking forward|speak soon)/i;
-    const sigIdx = bodyLines.findIndex((l, i) => {
-      const t = l.trim();
-      if (!t) return false;
-      if (fromName && t.startsWith(fromName)) return true;
-      if (/^--\s*$/.test(t)) return true;
-      // Sign-off line followed by name or empty
-      if (signOffPatterns.test(t) && i >= bodyLines.length - 4) return true;
-      return false;
-    });
-    if (sigIdx > 0) bodyLines = bodyLines.slice(0, sigIdx);
+    // Find if there's a proper sign-off (Thanks/Best/Regards) in last 6 lines
+    const last6 = bodyLines.slice(-6).map(l => l.trim());
+    const hasProperSignOff = last6.some(l => /^(thanks|best|regards|cheers|sincerely|kind regards)/i.test(l));
+    if (!hasProperSignOff) {
+      // No sign-off at all — strip any bare name/title lines at the end
+      const sigIdx = bodyLines.findIndex((l, i) => {
+        const t = l.trim();
+        if (!t) return false;
+        if (/^--\s*$/.test(t)) return true;
+        if (fromName && (t === fromName || t.startsWith(fromName + ' |') || t.startsWith(fromName + '\n'))) return true;
+        return false;
+      });
+      if (sigIdx > 0) bodyLines = bodyLines.slice(0, sigIdx);
+      // Append proper sign-off since model didn't include one
+      bodyLines.push('');
+      bodyLines.push('Thanks,');
+      bodyLines.push('');
+      bodyLines.push(fromName);
+      const userTitle = cfg('title') || '';
+      if (userTitle) bodyLines.push(userTitle + ' | Clarify B2B');
+    }
 
     let body = bodyLines.join('\n').trim();
 
