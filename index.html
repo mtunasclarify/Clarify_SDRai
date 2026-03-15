@@ -1949,43 +1949,42 @@ function personaPill(persona) {
 // ── Vertical-specific verified facts (2 lines max per vertical) ─────────
 const ALL_VERTICAL_FACTS = {
   'Cybersecurity': [
-    'Clarify has worked with cybersecurity organisations including Okta, Wiz, Ping Identity, Entrust, ExtraHop, SureCloud, Symantec, Veridium, Cyera, One Identity, and Outseer.',
-    'Ping Identity: $14.7M pipeline generated. One other cybersecurity client (cloud-native security): $27M pipeline and $3.5M revenue in approximately 8 months.',
+    'Clarify has worked with cybersecurity organisations including Okta, Wiz, Ping Identity, Entrust, ExtraHop, SureCloud, Symantec, Veridium, Cyera, One Identity, Outseer, Palo Alto Networks, and Lacework.',
+    'Ping Identity: $14.7M pipeline. Wiz: $27M pipeline and $3.5M revenue in 8 months. Palo Alto/Cortex: $16M+ qualified pipeline.',
   ],
   'BPO': [
-    'Clarify has worked with BPO organisations including Capita, Mastek, Xerox, DXC Technology, Genpact, Accenture, IBM, Deloitte, EXL Service, FirstSource, Hexaware, and Tata Consultancy Services.',
-    'Capita: $234.5M pipeline across 8 business divisions. Xerox: $1.4B+ pipeline influenced and $105M in new logo revenue. Mastek: $800M+ pipeline and $150M+ revenue attributed.',
+    'Clarify has worked with BPO and IT services organisations including Capita, Mastek, Xerox, DXC Technology, Genpact, Accenture, IBM, Deloitte, EXL Service, FirstSource, Hexaware, Tata Consultancy Services, and Siemens.',
+    'Capita: $234.5M pipeline across 8 business divisions, $34.2M revenue. Mastek: $800M+ pipeline, $150M+ revenue. Xerox: $41.6M pipeline. Siemens: $53.4M pipeline.',
   ],
   'Fintech': [
-    'Clarify has worked with fintech and financial services organisations including PayPal, Collenda, and Digital Owl.',
-    'One fintech client (leading global payment platform): $51M pipeline, 84% conversion to pipeline, 91:1 pipeline ROI.',
+    'Clarify has worked with fintech and payments organisations including PayPal, ACI Worldwide, Collenda, Soldo, and Digital Owl.',
+    'PayPal: $20M qualified pipeline, 91:1 ROI, 30 net new enterprise logos. Collenda: $78.8M pipeline. ACI Worldwide: $25.5M pipeline. Soldo: $12.3M pipeline, $3.96M ARR in 6 months.',
   ],
   'AI & Data': [
-    'Clarify has worked with AI and data organisations including SAP, Sage, Beamery, Cohesity, Interactions, Moogsoft, Orgvue, PolyAI, Seldon, Pachyderm, and Unit4.',
-    'Clarify works as an extension of AI and data sales and marketing teams to build pipeline into enterprise accounts — reaching economic buyers in Finance and Operations, not just technical stakeholders.',
+    'Clarify has worked with AI and data organisations including SAP, Unit4, Sage, Beamery, Cohesity, Interactions, Moogsoft, Orgvue, PolyAI, Seldon, Pachyderm, and Oracle.',
+    'Interactions: $97M pipeline, 30 net new logos. SAP SuccessFactors: $7.2M pipeline in 4 months, 205:1 ROI. Unit4: $7.7M pipeline. PolyAI: $12.3M ARR pipeline, $2.79M closed ARR.',
   ],
   'Cloud & Infrastructure': [
-    'Clarify has worked with cloud and infrastructure organisations including Cisco, VMware, Computacenter, Integra, Sensedia, Software AG, Tech Data, and Veritas.',
-    'Clarify works as an extension of infrastructure sales teams to build pipeline into enterprise accounts — positioning clients ahead of vendor consolidation decisions before formal reviews begin.',
+    'Clarify has worked with cloud and infrastructure organisations including Cisco, VMware, Veritas, Computacenter, Integra, Sensedia, Software AG, Tech Data, and Cohesity.',
+    'VMware: $70M pipeline. Veritas: $89.3M pipeline. Cohesity: $3.3M pipeline.',
   ],
   'Enterprise Software': [
-    'Clarify has worked with enterprise software organisations including Adobe, Samsara, CA Technologies, Micro Focus, OutSystems, Sprout Social, Kodak Alaris, and Tryzens.',
-    'Clarify works as an extension of enterprise software sales and marketing teams to build pipeline into strategic accounts.',
+    'Clarify has worked with enterprise software organisations including Adobe, Samsara, CA Technologies, Micro Focus, OutSystems, Sprout Social, Kodak Alaris, Tryzens, and WalkMe.',
+    'Adobe: $47M pipeline, 84% conversion to pipeline. Clarify works as an extension of enterprise software sales and marketing teams to build pipeline into strategic accounts.',
   ],
   'Automation & DevTools': [
     'Clarify has worked with automation and developer tools organisations including OutSystems.',
-    'Clarify works as an extension of sales and marketing teams to build pipeline into enterprise accounts — reaching Operations and Finance alongside IT so the full buying group is engaged before formal procurement begins.',
+    'Clarify works as an extension of sales and marketing teams to build pipeline into enterprise accounts, reaching Operations and Finance alongside IT so the full buying group is engaged before formal procurement begins.',
   ],
   'Cloud Communications': [
     'Clarify has worked with cloud communications organisations including Vodafone, Infobip, and Smart Communications.',
-    'Vodafone: $29M pipeline over 15 months, 23% increase in average deal size, $13.3M in first 6 months vs a target of $9.8M.',
+    'Vodafone: $1.27B pipeline, $127M+ revenue across the partnership. $29M pipeline in 15 months on one programme alone, with a 23% increase in average deal size.',
   ],
   'Other': [
     'Clarify has worked with organisations across cybersecurity, BPO, fintech, AI and data, cloud infrastructure, enterprise software, and cloud communications.',
-    'Clarify works as an extension of enterprise sales and marketing teams to build predictable pipeline into strategic accounts — particularly where deal cycles are long and access to decision makers is difficult.',
+    'Clarify works as an extension of enterprise sales and marketing teams to build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult.',
   ],
-};
-// ── Vertical-specific verified facts ────────────────────────────────────
+};// ── Vertical-specific verified facts ────────────────────────────────────
 
 // ── Web search title lookup ──────────────────────────────────────────────
 const _titleCache = {};
@@ -2717,9 +2716,10 @@ function handleFile(file) {
     if (result.error) { errEl.textContent = result.error; errEl.style.display='flex'; return; }
     contacts = result.contacts; emails = {}; statuses = {};
 
-    // ── A/B variant assignment — alternating 50/50, locked per contact ───
+    // ── A/B/C variant assignment — rotating 33/33/33, locked per contact ───
+    const variants = ['A', 'B', 'C'];
     contacts.forEach((c, i) => {
-      if (!c.variant) c.variant = i % 2 === 0 ? 'A' : 'B';
+      if (!c.variant) c.variant = variants[i % 3];
     });
 
     renderContactsPage(); renderComposePage(); renderSendPage();
@@ -2891,7 +2891,8 @@ function renderContactsPage() {
   if (filterCount) {
     const aCount = contacts.filter(c => c.variant === 'A').length;
     const bCount = contacts.filter(c => c.variant === 'B').length;
-    const splitInfo = aCount > 0 || bCount > 0 ? ` | A: ${aCount}  B: ${bCount}` : '';
+    const cCount = contacts.filter(c => c.variant === 'C').length;
+    const splitInfo = aCount > 0 || bCount > 0 ? ` | A: ${aCount}  B: ${bCount}  C: ${cCount}` : '';
     filterCount.textContent = filtered.length < contacts.length
       ? `${filtered.length} of ${contacts.length} shown${splitInfo}`
       : `${contacts.length} contacts${splitInfo}`;
@@ -2921,6 +2922,16 @@ function renderContactsPage() {
 
 // ── Generate ────────────────────────────────────────────────────────────────
 function generateById(id) { const c = contacts.find(x=>x.id===id); if(c) generateOne(c); }
+
+const CLARIFY_CLIENTS = new Set(['a24','accenture','aci worldwide','adobe','arctic wolf','atech cloud','beamery','ca technologies','capita','cisco','cohesity','collenda','computacenter','cyberfort','cyera','deloitte','digital owl','dxc technology','entrust','exl service','extrahop','firstsource','genpact','hexaware','ibm','incopro','infobip','integra','interactions','kodak alaris','lacework','mastek','micro focus','moogsoft','okta','one identity','oracle','orgvue','outseer','outsystems','pachyderm','palo alto networks','paypal','ping identity','polyai','sage','samsara','sap','seldon','sensedia','siemens','smart communications','software ag','soldo','sprout social','sullivan & stanley','surecloud','symantec','syniverse','tata communications','tata consultancy services','tata tcs','tcs','tech data','towers associates','tryzens','unit4','veridium','veritas','vmware','vodafone','vonage','walkme','wiz','xerox']);
+function isKnownClient(company) {
+  if (!company) return false;
+  const lower = company.toLowerCase().trim();
+  for (const c of CLARIFY_CLIENTS) {
+    if (lower === c || lower.startsWith(c) || c.startsWith(lower)) return true;
+  }
+  return false;
+}
 
 async function generateOne(contact, skipRender=false) {
   statuses[contact.id] = 'generating';
@@ -2954,20 +2965,20 @@ async function generateOne(contact, skipRender=false) {
 
 Hi [First Name],
 
-We work with cybersecurity companies as an extension of their sales team to build pipeline into strategic accounts where typical outreach falls short and decision-making spans multiple stakeholders.
+We work with cybersecurity companies as an extension of their sales and marketing team to build pipeline into strategic accounts where typical outreach doesn't reach and decisions span multiple stakeholders.
 
 We helped Ping Identity generate $14.7M in pipeline. We also worked with a cloud-native security company to build $27M in pipeline and $3.5M in revenue over roughly 8 months.
 
-Are you open to 15 minutes this week to discuss how this could work for [Company]?`,
-      'marketing': `Subject: Turning security campaigns into pipeline
+Are you open to 15 minutes Thursday or Friday to discuss how this could work for [Company]?`,
+      'marketing': `Subject: Building pipeline into security accounts
 
 Hi [First Name],
 
-We work with cybersecurity companies as an extension of their marketing team to convert campaign engagement into qualified pipeline with the buyers who actually control budget.
+We work with cybersecurity companies as an extension of their marketing team to build pipeline into strategic accounts where typical outreach doesn't reach and buying decisions span CISO, CIO, Legal, and Finance.
 
-We helped Ping Identity generate $14.7M in pipeline by reaching beyond the CISO to the full buying committee. We also helped a cloud-native security company build $27M in pipeline over roughly 8 months.
+We helped Ping Identity generate $14.7M in pipeline. We also worked with a cloud-native security company to build $27M in pipeline and $3.5M in revenue over roughly 8 months.
 
-Are you free for 15 minutes this week to explore how this could work for [Company]?`,
+Are you open to 15 minutes Thursday or Friday to discuss how this could work for [Company]?`,
     },
     'BPO': {
       'sales': `Subject: Building pipeline into strategic accounts
@@ -3123,13 +3134,13 @@ Clarify helps enterprise security companies build predictable pipeline into stra
 We have worked with organisations including Okta, Wiz, and Ping Identity on this.
 
 Are you open to 15 minutes Thursday or Friday?`,
-    'Fintech': `Subject: How Clarify supports fintech sales teams
+    'Fintech': `Subject: Building pipeline into strategic accounts
 
 Hi [First Name],
 
-Clarify helps fintech and financial services companies build predictable pipeline into strategic accounts where deal cycles are long and procurement is compliance-heavy. We work as an extension of your sales and marketing team, combining account research, ABM, and sales development to help you engage business buyers earlier in the cycle.
+Clarify helps fintech sales and marketing teams build predictable pipeline into strategic accounts where deal cycles are long and access to decision makers is difficult. We work as an extension of your team, running targeted account research, outreach, and ABM into priority accounts to help you engage the right people earlier in the buying cycle.
 
-We have worked with a leading global payment platform to generate $51M in pipeline at 91:1 ROI.
+We worked with a leading global payment platform that generated $51M in pipeline at 91:1 ROI.
 
 Are you open to 15 minutes Thursday or Friday?`,
     'Cloud & Infrastructure': `Subject: How Clarify supports infrastructure sales teams
@@ -3183,13 +3194,15 @@ Are you open to 15 minutes Thursday or Friday?`,
     : '';
 
   const VOICE_GUIDE = [
-    "Write like a trusted peer who works in this space. Short sentences. Conversational. Not a pitch deck.",
-    "Sentence 1-2: Clarify works as an extension of sales and marketing teams to build predictable pipeline into strategic accounts. Keep it simple and direct — do not over-explain. Style guide: 'We work with [vertical] companies as an extension of their sales and marketing team to build pipeline into accounts that typical outreach does not reach.' Adapt naturally to the vertical and role.",
-    "Sentence 3-4: If VERIFIED_FACTS contains a relevant stat with a number, use it with the client name. If not, skip proof entirely — do not invent or imply results.",
-    "Subject: 4-6 words, plain language. Never starts with Re: or Fwd:.",
-    "CTA: ask for 15 minutes, specific day or this week. Never 'would love to', 'happy to', 'hope this finds you well'.",
-    "NEVER use these phrases: multi-threaded, buying groups, pre-RFP access, sustained engagement, hard-to-reach accounts, account-based development (use plain English instead). NEVER fabricate stats. NEVER list multiple clients.",
-  ].join('\n');// Nurture re-engagement uses completely fresh angle
+    "Write as a credible peer who knows this industry. Conversational, direct, confident. Not a vendor pitch.",
+    "Think about who this specific person is — their role, seniority, company, and what they likely care about day to day. Use that to choose your angle, not a template.",
+    "The email should feel like it was written for this person specifically, not adapted from a generic script.",
+    "Lead with what Clarify does clearly — the reader should immediately understand we are a sales and marketing service, not software. Then use one proof point that is relevant to their world.",
+    "Choose the proof point that will land best for this person. A sales leader cares about pipeline numbers. A marketing leader cares about campaign-to-pipeline conversion. A CRO cares about efficiency and cost of growth.",
+    "Length: 3-4 short paragraphs maximum. Under 120 words for first touch. Every sentence must earn its place.",
+    "NEVER use: em dashes, bullet points, 'Hope you are doing well', 'I noticed', 'I came across', 'just wanted to', 'circling back', 'multi-threaded', 'buying groups', 'pre-RFP', 'sustained engagement'.",
+    "NEVER fabricate stats. NEVER attach a number to a company name unless that exact pairing is in VERIFIED FACTS.",
+  ].join('\n'); // Nurture re-engagement uses completely fresh angle
   const isNurture = contact.isNurture || false;
   const nurtureAngleMap = persona === 'sales' ? NURTURE_ANGLES_SALES : NURTURE_ANGLES_MARKETING;
   const nurtureAngle = nurtureAngleMap[vertical] || nurtureAngleMap['Other'];
@@ -3225,7 +3238,7 @@ Thanks,
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body under 90 words. No em dashes. No bullet points. Never say: circling back, following up, reaching out again, as I mentioned, just wanted to. One client reference maximum. No fabricated stats. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`
+STRICT RULES: Body under 90 words. No em dashes. No bullet points. Never say: circling back, following up, reaching out again, as I mentioned, just wanted to. One client reference maximum. No fabricated stats. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats (USD): Capita ($234.5M pipeline), Mastek ($800M+ pipeline), Xerox ($41.6M pipeline), Vodafone ($1.27B pipeline total, $127M+ revenue), Ping Identity ($14.7M pipeline), VMware ($70M pipeline), Veritas ($89.3M pipeline), Collenda ($78.8M pipeline), ACI Worldwide ($25.5M pipeline), Soldo ($12.3M pipeline), PayPal ($20M pipeline, 91:1 ROI), Wiz ($27M pipeline, $3.5M revenue), Palo Alto/Cortex ($16M pipeline), Interactions ($97M pipeline), Siemens ($53.4M pipeline), Adobe ($47M pipeline, 84% conversion), SAP SuccessFactors ($7.2M pipeline, 205:1 ROI), Unit4 ($7.7M pipeline), PolyAI ($12.3M pipeline), Digital Owl ($5.2M pipeline), Cohesity ($3.3M pipeline). All other companies — name only, no invented numbers.`
     : isFollowUp
     ? `You are writing follow-up cold email (touch ${currentStage} of 3) on behalf of ${cfg('fromName')}, ${cfg('title')}.
 Today: ${dateContext}.
@@ -3245,7 +3258,7 @@ ${clientNote}${examplesBlock}${hardcodedEx ? `
 APPROVED STYLE EXAMPLE — use this as your structural and tonal reference. Same length, same directness, same format. But think about this specific person at this specific company — if their role, company size, or situation suggests a sharper or more relevant angle, use it. The example is a floor not a script:
 ${hardcodedEx}` : ''}
 
-REMINDER: Clarify is a specialist sales and marketing service that works as an extension of enterprise technology sales and marketing teams to build pipeline into strategic accounts. Not a tech product — a service.
+REMINDER: Clarify is a specialist B2B sales and marketing agency (20+ years, offices in Tampa and UK). Not a technology product. We work as an extension of enterprise sales and marketing teams — running outbound, ABM, account research, and sales development to build pipeline into strategic accounts where typical outreach doesn't reach.
 
 ---
 Subject: [4-6 words, fresh angle from previous subject, not starting with Re:]
@@ -3261,11 +3274,39 @@ Thanks,
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following up" or "circling back". One client reference maximum. No fabricated stats. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift). All other companies — mention by name only, no numbers.`
+STRICT RULES: Body under 80 words. No em dashes. No bullet points. No "following up" or "circling back". One client reference maximum. No fabricated stats. NEVER attach a stat to a named company unless that exact pairing is in VERIFIED FACTS. Only confirmed named stats (USD): Capita ($234.5M pipeline), Mastek ($800M+ pipeline), Xerox ($41.6M pipeline), Vodafone ($1.27B pipeline total, $127M+ revenue), Ping Identity ($14.7M pipeline), VMware ($70M pipeline), Veritas ($89.3M pipeline), Collenda ($78.8M pipeline), ACI Worldwide ($25.5M pipeline), Soldo ($12.3M pipeline), PayPal ($20M pipeline, 91:1 ROI), Wiz ($27M pipeline, $3.5M revenue), Palo Alto/Cortex ($16M pipeline), Interactions ($97M pipeline), Siemens ($53.4M pipeline), Adobe ($47M pipeline, 84% conversion), SAP SuccessFactors ($7.2M pipeline, 205:1 ROI), Unit4 ($7.7M pipeline), PolyAI ($12.3M pipeline), Digital Owl ($5.2M pipeline), Cohesity ($3.3M pipeline). All other companies — name only, no invented numbers.`
+    : contact.variant === 'C'
+    ? `You are an experienced B2B sales development rep at Clarify B2B writing a cold outbound email to ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company}.
+
+ABOUT CLARIFY: Clarify is a B2B enterprise pipeline generation and account-based growth partner. We help technology and services companies generate pipeline into strategic accounts where access is difficult and sales cycles are long. We combine account research, multi-threaded outreach, ABM, and sales development execution — working as an extension of sales and marketing teams. We are a service, not a technology product. We work best in complex, multi-stakeholder enterprise buying environments where broad outbound alone does not work.
+
+ABOUT THIS PERSON: They work in the ${vertical} space. Their persona is ${personaContext}. Key challenge they likely face: ${pain}.
+
+VERIFIED FACTS — only use what is listed here, invent nothing:
+${VERIFIED_FACTS}
+
+${clientNote}
+
+Write the best possible cold email to this person. Use your judgment on structure, angle, length, and proof points. Do not follow a template. Think about what would make this specific person want to reply. Be direct, be human, be specific to who they are and what they do.
+
+The only rules:
+- Under 120 words
+- No em dashes
+- No "Hope you're doing well", "I noticed", "I came across", "just wanted to"
+- No fabricated stats — only use numbers from VERIFIED FACTS
+- Only confirmed named stats (USD): Capita ($234.5M pipeline), Mastek ($800M+ pipeline), Xerox ($41.6M pipeline), Vodafone ($1.27B pipeline total, $127M+ revenue), Ping Identity ($14.7M pipeline), VMware ($70M pipeline), Veritas ($89.3M pipeline), Collenda ($78.8M pipeline), ACI Worldwide ($25.5M pipeline), Soldo ($12.3M pipeline), PayPal ($20M pipeline, 91:1 ROI), Wiz ($27M pipeline, $3.5M revenue), Palo Alto/Cortex ($16M pipeline), Interactions ($97M pipeline), Siemens ($53.4M pipeline), Adobe ($47M pipeline, 84% conversion), SAP SuccessFactors ($7.2M pipeline, 205:1 ROI), Unit4 ($7.7M pipeline), PolyAI ($12.3M pipeline), Digital Owl ($5.2M pipeline), Cohesity ($3.3M pipeline). All other companies — name only, no invented numbers.
+- End with: Thanks, / / ${cfg('fromName')} / ${cfg('title')} | Clarify B2B`
     : contact.variant === 'B'
     ? `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
 
-WHAT CLARIFY IS: Clarify helps enterprise sales and marketing teams build predictable pipeline into strategic accounts, particularly where deal cycles are long and access to decision makers is difficult. We work as an extension of sales and marketing teams, running targeted outreach, ABM campaigns, and sales development into priority accounts to help teams engage the right people earlier and convert that into qualified pipeline. We are a service, not a technology product.
+WHAT CLARIFY IS:
+Clarify is a specialist B2B sales and marketing agency with over 20 years of experience, with offices in the US (Tampa) and EMEA (UK). We are not a technology product — we are a service.
+
+Clarify is a B2B enterprise pipeline generation and account-based growth partner. We help technology and services companies generate pipeline into strategic accounts where access is difficult, sales cycles are long, and buying groups are complex. We combine account research, multi-threaded outreach, ABM design, and sales development execution — working as an extension of sales and marketing teams, not as a technology product or data tool.
+
+Our services include: outsourced sales development, marketing consultancy, data and insights, recruitment, and sales training. Clients typically onboard within 2-6 weeks.
+
+We specialise in complex B2B technology sales — hyperscalers, enterprise-level companies, and high-growth scale-ups navigating long, complicated buying cycles.
 
 VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
 ${VERIFIED_FACTS}
@@ -3281,25 +3322,28 @@ APPROVED STYLE EXAMPLE — match this structure and tone, adapt to this specific
 ${VARIANT_B_EXAMPLES[vertical] || VARIANT_B_EXAMPLES['BPO']}
 
 ---
-Subject: [4-6 plain words, not starting with Re:]
+Write the email now. Subject line first, then the email body.
 
-Hi ${contact.first_name||'there'},
+Think about this specific person — their role at ${contact.company} in the ${vertical} space — and write something that would make them want to reply. Use the approved example as your tonal reference for length and directness, but find the most relevant angle for this contact specifically.
 
-[2 sentences: Open with what Clarify does. Lead with "Clarify helps [vertical] sales and marketing teams..." — make it clear we are a service working as an extension of their team. Specific to their vertical.]
-
-[1-2 sentences: Reference 1-2 companies Clarify has worked with in this vertical. Use a stat if one exists in VERIFIED_FACTS. If no stat, company names alone are fine.]
-
-[1 sentence CTA: 15 minutes, Thursday or Friday or this week.]
+Open by explaining what Clarify is and does clearly — the reader should understand we are a sales and marketing service working as an extension of their team. Then reference one proof point from VERIFIED FACTS. End with a direct ask for 15 minutes.
 
 Thanks,
 
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across". ONE client reference maximum. No fabricated stats. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift), Ping Identity ($14.7M pipeline). All other companies — names only, no numbers.`
+STRICT RULES: Body 80-120 words. No em dashes. No bullet points. Subject does not start with Re:. ONE proof point only. No fabricated stats. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift), Ping Identity ($14.7M pipeline), Interactions ($46M pipeline), Cohesity ($3.3M pipeline), Digital Owl ($5.2M pipeline). All other companies — name only, no numbers.`
     : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
 
-WHAT CLARIFY IS: Clarify works as an extension of sales and marketing teams to build pipeline into strategic accounts. We are a service, not a technology product.
+WHAT CLARIFY IS:
+Clarify is a specialist B2B sales and marketing agency with over 20 years of experience, with offices in the US (Tampa) and EMEA (UK). We are not a technology product — we are a service.
+
+Clarify works as an extension of enterprise sales and marketing teams to build predictable pipeline into strategic accounts, particularly where deal cycles are long, buying groups are complex, and access to senior decision makers is difficult. We integrate directly into a client's go-to-market motion — running outbound, ABM campaigns, account research, and sales development execution as a seamless part of their team.
+
+Our services include: outsourced sales development, marketing consultancy, data and insights, recruitment and talent, and sales training. Clients typically onboard within 2-6 weeks.
+
+We specialise in complex B2B technology sales — working with hyperscalers, enterprise-level companies, and high-growth scale-ups that have complicated, high-value solutions and need to engage senior decision makers across long buying cycles.
 
 VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
 ${VERIFIED_FACTS}
@@ -3315,22 +3359,18 @@ APPROVED STYLE EXAMPLE — use this as your floor. Same structure, same length, 
 ${HARDCODED_EXAMPLES[vertical]?.[persona] || HARDCODED_EXAMPLES[vertical]?.['sales'] || ''}
 
 ---
-Subject: [4-6 plain words, not starting with Re:]
+Write the email now. Subject line first, then the email body.
 
-Hi ${contact.first_name||'there'},
+Think about this specific person — their role at ${contact.company} in the ${vertical} space — and write something that would make them want to reply. Use the approved example as your tonal reference for length and directness, but find the most relevant angle for this contact specifically.
 
-[1-2 sentences: Open with what Clarify does in one sentence — "We work with [vertical] companies as an extension of their sales and marketing team to build pipeline into accounts that typical outreach doesn't reach." Adapt naturally. No jargon.]
-
-[1-2 sentences: Go straight to the strongest proof point for this vertical. Named client with stat if one exists. Anonymous if not. One name with a number beats a list of names.]
-
-[1 sentence CTA: 15 minutes, Thursday or Friday or this week.]
+Lead with what Clarify does clearly and concisely. Then use the strongest proof point from VERIFIED FACTS that would resonate with someone in this role. End with a direct ask for 15 minutes.
 
 Thanks,
 
 ${cfg('fromName')}
 ${cfg('title')} | Clarify B2B
 
-STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across". ONE proof point maximum. No fabricated stats. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift), Ping Identity ($14.7M pipeline). All other companies — names only, no numbers.`;
+STRICT RULES: Body 80-120 words. No em dashes. No bullet points. Subject does not start with Re:. ONE proof point only. No fabricated stats. Only confirmed named stats: Capita ($234.5M pipeline), Xerox ($1.4B+ pipeline, $105M new logo revenue), Mastek ($800M+ pipeline), Vodafone ($29M pipeline, 23% deal size uplift), Ping Identity ($14.7M pipeline), Interactions ($46M pipeline), Cohesity ($3.3M pipeline), Digital Owl ($5.2M pipeline). All other companies — name only, no numbers.`;
 
   try {
     const apiKey = cfg('apiKey');
@@ -3499,7 +3539,7 @@ function renderComposePage() {
           <div class="contact-avatar">${initials}</div>
           <div class="contact-info">
             <div class="contact-name">${esc(c.first_name)} ${esc(c.last_name)} <span class="contact-company">at ${esc(c.company)}</span></div>
-            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)} ${personaPill(c.persona || detectPersona(c.title||''))} ${c.variant ? `<span class="pill" style="background:${c.variant==='A'?'rgba(233,113,50,0.12)':'rgba(15,158,213,0.12)'};color:${c.variant==='A'?'#E97132':'#0F9ED5'};border:1px solid ${c.variant==='A'?'rgba(233,113,50,0.3)':'rgba(15,158,213,0.3)'}">Test ${c.variant}</span>` : ''} ${c.isNurture ? '<span class="pill" style="background:rgba(15,158,213,0.12);color:#0F9ED5;border:1px solid rgba(15,158,213,0.25)">🌱 Nurture</span>' : ''}</div>
+            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)} ${personaPill(c.persona || detectPersona(c.title||''))} ${c.variant ? `<span class="pill" style="background:${c.variant==='A'?'rgba(233,113,50,0.12)':c.variant==='B'?'rgba(15,158,213,0.12)':'rgba(168,85,247,0.12)'};color:${c.variant==='A'?'#E97132':c.variant==='B'?'#0F9ED5':'#c084fc'};border:1px solid ${c.variant==='A'?'rgba(233,113,50,0.3)':c.variant==='B'?'rgba(15,158,213,0.3)':'rgba(168,85,247,0.3)'}">Test ${c.variant}</span>` : ''} ${c.isNurture ? '<span class="pill" style="background:rgba(15,158,213,0.12);color:#0F9ED5;border:1px solid rgba(15,158,213,0.25)">🌱 Nurture</span>' : ''}</div>
           </div>
         </div>
         <div class="compose-actions">
