@@ -303,7 +303,10 @@ td{padding:13px 18px}
             <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px">Thumbs up/down on generated emails. Approved emails are used as style examples for future generation in that vertical.</div>
             <p id="feedback-stats" style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px">No feedback yet — rate emails in the Generate tab.</p>
             <div id="approved-examples-list" style="font-size:11px;color:rgba(255,255,255,0.4)"></div>
-            <button class="btn btn-ghost btn-sm" style="margin-top:10px;font-size:11px" onclick="clearFeedback()">Clear all feedback</button>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button id="export-feedback-btn" class="btn btn-primary btn-sm" style="font-size:11px" onclick="exportFeedback()">📋 Export feedback to Claude</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="clearFeedback()">Clear all feedback</button>
+          </div>
           </div>
           <button class="btn btn-primary" onclick="goTab(1)">Continue to Contacts →</button>
         </div>
@@ -2334,6 +2337,56 @@ function clearFeedback() {
   saveFeedback();
   renderFeedbackStats();
   renderComposePage();
+}
+
+function exportFeedback() {
+  const ups = Object.values(emailFeedback).filter(f => f.rating === 'up');
+  const downs = Object.values(emailFeedback).filter(f => f.rating === 'down');
+  if (ups.length === 0 && downs.length === 0) {
+    alert('No feedback yet — rate some emails first.');
+    return;
+  }
+  const output = {
+    exported: new Date().toISOString(),
+    approved: ups.map(f => ({
+      vertical: f.vertical,
+      persona: f.persona,
+      stage: f.stage,
+      company: f.company,
+      name: f.name,
+      subject: f.subject,
+      body: f.body,
+    })),
+    rejected: downs.map(f => ({
+      vertical: f.vertical,
+      persona: f.persona,
+      stage: f.stage,
+      company: f.company,
+      subject: f.subject,
+    })),
+    summary: {
+      totalApproved: ups.length,
+      totalRejected: downs.length,
+      approvedByVertical: ups.reduce((acc, f) => { acc[f.vertical] = (acc[f.vertical]||0)+1; return acc; }, {}),
+    }
+  };
+  const text = JSON.stringify(output, null, 2);
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('export-feedback-btn');
+    if (btn) { btn.textContent = '✅ Copied to clipboard!'; setTimeout(() => btn.textContent = '📋 Export feedback to Claude', 2000); }
+  }).catch(() => {
+    // Fallback: show in a textarea
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80vw;height:60vh;z-index:9999;padding:16px;font-size:11px;background:#0E2841;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:8px';
+    document.body.appendChild(ta);
+    ta.select();
+    const close = document.createElement('button');
+    close.textContent = '✕ Close';
+    close.style.cssText = 'position:fixed;top:calc(50% - 30vh - 30px);left:50%;transform:translateX(-50%);z-index:10000;padding:8px 16px;background:#E97132;color:#fff;border:none;border-radius:6px;cursor:pointer';
+    close.onclick = () => { document.body.removeChild(ta); document.body.removeChild(close); };
+    document.body.appendChild(close);
+  });
 }
 
 function renderFeedbackStats() {
