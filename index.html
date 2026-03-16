@@ -2494,48 +2494,32 @@ const NURTURE_ANGLES_MARKETING = {
 
 const _verticalCache = {};
 async function detectVerticalWithAI(company, apiKey) {
- if (!company || !apiKey) return 'Other';
+ if (!company || !apiKey) return 'Enterprise SaaS';
  const lower = company.toLowerCase().trim();
  if (_verticalCache[lower]) return _verticalCache[lower];
  const known = detectVertical(company);
- if (known && known !== 'Enterprise SaaS' && known !== 'Other') { _verticalCache[lower] = known; return known; }
+ if (known && known !== 'Enterprise SaaS') { _verticalCache[lower] = known; return known; }
  try {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
    method:'POST',
    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
    body:JSON.stringify({
     model:'claude-haiku-4-5-20251001',
-    max_tokens:50,
-    tools:[{type:'web_search_20250305',name:'web_search'}],
-    messages:[{role:'user',content:`Search for what "${company}" does as a company, then classify it into exactly one of these categories:
-- Cybersecurity: security software, identity, threat detection, endpoint, cloud security, compliance
-- BPO: outsourced business services, IT services, consulting, staffing, managed services
-- Fintech: payments, banking software, financial services, insurance tech, lending, expense management
-- AI & Data: data analytics, BI, AI/ML platforms, HR tech, ERP, workforce management, learning management
-- Cloud & Infrastructure: cloud platforms, infrastructure software, DevOps, databases, monitoring, storage
-- Enterprise Software: CRM, marketing automation, sales tools, content management, collaboration, legal tech
-- Automation & DevTools: developer tools, CI/CD, testing, low-code, workflow automation, APIs
-- Cloud Communications: UCaaS, CPaaS, video conferencing, messaging platforms, contact centre
-- Other: if genuinely unclear
-
-Reply with ONLY the category name. Never reply "Enterprise SaaS".`}]
+    max_tokens:10,
+    messages:[{role:'user',content:`What industry category is "${company}"? Reply with ONLY one of these exact options:
+Cybersecurity, BPO, Fintech, AI & Data, Cloud & Infrastructure, Enterprise Software, Automation & DevTools, Cloud Communications, Other`}]
    })
   });
   if (res.ok) {
    const data = await res.json();
-   // Handle both text and tool_use responses
-   const content = data.content || [];
-   let v = '';
-   for (const block of content) {
-     if (block.type === 'text') { v = block.text?.trim(); break; }
-   }
-   const valid = ['Cybersecurity','BPO','Fintech','AI & Data','Cloud & Infrastructure','Enterprise Software','Automation & DevTools','Cloud Communications','Other'];
-   const result = valid.find(x => v?.includes(x)) || 'Other';
+   const v = data.content?.[0]?.text?.trim();
+   const valid = ['Cybersecurity','BPO','Fintech','AI & Data','Cloud & Infrastructure','Enterprise Software','Automation & DevTools','Cloud Communications'];
+   const result = valid.find(x => v?.includes(x)) || 'Enterprise SaaS';
    _verticalCache[lower] = result;
    return result;
   }
  } catch(e) { console.warn('detectVerticalWithAI error:', e); }
- return 'Other';
+ return 'Enterprise SaaS';
 }
 
 
@@ -3228,13 +3212,13 @@ function handleFile(file) {
 
   if (!apiKey) {
    const noTitle = contacts.filter(c => !c.title).length;
-   const noVertical = contacts.filter(c => c.vertical === 'Other' || c.vertical === 'Enterprise SaaS').length;
+   const noVertical = contacts.filter(c => !c.vertical || c.vertical === 'Enterprise SaaS').length;
    if ((noTitle > 0 || noVertical > 0) && dropSub)
     dropSub.textContent = `Add your Anthropic API key in Setup to auto-enrich ${noTitle} missing titles and ${noVertical} unknown verticals`;
   }
 
   if (apiKey) {
-   const verticalUnknowns = contacts.filter(c => c.vertical === 'Other' || c.vertical === 'Enterprise SaaS' || c.autoDetected === false);
+   const verticalUnknowns = contacts.filter(c => !c.vertical || c.vertical === 'Enterprise SaaS');
    const titleUnknowns = contacts.filter(c => !c.title || c.title.trim() === '');
 
    const totalToEnrich = verticalUnknowns.length + titleUnknowns.length;
