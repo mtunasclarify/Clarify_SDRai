@@ -180,6 +180,357 @@ td{padding:13px 18px}
 
 /* Divider */
 .divider{height:1px;background:var(--border);margin:20px 0}
+
+
+/* ── UI UPGRADES ─────────────────────────────────────────── */
+
+/* Enhanced root variables */
+:root {
+  --orange-glow: rgba(233,113,50,0.15);
+  --cyan-glow: rgba(15,158,213,0.12);
+  --border-accent: rgba(233,113,50,0.3);
+  --card-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  --sidebar-width: 220px;
+}
+
+/* Sidebar refinements */
+#sidebar {
+  background: linear-gradient(180deg, #0a1929 0%, #071220 100%);
+  border-right: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 4px 0 32px rgba(0,0,0,0.3);
+}
+
+/* Nav item upgrades */
+.nav-item {
+  border-radius: 8px !important;
+  margin: 2px 8px !important;
+  padding: 9px 12px !important;
+  transition: all 0.15s ease !important;
+  border: 1px solid transparent !important;
+  position: relative;
+  overflow: hidden;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+.nav-item.active {
+  background: rgba(233,113,50,0.12) !important;
+  border-color: rgba(233,113,50,0.25) !important;
+  color: #E97132 !important;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; height: 60%;
+  width: 3px;
+  background: #E97132;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Card upgrades */
+.card {
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+/* Section header refinements */
+.section-header h2 {
+  font-size: 18px !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Compose card upgrades */
+.compose-card {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  transition: all 0.2s ease !important;
+}
+.compose-card:hover {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+}
+.compose-card.ready {
+  border-color: rgba(78,167,46,0.25) !important;
+  background: rgba(78,167,46,0.03) !important;
+}
+.compose-card.ready:hover {
+  border-color: rgba(78,167,46,0.4) !important;
+}
+
+/* Button refinements */
+.btn-primary {
+  background: linear-gradient(135deg, #E97132 0%, #d4622a 100%) !important;
+  box-shadow: 0 2px 12px rgba(233,113,50,0.3) !important;
+  border: none !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  transition: all 0.15s ease !important;
+}
+.btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 20px rgba(233,113,50,0.45) !important;
+}
+.btn-primary:active {
+  transform: translateY(0) !important;
+}
+
+/* Input field upgrades */
+.field-input {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  transition: all 0.15s ease !important;
+}
+.field-input:focus {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(233,113,50,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(233,113,50,0.1) !important;
+  outline: none !important;
+}
+
+/* Stats sidebar upgrades */
+.sidebar-stats {
+  background: rgba(0,0,0,0.2);
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 0 0 0 0;
+  margin: 0 8px 8px;
+  border-radius: 12px;
+  padding: 14px 12px !important;
+}
+.stat-val {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+.stat-label {
+  font-size: 10px !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  opacity: 0.5;
+}
+
+/* Table upgrades */
+table { border-collapse: separate !important; border-spacing: 0 !important; }
+thead th {
+  font-size: 10px !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: rgba(255,255,255,0.35) !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+}
+tbody tr {
+  transition: background 0.15s !important;
+}
+tbody tr:hover td {
+  background: rgba(255,255,255,0.03) !important;
+}
+tbody td {
+  padding: 11px 14px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Pill upgrades */
+.pill {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  padding: 3px 8px !important;
+  border-radius: 20px !important;
+}
+
+/* Modal upgrades */
+.modal-backdrop { backdrop-filter: blur(8px) !important; background: rgba(0,0,0,0.7) !important; }
+.modal {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6) !important;
+}
+
+/* Subject preview upgrades */
+.subject-preview {
+  background: rgba(255,255,255,0.025) !important;
+  border-radius: 8px !important;
+  margin-top: 10px !important;
+  padding: 8px 12px !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+}
+.subject-text {
+  font-weight: 500 !important;
+}
+
+/* Drop zone upgrades */
+.drop-zone {
+  border: 2px dashed rgba(255,255,255,0.12) !important;
+  border-radius: 16px !important;
+  transition: all 0.2s ease !important;
+}
+.drop-zone:hover, .drop-zone.over {
+  border-color: rgba(233,113,50,0.5) !important;
+  background: rgba(233,113,50,0.04) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Auth screen upgrades */
+#auth-screen {
+  background: linear-gradient(135deg, #060f1c 0%, #0a1929 50%, #071220 100%) !important;
+}
+
+/* Animated gradient background for auth */
+#auth-screen::before {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 30% 40%, rgba(233,113,50,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 60%, rgba(15,158,213,0.06) 0%, transparent 50%);
+  animation: authGlow 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes authGlow {
+  0% { transform: translate(0,0) rotate(0deg); }
+  100% { transform: translate(2%,2%) rotate(2deg); }
+}
+
+/* Notification badge upgrades */
+.notif-badge {
+  background: #E97132 !important;
+  color: white !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  padding: 2px 5px !important;
+  border-radius: 10px !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: 0 2px 8px rgba(233,113,50,0.4) !important;
+}
+
+/* Contact avatar upgrades */
+.contact-avatar {
+  background: linear-gradient(135deg, rgba(233,113,50,0.25), rgba(15,158,213,0.2)) !important;
+  border: 1px solid rgba(233,113,50,0.2) !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Status pills */
+.status-sent { box-shadow: 0 0 8px rgba(78,167,46,0.3) !important; }
+
+/* Subtle page background texture */
+#app {
+  background: linear-gradient(160deg, #0a1929 0%, #071220 100%) !important;
+}
+
+/* Main content area */
+#main {
+  background: transparent !important;
+}
+
+/* Logo subtitle */
+.logo-sub {
+  font-size: 9px !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  opacity: 0.4 !important;
+}
+
+/* Section subtitle */
+.section-subtitle {
+  font-size: 12px !important;
+  color: rgba(255,255,255,0.35) !important;
+  margin-top: 3px !important;
+}
+
+/* Smooth page transitions */
+.tab-content {
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Top bar */
+#top-bar {
+  background: rgba(6,15,28,0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* Ghost buttons */
+.btn-ghost {
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  transition: all 0.15s ease !important;
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+}
+
+/* Danger button */
+.btn-danger {
+  background: rgba(239,68,68,0.1) !important;
+  border: 1px solid rgba(239,68,68,0.3) !important;
+  color: #ef4444 !important;
+  transition: all 0.15s ease !important;
+}
+.btn-danger:hover {
+  background: rgba(239,68,68,0.2) !important;
+  border-color: rgba(239,68,68,0.5) !important;
+}
+
+/* Send page table */
+#send-tbody tr.sent td { opacity: 0.5; }
+
+/* Cadence/history page */
+.history-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+/* Search and filter bar */
+#contacts-filters {
+  gap: 6px !important;
+}
+#contacts-filters .btn-ghost {
+  font-size: 11px !important;
+  padding: 5px 12px !important;
+  border-radius: 20px !important;
+}
+#contacts-search {
+  border-radius: 20px !important;
+  font-size: 12px !important;
+}
+
+/* Error message */
+#file-error {
+  border-radius: 10px !important;
+  font-size: 12px !important;
+}
+
+/* Follow-up banner */
+#followup-banner > div {
+  border-radius: 10px !important;
+  font-size: 12px !important;
+}
 </style>
 </head>
 <body>
@@ -256,6 +607,9 @@ td{padding:13px 18px}
   <div id="content">
    <!-- SETUP -->
    <div class="page active" id="page-0">
+    <div id="dashboard-content"></div>
+  </div>
+  <div class="page" id="page-1">
     <div style="max-width:100%">
      <div class="section-header"><div><h2>Email Configuration</h2><p class="section-subtitle">Connect your Outlook via EmailJS to send directly from your work address.</p></div></div>
      <div class="card highlight" style="margin-bottom:16px">
@@ -299,12 +653,12 @@ td{padding:13px 18px}
       </div>
      </div>
 
-     <button class="btn btn-primary" onclick="goTab(1)">Continue to Contacts →</button>
+     <button class="btn btn-primary" onclick="goTab(2)">Continue to Contacts →</button>
     </div>
    </div>
 
    <!-- CONTACTS -->
-   <div class="page" id="page-1">
+   <div class="page" id="page-2">
     <div style="max-width:100%">
      <div class="section-header">
       <div><h2>Import Contacts</h2><p class="section-subtitle">Upload from Apollo or any spreadsheet. Vertical and persona auto-detected.</p></div>
@@ -344,7 +698,7 @@ td{padding:13px 18px}
    </div>
 
    <!-- COMPOSE -->
-   <div class="page" id="page-2">
+   <div class="page" id="page-3">
     <div style="max-width:100%">
      <div class="section-header">
       <div><h2>Generate Emails</h2><p class="section-subtitle">Claude writes persona-aware emails — Sales personas get ABD messaging, Marketing personas get ABM+integrated messaging.</p></div>
@@ -356,7 +710,7 @@ td{padding:13px 18px}
    </div>
 
    <!-- SEND -->
-   <div class="page" id="page-3">
+   <div class="page" id="page-4">
     <div style="max-width:100%">
      <div id="auto-advance-banner" style="display:none"></div>
      <div class="section-header">
@@ -372,7 +726,7 @@ td{padding:13px 18px}
    </div>
 
    <!-- CADENCE -->
-   <div class="page" id="page-4">
+   <div class="page" id="page-5">
     <div style="max-width:100%">
      <div class="section-header">
       <div><h2>Cadence Tracker</h2><p class="section-subtitle">Full contact history — sequence stage, last touch, and follow-up timing.</p></div>
@@ -394,7 +748,7 @@ td{padding:13px 18px}
    </div>
 
    <!-- NURTURE -->
-   <div class="page" id="page-5">
+   <div class="page" id="page-6">
     <div style="max-width:100%">
      <div class="section-header">
       <div>
@@ -501,6 +855,7 @@ let _autoRunning = false; // guard for runAutoSequence
 let _contactPersonaFilter = ''; // filter: empty=all, sales, marketing, other
 
 const TABS = [
+ {label:'Dashboard', icon:'◈'},
  {label:'Setup', icon:'⚙'},
  {label:'Contacts', icon:'👥'},
  {label:'Compose', icon:'✏️'},
@@ -2282,6 +2637,7 @@ function showApp() {
  document.getElementById('app').style.display = 'flex';
  document.getElementById('user-name-display').textContent = currentUser?.name || '';
  renderNav(); updateTopBar(); updateReadyStatus();
+ renderDashboard();
  renderContactsPage(); renderComposePage(); renderSendPage(); renderCadencePage(); renderNurturePage();
  updateAutoSendUI();
  // Init EmailJS once on login
@@ -2384,29 +2740,134 @@ function renderNav() {
  const nav = document.getElementById('nav');
  const fud = followUpDue();
  nav.innerHTML = TABS.map((t,i) => {
-  const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0) || (i===5 && getNurtureContacts().length===0);
+  const locked = (i===3 && contacts.length===0) || (i===4 && countStatus('ready')===0 && countStatus('sent')===0) || (i===6 && getNurtureContacts().length===0);
   const active = i === currentTab;
   let nurtureCount = 0;
   try { nurtureCount = i===5 ? getNurtureContacts().filter(([,r]) => nurtureReadyDue(r)).length : 0; } catch {}
-  const notif = i===4 && fud.length > 0 ? `<span class="notif-badge">${fud.length}</span>`
-        : i===5 && nurtureCount > 0 ? `<span class="notif-badge" style="background:#E97132">${nurtureCount}</span>` : '';
+  const notif = i===5 && fud.length > 0 ? `<span class="notif-badge">${fud.length}</span>`
+        : i===6 && nurtureCount > 0 ? `<span class="notif-badge" style="background:#E97132">${nurtureCount}</span>` : '';
   return `<button class="nav-btn ${active?'active':''} ${locked?'locked':''}" onclick="goTab(${i})">${t.icon} ${t.label}${notif}</button>`;
  }).join('');
 }
 
+function renderDashboard() {
+  const el = document.getElementById('dashboard-content');
+  if (!el) return;
+  const total = contacts.length;
+  const sent = Object.values(statuses).filter(s=>s==='sent').length;
+  const ready = Object.values(statuses).filter(s=>s==='ready').length;
+  const errors = Object.values(statuses).filter(s=>s==='error').length;
+  const aCount = contacts.filter(c=>c.variant==='A').length;
+  const bCount = contacts.filter(c=>c.variant==='B').length;
+  const cCount = contacts.filter(c=>c.variant==='C').length;
+  const vertBreakdown = {};
+  contacts.forEach(c => { const v=c.vertical||'Other'; vertBreakdown[v]=(vertBreakdown[v]||0)+1; });
+  const topVerticals = Object.entries(vertBreakdown).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const stage1 = contacts.filter(c=>{ const h=history[c.email]; return !h||!(h.sequences?.length>0); }).length;
+  const stage2 = contacts.filter(c=>{ const h=history[c.email]; return h?.sequences?.length===1; }).length;
+  const stage3 = contacts.filter(c=>{ const h=history[c.email]; return h?.sequences?.length>=2; }).length;
+  const sentPct = total>0?Math.round((sent/total)*100):0;
+  const hr = new Date().getHours();
+  const greeting = hr<12?'morning':hr<17?'afternoon':'evening';
+  const fromName = cfg('fromName')||'there';
+  const firstName = fromName.split(' ')[0];
+
+  el.innerHTML = `
+  <div style="padding:32px 36px;max-width:960px;margin:0 auto">
+    <div style="margin-bottom:36px">
+      <h1 style="font-size:28px;font-weight:900;letter-spacing:-0.04em;color:#fff;margin-bottom:5px">Good ${greeting}, ${firstName} 👋</h1>
+      <p style="color:rgba(255,255,255,0.35);font-size:13px">${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+      ${[
+        {label:'Total Contacts',value:total,color:'#fff',sub:'imported',icon:'👥'},
+        {label:'Emails Sent',value:sent,color:'#4EA72E',sub:'delivered',icon:'✅'},
+        {label:'Ready to Send',value:ready,color:'#E97132',sub:'generated',icon:'✉️'},
+        {label:'Send Rate',value:sentPct+'%',color:'#0F9ED5',sub:'of total',icon:'📈'},
+      ].map(k=>`
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:22px 18px;cursor:default;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(255,255,255,0.14)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <div style="font-size:20px;margin-bottom:14px">${k.icon}</div>
+          <div style="font-size:30px;font-weight:900;letter-spacing:-0.05em;color:${k.color};line-height:1;margin-bottom:6px">${k.value}</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3)">${k.label}</div>
+        </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:22px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:18px">Sequence Pipeline</div>
+        ${total===0?'<div style="color:rgba(255,255,255,0.2);font-size:13px">Import contacts to see pipeline</div>':
+        [
+          {label:'Touch 1',val:stage1,color:'#E97132'},
+          {label:'Touch 2',val:stage2,color:'#0F9ED5'},
+          {label:'Touch 3',val:stage3,color:'#4EA72E'},
+          {label:'Sent',val:sent,color:'rgba(255,255,255,0.25)'},
+        ].map(s=>`
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:12px;color:rgba(255,255,255,0.55)">${s.label}</span>
+              <span style="font-size:13px;font-weight:800;color:${s.color}">${s.val}</span>
+            </div>
+            <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${total>0?Math.round((s.val/total)*100):0}%;background:${s.color};border-radius:4px;transition:width .8s ease"></div>
+            </div>
+          </div>`).join('')}
+        }
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:22px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:18px">A/B/C Test Split</div>
+        ${total===0?'<div style="color:rgba(255,255,255,0.2);font-size:13px">Import contacts to see test split</div>':
+        [
+          {label:'Variant A',val:aCount,color:'#E97132',desc:'Proof-led'},
+          {label:'Variant B',val:bCount,color:'#0F9ED5',desc:'Clarify-heavy'},
+          {label:'Variant C',val:cCount,color:'#c084fc',desc:'Free agent'},
+        ].map(v=>`
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div style="width:34px;height:34px;border-radius:9px;background:${v.color}18;border:1px solid ${v.color}40;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:${v.color};flex-shrink:0">${v.label.slice(-1)}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.6)">${v.label} <span style="color:rgba(255,255,255,0.25);font-size:10px">${v.desc}</span></span>
+                <span style="font-size:13px;font-weight:800;color:${v.color}">${v.val}</span>
+              </div>
+              <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${total>0?Math.round((v.val/total)*100):0}%;background:${v.color};border-radius:4px"></div>
+              </div>
+            </div>
+          </div>`).join('')}
+        }
+      </div>
+    </div>
+    ${topVerticals.length>0?`
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:22px;margin-bottom:20px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:16px">Contacts by Vertical</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">
+        ${topVerticals.map(([v,c])=>`
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:rgba(255,255,255,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px">${v}</span>
+            <span style="font-size:16px;font-weight:900;color:#E97132;margin-left:8px">${c}</span>
+          </div>`).join('')}
+      </div>
+    </div>`:''}
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${total===0
+        ?`<button class="btn btn-primary" onclick="goTab(2)" style="font-size:13px">Import Contacts →</button><button class="btn btn-ghost" onclick="goTab(1)" style="font-size:13px">Setup</button>`
+        :`<button class="btn btn-primary" onclick="goTab(3)" style="font-size:13px">Generate Emails →</button><button class="btn btn-ghost" onclick="goTab(4)" style="font-size:13px">Send →</button><button class="btn btn-ghost" onclick="goTab(5)" style="font-size:13px">Cadence</button>`}
+    </div>
+  </div>`;
+}
+
 function goTab(i) {
- const locked = (i===2 && contacts.length===0) || (i===3 && countStatus('ready')===0 && countStatus('sent')===0) || (i===5 && getNurtureContacts().length===0);
+ const locked = (i===3 && contacts.length===0) || (i===4 && countStatus('ready')===0 && countStatus('sent')===0) || (i===6 && getNurtureContacts().length===0);
  if (locked) return;
  currentTab = i;
  document.querySelectorAll('.page').forEach((p,idx) => p.classList.toggle('active', idx===i));
  const titleEl = document.getElementById('page-title');
  if (titleEl && TABS[i]) titleEl.textContent = TABS[i].label;
  renderNav();
- if (i===1) renderContactsPage();
- if (i===2) renderComposePage();
- if (i===3) { renderSendPage(); setTimeout(autoAdvanceIfReady, 500); }
- if (i===4) renderCadencePage();
- if (i===5) renderNurturePage();
+ if (i===0) renderDashboard();
+ if (i===2) renderContactsPage();
+ if (i===3) renderComposePage();
+ if (i===4) { renderSendPage(); setTimeout(autoAdvanceIfReady, 500); }
+ if (i===5) renderCadencePage();
+ if (i===6) renderNurturePage();
 }
 
 // ── Stats ──────────────────────────────────────────────────────────────────
@@ -3554,7 +4015,7 @@ function renderComposePage() {
 
  const cont = document.getElementById('compose-continue');
  const ready = countStatus('ready');
- if (cont) { if (ready > 0) { cont.style.display = 'block'; cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(3)">Continue to Send (${ready} ready) →</button>`; } else cont.style.display = 'none'; }
+ if (cont) { if (ready > 0) { cont.style.display = 'block'; cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(4)">Continue to Send (${ready} ready) →</button>`; } else cont.style.display = 'none'; }
 }
 
 // ── Send ─────────────────────────────────────────────────────────────────────
