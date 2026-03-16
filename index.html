@@ -2477,6 +2477,12 @@ const PAIN_POINTS_MARKETING = {
  'Enterprise Software':  'marketing-qualified accounts and sales-accepted pipeline gap is widening. ABM without embedded sales development means accounts campaigns have warmed are not being activated before competitors engage them.',
  'Automation & DevTools': 'automation marketing builds strong business case content but without outbound follow-through ROI conversations stall at awareness. Coordinated outbound converting content engagement into buying group conversations turns marketing investment into pipeline.',
  'Cloud Communications':  'cloud communications marketing invests in ABM and brand but lacks the sales development bandwidth to activate target accounts at scale. Campaigns create awareness — embedded outbound converts that to pipeline before the consolidation decision.',
+ 'HR Tech': 'HR technology marketing teams invest heavily in employer brand and events but struggle to convert that awareness into qualified pipeline. Buying groups span HR, IT, and Finance — single-channel campaigns miss the full committee.',
+ 'MarTech': 'MarTech marketing teams face the irony of selling marketing technology while struggling to generate their own pipeline. Enterprise buyers expect personalised, insight-led engagement.',
+ 'Legal Tech': 'legal technology marketing teams struggle to reach senior decision makers in enterprise legal departments. Traditional digital channels are underused by legal professionals, making account-based outreach critical.',
+ 'RevOps & Sales Tech': 'RevOps and sales tech marketing teams are selling to the very people who evaluate marketing ROI most critically. Enterprise buyers expect highly relevant, data-driven outreach.',
+ 'HealthTech': 'HealthTech marketing teams face highly regulated buyers who are cautious about vendor engagement. Reaching Clinical, IT, and Finance stakeholders simultaneously requires coordinated, insight-led outreach.',
+ 'Manufacturing & Industrial': 'manufacturing and industrial tech marketing teams support very long sales cycles with large buying groups. Standard digital campaigns struggle to maintain engagement across Operations, IT, Finance, and Engineering.',
  'Other':         'investing in marketing programmes that generate awareness and engagement without a coordinated sales development motion to convert that interest into qualified pipeline.',
 };
 
@@ -2489,6 +2495,12 @@ const FOLLOW_UP_ANGLES_SALES = {
  'Enterprise Software':  'how enterprise software companies drive net-new logo pipeline by leading with account-based development — engaging buying groups earlier and building influence before evaluations begin',
  'Automation & DevTools': 'how automation vendors convert business case conversations into pipeline by engaging Operations and Finance alongside IT — what changes when outbound is designed around the full buying group',
  'Cloud Communications':  'how cloud communications vendors win consolidation decisions by reaching enterprise buying committees before procurement-led reviews begin',
+ 'HR Tech': 'the gap between HR strategy and enterprise pipeline — most HR tech teams invest in events but struggle to convert that into qualified pipeline in strategic accounts',
+ 'MarTech': 'the conversion gap between ABM awareness and qualified pipeline — campaigns reach accounts but without coordinated outreach they never generate sales conversations',
+ 'Legal Tech': 'the access problem in legal departments — even with clear fit, getting in front of Legal, IT, and Finance simultaneously is where most vendors fail',
+ 'RevOps & Sales Tech': 'pipeline predictability — RevOps leaders know their tools but struggle to build consistent net-new pipeline in enterprise accounts',
+ 'HealthTech': 'stakeholder complexity — HealthTech deals stall because outreach hits one persona but the decision requires alignment across Clinical, IT, Finance, and Compliance',
+ 'Manufacturing & Industrial': 'the long-cycle access problem — manufacturing deals are won in the relationship phase months before procurement begins',
  'Other':         'the difference between reactive pipeline and built pipeline — and how account-based development changes the revenue equation when sales teams are already stretched',
 };
 
@@ -2501,6 +2513,12 @@ const FOLLOW_UP_ANGLES_MARKETING = {
  'Enterprise Software':  'what it looks like when ABM and outbound are genuinely integrated — same target account list, coordinated messaging, and a shared pipeline metric that marketing and sales both own',
  'Automation & DevTools': 'how automation marketing teams turn business case content into pipeline by coupling it with outbound that reaches Operations and Finance alongside IT',
  'Cloud Communications':  'how cloud communications marketing programmes deliver pipeline ROI when backed by outbound that converts campaign engagement before consolidation decisions are made',
+ 'HR Tech': 'the conversion gap between HR tech brand investment and marketing-sourced pipeline — campaigns reach HR leaders but rarely convert without coordinated sales outreach',
+ 'MarTech': 'the pipeline attribution gap — MarTech marketing teams struggle to show how their own ABM investment converts to qualified pipeline and revenue',
+ 'Legal Tech': 'the awareness gap in legal technology — even well-funded legal tech companies struggle to build brand recognition in enterprise legal departments',
+ 'RevOps & Sales Tech': 'the marketing-to-pipeline gap — RevOps and sales tech marketing teams generate awareness but struggle to convert that into qualified conversations with CROs and VP Sales',
+ 'HealthTech': 'the regulatory awareness gap — HealthTech marketing teams struggle to reach clinical and compliance decision makers who are not active on standard digital channels',
+ 'Manufacturing & Industrial': 'the long sales cycle problem — manufacturing tech marketing teams invest in awareness but struggle to support sales through 12-24 month procurement cycles',
  'Other':         'how integrated marketing and sales development can turn existing ABM investment into measurable pipeline — without adding headcount to the sales team',
 };
 
@@ -3460,7 +3478,7 @@ async function generateOne(contact, skipRender=false) {
  const vertical = contact.vertical || 'Other';
  const persona = detectPersona(contact.title || '');
  // Select pain points and follow-up angles based on persona
- const painMap = persona === 'sales' ? PAIN_POINTS_SALES : persona === 'marketing' ? PAIN_POINTS_MARKETING : PAIN_POINTS;
+ const painMap = persona === 'marketing' ? PAIN_POINTS_MARKETING : PAIN_POINTS;
  const followMap = persona === 'sales' ? FOLLOW_UP_ANGLES_SALES : persona === 'marketing' ? FOLLOW_UP_ANGLES_MARKETING : FOLLOW_UP_ANGLES;
  const pain = painMap[vertical] || painMap['Other'] || PAIN_POINTS['Other'];
  const histRec = history[contact.email];
@@ -4926,4 +4944,21 @@ setInterval(() => {
 }, 30 * 60 * 1000);
 </script>
 </body>
-</html>
+</html>  'HR Tech': 'the gap between HR strategy and enterprise pipeline — most HR tech teams invest in events but struggle to convert that into qualified pipeline in strategic accounts',
+  'MarTech': 'the conversion gap between ABM awareness and qualified pipeline — campaigns reach accounts but without coordinated outreach they never generate sales conversations',
+  'Legal Tech': 'the access problem in legal departments — even with clear fit, getting in front of Legal, IT, and Finance simultaneously is where most vendors fail',
+  'RevOps & Sales Tech': 'pipeline predictability — RevOps leaders know their tools but struggle to build consistent net-new pipeline in enterprise accounts',
+  'HealthTech': 'stakeholder complexity — HealthTech deals stall because outreach hits one persona but the decision requires alignment across Clinical, IT, Finance, and Compliance',
+  'Manufacturing & Industrial': 'the long-cycle access problem — manufacturing deals are won in the relationship phase months before procurement begins',
+  'HR Tech': 'the conversion gap between HR tech brand investment and marketing-sourced pipeline — campaigns reach HR leaders but rarely convert without coordinated sales outreach',
+  'MarTech': 'the pipeline attribution gap — MarTech marketing teams struggle to show how their own ABM investment converts to qualified pipeline and revenue',
+  'Legal Tech': 'the awareness gap in legal technology — even well-funded legal tech companies struggle to build brand recognition in enterprise legal departments where decision makers are hard to reach',
+  'RevOps & Sales Tech': 'the marketing-to-pipeline gap — RevOps and sales tech marketing teams generate awareness but struggle to convert that into qualified conversations with CROs and VP Sales',
+  'HealthTech': 'the regulatory awareness gap — HealthTech marketing teams struggle to reach clinical and compliance decision makers who are not active on standard digital channels',
+  'Manufacturing & Industrial': 'the long sales cycle problem — manufacturing and industrial tech marketing teams invest in awareness but struggle to support sales through 12-24 month procurement cycles',
+  'HR Tech': 'HR technology marketing teams invest heavily in employer brand and events but struggle to convert that awareness into qualified pipeline. Buying groups span HR, IT, and Finance — single-channel campaigns miss the full committee.',
+  'MarTech': 'MarTech marketing teams face the irony of selling marketing technology while struggling to generate their own pipeline. Enterprise buyers are sceptical of generic outreach and expect personalised, insight-led engagement.',
+  'Legal Tech': 'legal technology marketing teams struggle to reach senior decision makers in enterprise legal departments. Traditional digital channels are underused by legal professionals, making account-based outreach critical.',
+  'RevOps & Sales Tech': 'RevOps and sales tech marketing teams are selling to the very people who evaluate marketing ROI most critically. Enterprise buyers expect highly relevant, data-driven outreach — generic campaigns get ignored.',
+  'HealthTech': 'HealthTech marketing teams face highly regulated buyers who are cautious about vendor engagement. Reaching Clinical, IT, and Finance stakeholders simultaneously requires a coordinated, insight-led approach.',
+  'Manufacturing & Industrial': 'manufacturing and industrial tech marketing teams support very long sales cycles with large buying groups. Standard digital campaigns struggle to maintain engagement across Operations, IT, Finance, and Engineering over months.',
