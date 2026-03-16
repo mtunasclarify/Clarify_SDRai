@@ -3342,6 +3342,8 @@ function renderContactsPage() {
   if (clearBtn) clearBtn.style.display='none';
   const filtersEl = document.getElementById('contacts-filters');
   if (filtersEl) filtersEl.style.display='none';
+  const dropZone = document.getElementById('drop-zone');
+  if (dropZone) dropZone.style.display = 'flex';
   return;
  }
  wrap.style.display = 'block';
@@ -3826,7 +3828,27 @@ SENIORITY GUIDANCE — adapt your angle:
 
 FUNCTION GUIDANCE — pick the right proof point:
 - Sales leader: Lead with pipeline numbers, new logo acquisition, enterprise account access. Best stats: Capita, Mastek, Xerox, Ping Identity, Wiz, Collenda, VMware, Veritas, PayPal
-- Marketing leader: Lead with ABM execution, marketing-sourced pipeline, campaign-to-pipeline conversion. Best stats: Capita (ABM motion), PayPal (91:1 ROI), SAP (205:1 ROI), Adobe (84% conversion)
+- Marketing / ABM leader: You have multiple talk tracks available — choose the one most relevant to this specific person's likely situation:
+
+  TALK TRACK 1 — The intent gap (use when they seem focused on in-market accounts):
+  Most ABM programs only chase the 5-10% of accounts showing intent signals. Clarify helps teams build pipeline in the other 90% — the high-ICP accounts competitors are ignoring because they're not yet in-market. In one Clarify programme, pipeline was secured across 13 accounts, and none were the ones originally showing intent.
+
+  TALK TRACK 2 — Campaign to pipeline gap (use for Demand Gen / Revenue Marketing leaders):
+  Many marketing teams generate strong campaign engagement but struggle to convert that into pipeline. ABM creates awareness but sales doesn't activate it. Clarify runs the outbound motion that sits between campaigns and closed pipeline — reaching the right stakeholders at the right time.
+  Best stat: Capita ($234.5M pipeline built through embedded ABM outreach motion). Adobe ($47M pipeline, 84% conversion).
+
+  TALK TRACK 3 — Sales and marketing alignment (use when ABM and sales are misaligned):
+  ABM strategies often stall because sales and marketing are working different ends of the funnel. Clarify sits between both teams — running coordinated outreach and campaign activation that both functions can see and measure. Pipeline becomes a shared outcome, not a handover argument.
+
+  TALK TRACK 4 — Buying group coverage (use for ABM leaders at companies with complex enterprise deals):
+  Most ABM programs reach one or two stakeholders per account. Enterprise deals involve 8-12 decision makers. Clarify runs multi-stakeholder outreach that reaches CISOs, CIOs, CFOs, and business unit leaders simultaneously — not just the obvious persona.
+  Best stat: Ping Identity ($14.7M pipeline), Wiz ($27M pipeline, $3.5M revenue).
+
+  TALK TRACK 5 — Scale without losing personalisation (use for ABM leaders frustrated by generic outbound):
+  1:1 ABM at scale is extremely hard to execute internally. Clarify combines account-level research with personalised outreach into priority accounts — running the insight-led engagement that ABM leaders design but rarely have the resource to execute consistently.
+  Best stat: SAP SuccessFactors ($7.2M pipeline in 4 months, 205:1 ROI), PayPal (91:1 ROI).
+
+  Choose ONE talk track. The best one for this specific person. Do not combine multiple tracks — pick the sharpest angle and commit to it.
 - SDR / Sales Development leader: Lead with outbound execution, meeting generation, account penetration. This is the person who feels the pipeline pressure most acutely.
 - RevOps / Operations: Lead with pipeline efficiency, forecasting accuracy, funnel coverage.
 - Alliances / Partnerships: Lead with co-sell pipeline, CSP ecosystem, partner-aligned outreach.
