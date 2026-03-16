@@ -3905,4 +3905,809 @@ ABSOLUTE RULES:
 - Only confirmed stats: Capita ($234.5M pipeline), Mastek ($800M+ pipeline), Xerox ($41.6M pipeline), Vodafone ($1.27B pipeline total, $127M+ revenue), Ping Identity ($14.7M pipeline), VMware ($70M pipeline), Veritas ($89.3M pipeline), Collenda ($78.8M pipeline), ACI Worldwide ($25.5M pipeline), Soldo ($12.3M pipeline), PayPal ($20M pipeline, 91:1 ROI, 30 new logos), Wiz ($27M pipeline, $3.5M revenue), Palo Alto/Cortex ($16M pipeline), Interactions ($97M pipeline, 30 logos), Siemens ($53.4M pipeline), Adobe ($47M pipeline, 84% conversion), SAP SuccessFactors ($7.2M pipeline, 205:1 ROI), Unit4 ($7.7M pipeline), PolyAI ($12.3M pipeline), Digital Owl ($5.2M pipeline), Cohesity ($3.3M pipeline). All other companies — name only, no numbers.
 - Body 80-120 words
 - Subject does not start with Re: or Fwd:`
-    : >
+    : contact.variant === 'B'
+    ? `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
+
+WHAT CLARIFY IS:
+Clarify is a B2B enterprise pipeline generation and account-based growth partner. We help technology and services companies generate pipeline into strategic accounts where access is difficult, sales cycles are long, and buying groups are complex. We combine account research, multi-threaded outreach, ABM design, and sales development execution — working as an extension of sales and marketing teams.
+
+VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
+${VERIFIED_FACTS}
+
+TONE: ${VOICE_GUIDE}
+
+Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company} (${vertical} industry)
+Persona: ${fullPersonaContext}
+Background context (do NOT repeat verbatim): ${pain}
+${clientNote}
+
+APPROVED STYLE EXAMPLE — match this structure and tone, adapt to this specific person:
+${VARIANT_B_EXAMPLES[vertical] || VARIANT_B_EXAMPLES['BPO']}
+
+---
+Subject: [4-6 plain words, not starting with Re:]
+
+Hi ${contact.first_name||'there'},
+
+[2 sentences: Open with what Clarify does. Lead with "Clarify helps [vertical] sales and marketing teams build predictable pipeline into strategic accounts where deal cycles are long and access to decision makers is difficult. We work as an extension of your team..." — adapt naturally to the vertical. No jargon.]
+
+[1 sentence: One proof point — the strongest stat for this vertical from VERIFIED_FACTS. Use a named client with a number if one exists. Anonymous if not. Do not list multiple companies — one strong proof point beats two names with nothing.]
+
+[1 sentence CTA: 15 minutes, Thursday or Friday or this week.]
+
+Thanks,
+
+${cfg('fromName')}
+${cfg('title')} | Clarify B2B
+
+STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across". ONE client reference maximum. No fabricated stats. Only confirmed named stats (USD): Capita ($234.5M pipeline), Mastek ($800M+ pipeline), Xerox ($41.6M pipeline), Vodafone ($1.27B pipeline total, $127M+ revenue), Ping Identity ($14.7M pipeline), VMware ($70M pipeline), Veritas ($89.3M pipeline), Collenda ($78.8M pipeline), ACI Worldwide ($25.5M pipeline), Soldo ($12.3M pipeline), PayPal ($20M pipeline, 91:1 ROI), Wiz ($27M pipeline, $3.5M revenue), Palo Alto/Cortex ($16M pipeline), Interactions ($97M pipeline), Siemens ($53.4M pipeline), Adobe ($47M pipeline, 84% conversion), SAP SuccessFactors ($7.2M pipeline, 205:1 ROI), Unit4 ($7.7M pipeline), PolyAI ($12.3M pipeline), Digital Owl ($5.2M pipeline), Cohesity ($3.3M pipeline). All other companies — name only, no invented numbers.`
+    : `You are writing a cold outbound email on behalf of ${cfg('fromName')}, ${cfg('title')} at Clarify B2B.
+
+WHAT CLARIFY IS: Clarify works as an extension of sales and marketing teams to build pipeline into strategic accounts. We are a specialist service that sits inside a client's GTM motion.
+
+VERIFIED FACTS — only reference clients and stats listed here, invent nothing:
+${VERIFIED_FACTS}
+
+TONE: ${VOICE_GUIDE}
+
+Contact: ${contact.first_name||'there'} ${contact.last_name||''}, ${contact.title||'senior leader'} at ${contact.company} (${vertical} industry)
+Persona: ${fullPersonaContext}
+Background context (do NOT repeat verbatim): ${pain}
+${clientNote}
+
+APPROVED STYLE EXAMPLE — use this as your floor. Same structure, same length, same directness. Adapt to this specific person:
+${HARDCODED_EXAMPLES[vertical]?.[persona] || HARDCODED_EXAMPLES[vertical]?.['sales'] || ''}
+
+---
+Subject: [4-6 plain words, not starting with Re:]
+
+Hi ${contact.first_name||'there'},
+
+[1-2 sentences: Open with what Clarify does in one sentence. Use the seniority and function context above to pick the right angle. Base: "We work with [vertical] companies as an extension of their sales and marketing team to build pipeline into strategic accounts." Adapt naturally. No jargon.]
+
+[1-2 sentences: Go straight to the strongest proof point for this vertical. Named client with stat if one exists. Anonymous if not. One name with a number beats a list of names. Use seniority/function to pick most relevant stat.]
+
+[1 sentence CTA: 15 minutes, Thursday or Friday or this week.]
+
+Thanks,
+
+${cfg('fromName')}
+${cfg('title')} | Clarify B2B
+
+STRICT RULES: Body between 80-120 words. No em dashes. No bullet points. No "Hope you're doing well", "I noticed", "I came across". ONE proof point maximum. No fabricated stats. Only confirmed named stats (USD): Capita ($234.5M pipeline), Mastek ($800M+ pipeline), Xerox ($41.6M pipeline), Vodafone ($1.27B pipeline total, $127M+ revenue), Ping Identity ($14.7M pipeline), VMware ($70M pipeline), Veritas ($89.3M pipeline), Collenda ($78.8M pipeline), ACI Worldwide ($25.5M pipeline), Soldo ($12.3M pipeline), PayPal ($20M pipeline, 91:1 ROI), Wiz ($27M pipeline, $3.5M revenue), Palo Alto/Cortex ($16M pipeline), Interactions ($97M pipeline), Siemens ($53.4M pipeline), Adobe ($47M pipeline, 84% conversion), SAP SuccessFactors ($7.2M pipeline, 205:1 ROI), Unit4 ($7.7M pipeline), PolyAI ($12.3M pipeline), Digital Owl ($5.2M pipeline), Cohesity ($3.3M pipeline). All other companies — name only, no numbers.`;
+
+  try {
+    const apiKey = cfg('apiKey');
+    if (!apiKey) { statuses[contact.id]='error'; if (!skipRender) { renderComposePage(); updateTopBar(); } return; }
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,messages:[{role:'user',content:prompt}]}),
+    });
+    if (!res.ok) {
+      const errBody = await res.json().catch(()=>({}));
+      const msg = errBody?.error?.message || 'HTTP ' + res.status;
+      if (res.status === 429) {
+        console.warn('Rate limited, retrying in 12s...');
+        await new Promise(r => setTimeout(r, 12000));
+        const retry = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,messages:[{role:'user',content:prompt}]}),
+        }).catch(()=>null);
+        if (retry && retry.ok) {
+          const rd = await retry.json();
+          const rt = (rd.content?.[0]?.text||'');
+          const rl = rt.split(/\r?\n/);
+          let rs='', rb=0;
+          for (let i=0;i<rl.length;i++){if(/^subject:/i.test(rl[i].trim())){rs=rl[i].replace(/^subject:\s*/i,'').trim();rb=i+1;while(rb<rl.length&&rl[rb].trim()==='')rb++;break;}}
+          if(!rs&&rl.length>0){rs=rl[0].replace(/^subject:\s*/i,'').trim();rb=1;}
+          let rb2=rl.slice(rb).join('\n').trim().replace(/ — /g,', ').replace(/—/g,' ').replace(/\*\*([^*]+)\*\*/g,'$1');
+          emails[contact.id]={subject:rs,body:rb2,stage:currentStage};
+          statuses[contact.id]='ready';
+          if(!skipRender){renderComposePage();renderSendPage();updateTopBar();renderNav();}
+          return;
+        }
+      }
+      console.error('API error:', res.status, msg);
+      statuses[contact.id] = 'error';
+      emails[contact.id] = {subject: 'Error: ' + msg, body: '', stage: currentStage};
+      if (!skipRender) { renderComposePage(); updateTopBar(); }
+      return;
+    }
+    const data = await res.json();
+    const text = data.content?.[0]?.text||'';
+    const lines = text.split(/\r?\n/);
+    let subject='', bodyStart=0;
+    for (let i=0;i<lines.length;i++) {
+      if (/^subject:/i.test(lines[i].trim())) {
+        subject = lines[i].replace(/^subject:\s*/i,'').replace(/\*\*/g,'').replace(/—/g,' ').replace(/^["']|["']$/g,'').trim();
+        bodyStart = i+1;
+        while (bodyStart<lines.length && lines[bodyStart].trim()==='') bodyStart++;
+        break;
+      }
+    }
+    if (!subject && lines.length>0) {subject=lines[0].replace(/\*\*/g,'').replace(/^subject:\s*/i,'').replace(/—/g,' ').trim();bodyStart=1;}
+    let bodyLines = lines.slice(bodyStart);
+    const fromName = cfg('fromName') || '';
+    const last6 = bodyLines.slice(-6).map(l => l.trim());
+    const hasProperSignOff = last6.some(l => /^(thanks|best|regards|cheers|sincerely)/i.test(l));
+    if (!hasProperSignOff) {
+      const sigIdx = bodyLines.findIndex(l => {
+        const t = l.trim();
+        if (!t) return false;
+        if (/^--\s*$/.test(t)) return true;
+        if (fromName && (t === fromName || t.startsWith(fromName + ' |'))) return true;
+        return false;
+      });
+      if (sigIdx > 0) bodyLines = bodyLines.slice(0, sigIdx);
+      bodyLines.push('', 'Thanks,', '', fromName);
+      const ut = cfg('title') || '';
+      if (ut) bodyLines.push(ut + ' | Clarify B2B');
+    }
+    let body = bodyLines.join('\n').trim();
+    body = body.replace(/ — /g, ', ').replace(/—/g, ' ');
+    subject = subject.replace(/—/g, ' ').replace(/\*\*/g, '').trim();
+    body = body.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1');
+    emails[contact.id] = {subject, body, stage:currentStage};
+    statuses[contact.id] = 'ready';
+  } catch(err) {
+    console.error('generateOne error:', err);
+    statuses[contact.id] = 'error';
+  }
+  if (!skipRender) { renderComposePage(); renderSendPage(); updateTopBar(); renderNav(); }
+}
+
+async function generateAll() {
+  if (generating) return;
+
+  // Check API key once before starting
+  if (!cfg('apiKey')) {
+    alert('Add your Anthropic API key in the Setup tab first.');
+    return;
+  }
+
+  const queue = contacts.filter(c => statuses[c.id] !== 'sent' && statuses[c.id] !== 'generating');
+  if (queue.length === 0) return;
+
+  generating = true;
+  const genBtn = document.getElementById('gen-all-btn');
+  if (genBtn) genBtn.classList.add('pulse');
+
+  try {
+    const BATCH = 10;
+    let done = 0;
+
+    for (let i = 0; i < queue.length; i += BATCH) {
+      const batch = queue.slice(i, i + BATCH);
+      // Use allSettled-style wrapper so one failure doesn't kill the whole batch
+      await Promise.all(batch.map(c => generateOne(c, true).catch(err => {
+        console.warn('generateOne failed for', c.email, err);
+        statuses[c.id] = 'error';
+      })));
+      done += batch.length;
+      renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+      if (genBtn) genBtn.textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
+      // No inter-batch delay needed
+    }
+  } catch(err) {
+    console.error('generateAll error:', err);
+  } finally {
+    // Always reset generating flag — even if error thrown
+    generating = false;
+    if (genBtn) {
+      genBtn.textContent = `Generate All (${contacts.length})`;
+      genBtn.classList.remove('pulse');
+    }
+    renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+  }
+}
+
+// ── Compose page ────────────────────────────────────────────────────────────
+function renderComposePage() {
+  const genBtn = document.getElementById('gen-all-btn');
+  if (genBtn && !generating) genBtn.textContent = contacts.length > 0 ? `Generate All (${contacts.length})` : 'Generate All';
+  const list = document.getElementById('compose-list');
+  if (!list) return;
+  if (contacts.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 32px;color:rgba(255,255,255,0.3)"><div style="font-size:28px;margin-bottom:12px">✏️</div><div style="font-size:13px">Import contacts first, then generate emails here.</div></div>';
+    return;
+  }
+  list.innerHTML = contacts.map(c => {
+    const s = statuses[c.id];
+    const em = emails[c.id];
+    const hr = history[c.email];
+    const currentStage = hr ? (hr.sequences?.length||0)+1 : 1;
+    const initials = (c.first_name?.[0]||'')+(c.last_name?.[0]||'');
+    const wordCount = em?.body ? em.body.trim().split(/\s+/).filter(Boolean).length : 0;
+    const subjectHtml = em && s !== 'error' ? `<div class="subject-preview"><span class="subject-label">Subject</span><span class="subject-text" title="${esc(em.subject)}">${esc(em.subject)}</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:auto;white-space:nowrap">${wordCount}w</span></div>`
+      : s === 'error' ? `<div class="subject-preview"><span class="subject-label" style="color:#ef4444">Error</span><span class="subject-text" style="color:#ef4444;font-style:normal">${em?.subject ? esc(em.subject) : 'Generation failed — click Generate to retry'}</span></div>` : '';
+    const actionBtns = s === 'sent' ? ''
+      : s === 'error' ? `<button class="btn btn-ghost btn-sm" onclick="generateById('${c.id}')">↻ Retry</button>`
+      : !em ? `<button class="btn btn-ghost btn-sm" ${s==='generating'?'disabled':''} onclick="generateById('${c.id}')">${s==='generating'?'<span class=\'spin\'>↻</span>':'Generate'}</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="openModal('${c.id}')">Preview / Edit</button>`;
+    return `<div class="compose-card ${s==='ready'?'ready':''}" id="cc-${c.id}">
+      <div class="compose-card-main">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          <div class="contact-avatar">${initials}</div>
+          <div class="contact-info">
+            <div class="contact-name">${esc(c.first_name)} ${esc(c.last_name)} <span class="contact-company">at ${esc(c.company)}</span></div>
+            <div class="contact-pills">${stagePill(currentStage)} ${verticalPill(c.vertical)} ${personaPill(c.persona || detectPersona(c.title||''))} ${c.variant ? `<span class="pill" style="background:${c.variant==='A'?'rgba(233,113,50,0.12)':'rgba(15,158,213,0.12)'};color:${c.variant==='A'?'#E97132':'#0F9ED5'};border:1px solid ${c.variant==='A'?'rgba(233,113,50,0.3)':'rgba(15,158,213,0.3)'}">Test ${c.variant}</span>` : ''} ${c.isNurture ? '<span class="pill" style="background:rgba(15,158,213,0.12);color:#0F9ED5;border:1px solid rgba(15,158,213,0.25)">🌱 Nurture</span>' : ''}</div>
+          </div>
+        </div>
+        <div class="compose-actions">
+          ${statusPill(s)}
+          ${actionBtns}
+        </div>
+      </div>
+      ${subjectHtml}
+    </div>`;
+  }).join('');
+  contacts = contacts;
+
+  const cont = document.getElementById('compose-continue');
+  const ready = countStatus('ready');
+  if (cont) { if (ready > 0) { cont.style.display = 'block'; cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(3)">Continue to Send (${ready} ready) →</button>`; } else cont.style.display = 'none'; }
+}
+
+// ── Send ─────────────────────────────────────────────────────────────────────
+async function sendOne(contactId) {
+  const contact = contacts.find(c=>c.id===contactId);
+  const email = emails[contactId];
+  if (!contact||!email||!canSend()) return;
+  if (statuses[contactId] === 'sending' || statuses[contactId] === 'sent') return; // double-send guard
+  if (!window.emailjs) {
+    showSendError('EmailJS is still loading — wait 5 seconds and try again. If this persists, check your internet connection.');
+    return;
+  }
+  clearSendError();
+  statuses[contactId] = 'sending';
+  renderSendPage(); updateTopBar();
+  try {
+    await window.emailjs.send(cfg('serviceId'), cfg('templateId'), {
+      to_email:contact.email,
+      to_name:`${contact.first_name} ${contact.last_name||''}`.trim(),
+      from_name:cfg('fromName'), from_email:cfg('fromEmail'),
+      reply_to:cfg('fromEmail'), subject:email.subject||'(no subject)', message:email.body||'',
+    });
+    statuses[contactId] = 'sent';
+    const stage = email.stage||1;
+    if (!history[contact.email]) history[contact.email] = {
+      firstName:contact.first_name||'',
+      lastName:contact.last_name||'',
+      company:contact.company||'',
+      vertical:contact.vertical||'Other',
+      sequences:[]
+    };
+    history[contact.email].sequences.push({
+      stage,
+      sentAt:new Date().toISOString(),
+      subject:email.subject||'(no subject)',
+      sentFrom:cfg('fromEmail')||''
+    });
+    // Auto-move to nurture if sequence complete (stage 3 sent)
+    if (stage >= 3 && !contact.isNurture) {
+      history[contact.email].nurtureEntered = new Date().toISOString();
+      history[contact.email].persona = detectPersona(contact.title||'');
+      history[contact.email].title = contact.title || '';
+      history[contact.email].persona = detectPersona(contact.title||'');
+    }
+    // After nurture re-engagement sent, reset the nurture clock
+    if (contact.isNurture) {
+      history[contact.email].nurtureEntered = new Date().toISOString(); // restart 90 day clock
+      history[contact.email].reEngaging = false;
+      history[contact.email].reEngageCount = (history[contact.email].reEngageCount || 0) + 1;
+    }
+    await saveHistory();
+  } catch(err) {
+    statuses[contactId] = 'error';
+    showSendError(err?.text||err?.message||'Send failed — check EmailJS config.');
+  }
+  renderSendPage(); renderCadencePage(); renderNurturePage(); updateTopBar(); renderNav();
+}
+
+// ── Auto-advance Engine ──────────────────────────────────────────────────
+// Fully autonomous: generate + send next touches without any manual clicks
+async function autoAdvanceIfReady() {
+  const fud = followUpDue();
+  if (fud.length === 0) return;
+  if (_autoRunning) return;
+
+  const autoEnabled = localStorage.getItem('clarify_auto_send') === 'true';
+  const apiKey = cfg('apiKey');
+  const canDoSend = canSend();
+
+  if (autoEnabled && apiKey && canDoSend) {
+    // FULL AUTO: generate + send with no prompts
+    await runAutoSequence(fud);
+  } else {
+    // SEMI AUTO: show banner, user clicks send
+    const banner = document.getElementById('auto-advance-banner');
+    if (!banner) return;
+    banner.style.display = 'block';
+    banner.innerHTML = `
+      <div class="card" style="border:1px solid rgba(78,167,46,0.35);background:rgba(78,167,46,0.06);margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#4EA72E;margin-bottom:3px">
+              ↻ ${fud.length} contact${fud.length>1?'s':''} ready for next touch
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">
+              3+ days since last email — sequence will auto-continue
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="font-size:11px;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="auto-send-toggle" ${autoEnabled?'checked':''} onchange="toggleAutoSend(this.checked)" style="cursor:pointer"/>
+              Auto-send
+            </label>
+            <button class="btn btn-primary btn-sm" onclick="runAutoSequence()">Generate + Send Now →</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('auto-advance-banner').style.display='none'">Later</button>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+function toggleAutoSend(enabled) {
+  localStorage.setItem('clarify_auto_send', enabled ? 'true' : 'false');
+  updateAutoSendUI();
+}
+
+function toggleAutoSendUI() {
+  const current = localStorage.getItem('clarify_auto_send') === 'true';
+  toggleAutoSend(!current);
+}
+
+function updateAutoSendUI() {
+  const enabled = localStorage.getItem('clarify_auto_send') === 'true';
+  const indicator = document.getElementById('auto-send-indicator');
+  const knob = document.getElementById('auto-send-knob');
+  const label = document.getElementById('auto-send-label');
+  if (indicator) indicator.style.background = enabled ? '#4EA72E' : 'rgba(255,255,255,0.15)';
+  if (knob) knob.style.left = enabled ? '18px' : '2px';
+  if (label) { label.textContent = enabled ? 'On' : 'Off'; label.style.color = enabled ? '#4EA72E' : 'rgba(255,255,255,0.5)'; }
+}
+
+async function runAutoSequence(fudOverride) {
+  if (_autoRunning) return;
+  _autoRunning = true;
+
+  const banner = document.getElementById('auto-advance-banner');
+  if (banner) banner.style.display = 'none';
+
+  const apiKey = cfg('apiKey');
+  if (!apiKey) {
+    _autoRunning = false;
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = '<div class="card" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);padding:14px 16px;font-size:13px;color:#ef4444">⚠ Add your Anthropic API key in <a onclick="goTab(0)" style="cursor:pointer;text-decoration:underline;color:#ef4444">Setup</a> to run auto-sequence.</div>';
+    }
+    return;
+  }
+
+  const fud = fudOverride || followUpDue();
+  if (fud.length === 0) { _autoRunning = false; return; }
+
+  // Load follow-up contacts
+  contacts = fud.map(([email, rec], i) => ({
+    id: `fu_${i}_${email.replace(/[^a-z0-9]/gi,'')}`,
+    email,
+    first_name: rec.firstName || '',
+    last_name:  rec.lastName  || '',
+    company:    rec.company   || '',
+    vertical:   rec.vertical  || 'Other',
+    title:      rec.title     || '',
+    persona:    rec.persona   || detectPersona(rec.title||''),
+  }));
+  emails = {}; statuses = {};
+
+  // Show progress in send page
+  goTab(3);
+  renderContactsPage(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+
+  // Show running status in banner
+  if (banner) {
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="card" style="border:1px solid rgba(15,158,213,0.3);background:rgba(15,158,213,0.06);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:#0F9ED5" id="auto-status">
+        <span class="spin">↻</span> Generating ${contacts.length} follow-up${contacts.length>1?'s':''}…
+      </div>
+    </div>`;
+  }
+
+  const updateStatus = (msg) => {
+    const el = document.getElementById('auto-status');
+    if (el) el.innerHTML = `<span class="spin">↻</span> ${msg}`;
+  };
+
+  // Step 1: Generate all emails
+  generating = true;
+  const BATCH = 5;
+  const queue = [...contacts];
+  let done = 0;
+
+  for (let i = 0; i < queue.length; i += BATCH) {
+    const batch = queue.slice(i, i + BATCH);
+    await Promise.all(batch.map(c => generateOne(c, true)));
+    done += batch.length;
+    renderComposePage(); renderSendPage(); updateTopBar();
+    updateStatus(`Generating ${Math.min(done, queue.length)}/${queue.length}…`);
+  }
+  generating = false;
+
+  // Step 2: Check all generated successfully
+  const failed = contacts.filter(c => statuses[c.id] === 'error');
+  const ready  = contacts.filter(c => statuses[c.id] === 'ready');
+
+  if (ready.length === 0) {
+    updateStatus(`⚠ Generation failed for all contacts. Check API key.`);
+    if (banner) banner.querySelector('.spin') && (banner.querySelector('[id=auto-status]').innerHTML = `⚠ Generation failed. Check your Anthropic API key.`);
+    _autoRunning = false;
+    return;
+  }
+
+  // Step 3: Send all ready emails
+  updateStatus(`Sending ${ready.length} email${ready.length>1?'s':''}…`);
+  let sent = 0;
+
+  for (const c of ready) {
+    await sendOne(c.id);
+    sent++;
+    updateStatus(`Sending ${sent}/${ready.length}…`);
+    renderSendPage(); updateTopBar();
+    if (sent < ready.length) await new Promise(r => setTimeout(r, 700));
+  }
+
+  // Step 4: Done — show summary in banner
+  const failedSend = contacts.filter(c => statuses[c.id] === 'error').length;
+  if (banner) {
+    banner.innerHTML = `
+      <div class="card" style="border:1px solid rgba(78,167,46,0.3);background:rgba(78,167,46,0.06);margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#4EA72E;margin-bottom:3px">
+              ✓ Sequence advanced — ${sent} email${sent>1?'s':''} sent${failedSend>0?' ('+failedSend+' failed)':''}
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">
+              Next follow-ups will surface automatically in 3 days
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('auto-advance-banner').style.display='none'">✕</button>
+        </div>
+      </div>`;
+  }
+
+  renderSendPage(); renderCadencePage(); updateTopBar(); renderNav();
+  _autoRunning = false;
+
+  // Recursively check again — handles edge case where multiple cohorts are due
+  setTimeout(async () => {
+    const stillDue = followUpDue();
+    if (stillDue.length > 0) await autoAdvanceIfReady();
+  }, 2000);
+}
+
+function showSendSuccess(msg) {
+  const el = document.getElementById('send-alerts');
+  if (!el) return;
+  // Remove any existing auto alerts first
+  el.querySelectorAll('.alert-auto').forEach(e => e.remove());
+  const div = document.createElement('div');
+  div.className = 'alert alert-success alert-auto';
+  div.textContent = '✓ ' + msg;
+  el.prepend(div);
+  // Auto-dismiss after 8 seconds
+  setTimeout(() => div.remove(), 8000);
+}
+
+async function sendAll() {
+  if (!canSend()) { showSendError('Configure EmailJS in the Setup tab before sending.'); return; }
+  const btn = document.getElementById('send-all-btn');
+  const toSend = contacts.filter(c => emails[c.id] && statuses[c.id]==='ready');
+  if (toSend.length === 0) { showSendError('No emails are ready to send. Generate emails first.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending 0/' + toSend.length + '…'; }
+  let sent = 0;
+  for (const c of toSend) {
+    await sendOne(c.id);
+    sent++;
+    if (btn) btn.textContent = 'Sending ' + sent + '/' + toSend.length + '…';
+    if (sent < toSend.length) await new Promise(r=>setTimeout(r,700));
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Send All Ready'; }
+  // After sending, auto-check if any contacts need next touch
+  await autoAdvanceIfReady();
+}
+
+function resetStuck(contactId) { statuses[contactId]='ready'; clearSendError(); renderSendPage(); updateTopBar(); }
+
+function showSendError(msg) {
+  const el = document.getElementById('send-alerts');
+  if (!el) return;
+  el.querySelectorAll('.alert-error').forEach(e => e.remove());
+  const div = document.createElement('div');
+  div.className = 'alert alert-error';
+  div.innerHTML = `⚠ ${msg} <button class="alert-close" onclick="this.parentElement.remove()">×</button>`;
+  el.prepend(div);
+}
+function clearSendError() {
+  document.getElementById('send-alerts')?.querySelectorAll('.alert-error').forEach(e => e.remove());
+}
+
+function renderSendPage() {
+  const sendSubEl = document.getElementById('send-subtitle'); if (sendSubEl) sendSubEl.textContent = `Sending from ${cfg('fromEmail')} via EmailJS.`;
+  const readyCount = countStatus('ready');
+  const sendAllBtn = document.getElementById('send-all-btn');
+  if (sendAllBtn && !sendAllBtn.disabled) sendAllBtn.textContent = readyCount > 0 ? `Send All Ready (${readyCount})` : 'Send All Ready';
+  const alerts = document.getElementById('send-alerts');
+  // Clean rebuild of static alerts every render — no accumulation
+  const sentCount = countStatus('sent');
+  const errorCount = countStatus('error');
+  const existingErrors = [...(alerts?.querySelectorAll('.alert-error')||[])].map(e=>e.outerHTML).join('');
+  const existingAuto  = [...(alerts?.querySelectorAll('.alert-auto')||[])].map(e=>e.outerHTML).join('');
+  let alertHtml = existingAuto;
+  if (!canSend()) alertHtml += `<div class="alert alert-warn">⚠ EmailJS not configured — go to Setup tab.</div>`;
+  if (sentCount > 0) alertHtml += `<div class="alert alert-success">✓ ${sentCount} email${sentCount>1?'s':''} sent from ${cfg('fromEmail')}</div>`;
+  alertHtml += existingErrors;
+  if (alerts) alerts.innerHTML = alertHtml;
+  const tbody = document.getElementById('send-tbody');
+  if (!tbody) return;
+  if (contacts.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:rgba(255,255,255,0.3)">No contacts loaded. Import contacts and generate emails first.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = contacts.map(c => {
+    const s = statuses[c.id];
+    const em = emails[c.id];
+    const hr = history[c.email];
+    const currentStage = hr ? (hr.sequences?.length||0)+1 : 1;
+    const sendDisabled = !em||s==='sending'||s==='sent'||!canSend();
+    const cancelBtn = s==='sending' ? `<button class="cancel-btn" onclick="resetStuck('${c.id}')">Cancel</button>` : '';
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${esc(c.first_name)} ${esc(c.last_name)}</div><div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">${esc(c.email)}</div></td>
+      <td style="color:rgba(255,255,255,0.5)">${c.company}</td>
+      <td>${stagePill(currentStage)}</td>
+      <td style="color:rgba(255,255,255,0.5);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${em?.subject ? esc(em.subject) : '<span style="color:rgba(255,255,255,0.3);font-style:italic">Not generated</span>'}</td>
+      <td>${statusPill(s)}</td>
+      <td><div style="display:flex;gap:6px;align-items:center"><button class="send-btn" ${sendDisabled?'disabled':''} onclick="sendOne('${c.id}')">${s==='sending'?'Sending…':s==='sent'?'Sent ✓':'Send'}</button>${cancelBtn}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Nurture ───────────────────────────────────────────────────────────────
+function getNurtureContacts() {
+  return Object.entries(history).filter(([,rec]) => rec.nurtureEntered);
+}
+
+function getNurtureWaitDays() {
+  const el = document.getElementById('nurture-wait-days');
+  return el ? parseInt(el.value) : 90;
+}
+
+function nurtureReadyDue(rec) {
+  if (!rec.nurtureEntered) return false;
+  const days = daysSince(rec.nurtureEntered);
+  return days !== null && days >= getNurtureWaitDays();
+}
+
+function loadNurtureContacts() {
+  const waitDays = getNurtureWaitDays();
+  const due = getNurtureContacts().filter(([,rec]) => nurtureReadyDue(rec));
+  if (due.length === 0) {
+    showSendSuccess('No contacts ready to re-engage yet — check back when the wait period passes.');
+    goTab(4); // go to cadence to see status
+    return;
+  }
+  // Load into contacts for new sequence
+  contacts = due.map(([email, rec], i) => ({
+    id: `nurture_${i}_${email.replace(/[^a-z0-9]/gi,'')}`,
+    email,
+    first_name: rec.firstName || '',
+    last_name: rec.lastName || '',
+    company: rec.company || '',
+    vertical: rec.vertical || 'Other',
+    title: rec.title || '',
+    isNurture: true,
+  }));
+  emails = {}; statuses = {};
+  // Flag as nurture in history so prompts know
+  contacts.forEach(c => {
+    if (history[c.email]) history[c.email].reEngaging = true;
+  });
+  goTab(2);
+  renderComposePage();
+  showSendSuccess(`${due.length} contact${due.length>1?'s':''} loaded — go to Compose to generate re-engagement emails.`);
+}
+
+function renderNurturePage() {
+  const all = getNurtureContacts();
+  const waitDays = getNurtureWaitDays();
+  const due = all.filter(([,rec]) => nurtureReadyDue(rec));
+  const waiting = all.filter(([,rec]) => !nurtureReadyDue(rec));
+
+  const statsEl = document.getElementById('nurture-stats');
+  const emptyEl = document.getElementById('nurture-empty');
+  const tableEl = document.getElementById('nurture-table-wrap');
+
+  if (all.length === 0) {
+    if (statsEl) statsEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    if (tableEl) tableEl.style.display = 'none';
+    return;
+  }
+
+  if (statsEl) statsEl.style.display = 'block';
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (tableEl) tableEl.style.display = 'block';
+
+  // Update stats
+  const totalEl = document.getElementById('nurture-stat-total');
+  const dueEl = document.getElementById('nurture-stat-due');
+  const waitEl = document.getElementById('nurture-stat-waiting');
+  if (totalEl) totalEl.textContent = all.length;
+  if (dueEl) dueEl.textContent = due.length;
+  if (waitEl) waitEl.textContent = waiting.length;
+
+  // Render table
+  const tbody = document.getElementById('nurture-tbody');
+  if (!tbody) return;
+  const sorted = [...all].sort(([,a],[,b]) => {
+    const ad = daysSince(a.nurtureEntered) || 0;
+    const bd = daysSince(b.nurtureEntered) || 0;
+    return bd - ad; // most recent first
+  });
+
+  tbody.innerHTML = sorted.map(([email, rec]) => {
+    const days = daysSince(rec.nurtureEntered);
+    const isDue = nurtureReadyDue(rec);
+    const daysUntil = waitDays - (days||0);
+    const persona = rec.persona || detectPersona(rec.title||'');
+    const statusHtml = isDue
+      ? `<span style="font-size:11px;color:#E97132;font-weight:700">⏰ Ready to re-engage</span>`
+      : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">Wait ${Math.max(0,daysUntil)}d</span>`;
+    return `<tr style="background:${isDue?'rgba(233,113,50,0.04)':'transparent'}">
+      <td><div style="font-weight:600">${esc(rec.firstName)} ${esc(rec.lastName)}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">${esc(email)}</div></td>
+      <td style="color:rgba(255,255,255,0.5)">${rec.company||''}</td>
+      <td>${verticalPill(rec.vertical||'Other')}</td>
+      <td>${personaPill(persona)}</td>
+      <td style="color:rgba(255,255,255,0.5)">${fmtDate(rec.nurtureEntered)}</td>
+      <td style="color:${isDue?'#E97132':'rgba(255,255,255,0.4)'};font-weight:${isDue?700:400}">${days!==null?days+'d ago':'—'}</td>
+      <td>${statusHtml}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="loadSingleNurture('${email}')" ${!isDue?'disabled':''}>Re-engage →</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function loadSingleNurture(email) {
+  const rec = history[email];
+  if (!rec || !nurtureReadyDue(rec)) return;
+  contacts = [{
+    id: `nurture_single_${email.replace(/[^a-z0-9]/gi,'')}`,
+    email,
+    first_name: rec.firstName || '',
+    last_name: rec.lastName || '',
+    company: rec.company || '',
+    vertical: rec.vertical || 'Other',
+    title: rec.title || '',
+    isNurture: true,
+  }];
+  emails = {}; statuses = {};
+  if (history[email]) history[email].reEngaging = true;
+  goTab(2);
+}
+
+// ── Cadence ───────────────────────────────────────────────────────────────
+function renderCadencePage() {
+  const keys = Object.keys(history);
+  document.getElementById('cadence-empty').style.display = keys.length===0?'block':'none';
+  document.getElementById('cadence-table-wrap').style.display = keys.length>0?'block':'none';
+  const fud = followUpDue();
+  const action = document.getElementById('cadence-action');
+  action.innerHTML = fud.length>0 ? `<button class="btn btn-primary" onclick="loadFollowUps()">Load ${fud.length} Follow-up${fud.length>1?'s':''} →</button>` : '';
+
+  if (keys.length===0) return;
+  const tbody = document.getElementById('cadence-tbody');
+  if (!tbody) return;
+  const sorted = Object.entries(history).sort(([,a],[,b]) => {
+    const al=a.sequences?.[a.sequences.length-1]?.sentAt||'';
+    const bl=b.sequences?.[b.sequences.length-1]?.sentAt||'';
+    return new Date(bl)-new Date(al);
+  });
+  tbody.innerHTML = sorted.map(([email,rec]) => {
+    const last = rec.sequences?.[rec.sequences.length-1];
+    const days = last ? daysSince(last.sentAt) : null;
+    const nextStage = (last?.stage||1)+1;
+    const isDue = days!==null && days>=3 && nextStage<=3;
+    const isComplete = nextStage>3;
+    const inNurture = rec.nurtureEntered && isComplete;
+    const nurtureReady = inNurture && nurtureReadyDue(rec);
+    const nextHtml = isComplete && nurtureReady
+      ? `<span style="font-size:11px;color:#E97132;font-weight:700">🌱 Ready to re-engage</span>`
+      : isComplete && inNurture
+      ? `<span style="font-size:11px;color:#0F9ED5;font-weight:600">🌱 In nurture pool</span>`
+      : isComplete
+      ? `<span style="font-size:11px;color:#4EA72E;font-weight:600">✓ Complete</span>`
+      : isDue
+      ? `<span style="font-size:11px;color:#f59e0b;font-weight:700">⏰ Follow-up due</span>`
+      : days !== null && (3 - days) <= 1 ? `<span style="font-size:11px;color:#E97132;font-weight:600">Due today</span>`
+      : `<span style="font-size:11px;color:rgba(255,255,255,0.3)">Wait ${3-(days||0)}d</span>`;
+    return `<tr style="background:${isDue?'#f59e0b06':'transparent'}">
+      <td><div style="font-weight:600">${esc(rec.firstName)} ${esc(rec.lastName)}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">${esc(email)}</div></td>
+      <td style="color:rgba(255,255,255,0.5)">${rec.company}</td>
+      <td>${verticalPill(rec.vertical)}</td>
+      <td>${last?stagePill(last.stage):'—'}</td>
+      <td style="color:rgba(255,255,255,0.5)">${fmtDate(last?.sentAt)}</td>
+      <td style="color:${isDue?'#f59e0b':'rgba(255,255,255,0.5)'};font-weight:${isDue?700:400}">${days!==null?days+'d ago':'—'}</td>
+      <td>${nextHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function clearHistory() {
+  if (!confirm('Clear all history? Cannot be undone.')) return;
+  history = {};
+  clearTimeout(_saveHistoryTimer); // cancel any pending debounced save
+  try { await fetch(API+'/user/history', {method:'PUT',headers:authHeaders(),body:JSON.stringify({history})}); }
+  catch {}
+  renderCadencePage(); updateTopBar(); renderNav();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+function openModal(contactId) {
+  const contact = contacts.find(c=>c.id===contactId);
+  const em = emails[contactId];
+  if (!contact||!em) return;
+  modalContact = contact;
+  const mName = document.getElementById('modal-name'); if (mName) mName.textContent = `${contact.first_name} ${contact.last_name||''}`;
+  const modalSubEl = document.getElementById('modal-sub');
+  if (modalSubEl) modalSubEl.innerHTML = `<span style="color:rgba(255,255,255,0.5)">${contact.company.replace(/</g,'&lt;')}</span> ${verticalPill(contact.vertical)} ${personaPill(detectPersona(contact.title||''))}`;
+  const mSub = document.getElementById('modal-subject'); if (mSub) mSub.value = em.subject;
+  const mBody = document.getElementById('modal-body'); if (mBody) mBody.value = em.body;
+  document.getElementById('modal-regen-btn').onclick = async () => { closeModal(); await generateOne(contact); };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function saveModal() {
+  if (!modalContact) return;
+  const subject = document.getElementById('modal-subject').value.trim();
+  const body = document.getElementById('modal-body').value.trim();
+  if (!subject || !body) { alert('Subject and body cannot be empty.'); return; }
+  emails[modalContact.id] = { ...emails[modalContact.id], subject, body };
+  statuses[modalContact.id] = 'ready';
+  closeModal(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+// Auto-login or show auth screen
+// Store auth screen HTML before cold-start loading state replaces it
+_authScreenHTML = document.getElementById('auth-screen').innerHTML;
+checkAutoLogin();
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); }
+  if (e.key === 'Enter' && !e.shiftKey) {
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    if (loginForm?.style.display !== 'none') {
+      const btn = document.getElementById('login-btn');
+      if (btn && !btn.disabled) doLogin();
+    } else if (signupForm?.style.display !== 'none') {
+      const btn = document.getElementById('signup-btn');
+      if (btn && !btn.disabled) doSignup();
+    }
+  }
+});
+
+// Background check every 30 minutes - surfaces follow-ups while app is open
+setInterval(() => {
+  if (authToken && contacts.length === 0) {
+    const fud = followUpDue();
+    if (fud.length > 0) autoAdvanceIfReady();
+  }
+}, 30 * 60 * 1000);
+</script>
+</body>
+</html>
