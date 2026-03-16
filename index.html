@@ -692,7 +692,7 @@ tbody td {
        <tbody id="contacts-tbody"></tbody></table>
        <div id="contacts-more" style="display:none;padding:10px 16px;font-size:11px;color:rgba(255,255,255,0.3);text-align:center;border-top:1px solid rgba(255,255,255,0.1)"></div>
       </div>
-      <button class="btn btn-primary" onclick="goTab(2)">Continue to Compose →</button>
+      <button class="btn btn-primary" onclick="goTab(3)">Continue to Compose →</button>
      </div>
     </div>
    </div>
@@ -3450,7 +3450,7 @@ async function generateOne(contact, skipRender=false) {
   ? `FUNCTION — Marketing (includes ABM, Demand Gen, Field Marketing): Cares about ABM effectiveness, marketing-sourced pipeline, campaign engagement, demand generation, account engagement. Lead with ABM execution, activating priority accounts, turning campaign investment into pipeline. For ABM-specific titles: the insight-led approach and targeting accounts not yet showing intent resonates strongly.`
   : `FUNCTION — Senior Leader: Use pipeline generation and enterprise growth messaging calibrated to their seniority level.`;
 
- const fullPersonaContext = `${seniorityContext}\n${fullPersonaContext}`;
+ const fullPersonaContext = `${seniorityContext}\n${personaContext}`;
 
  const VERIFIED_FACTS = (ALL_VERTICAL_FACTS[vertical] || ALL_VERTICAL_FACTS['Other']).join('\n');
 
@@ -4081,7 +4081,7 @@ async function generateAll() {
     for (let i = 0; i < queue.length; i += BATCH) {
       const batch = queue.slice(i, i + BATCH);
       // Use allSettled-style wrapper so one failure doesn't kill the whole batch
-      await Promise.all(batch.map(c => generateOne(c, true).catch(err => {
+      await Promise.all(batch.map((c, i) => new Promise(r => setTimeout(r, i * 300)).then(() => generateOne(c, true)).catch(err => {
         console.warn('generateOne failed for', c.email, err);
         statuses[c.id] = 'error';
       })));
@@ -4147,7 +4147,7 @@ function renderComposePage() {
 
   const cont = document.getElementById('compose-continue');
   const ready = countStatus('ready');
-  if (cont) { if (ready > 0) { cont.style.display = 'block'; cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(3)">Continue to Send (${ready} ready) →</button>`; } else cont.style.display = 'none'; }
+  if (cont) { if (ready > 0) { cont.style.display = 'block'; cont.innerHTML = `<button class="btn btn-primary" onclick="goTab(4)">Continue to Send (${ready} ready) →</button>`; } else cont.style.display = 'none'; }
 }
 
 // ── Send ─────────────────────────────────────────────────────────────────────
@@ -4281,7 +4281,7 @@ async function runAutoSequence(fudOverride) {
     _autoRunning = false;
     if (banner) {
       banner.style.display = 'block';
-      banner.innerHTML = '<div class="card" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);padding:14px 16px;font-size:13px;color:#ef4444">⚠ Add your Anthropic API key in <a onclick="goTab(0)" style="cursor:pointer;text-decoration:underline;color:#ef4444">Setup</a> to run auto-sequence.</div>';
+      banner.innerHTML = '<div class="card" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);padding:14px 16px;font-size:13px;color:#ef4444">⚠ Add your Anthropic API key in <a onclick="goTab(1)" style="cursor:pointer;text-decoration:underline;color:#ef4444">Setup</a> to run auto-sequence.</div>';
     }
     return;
   }
@@ -4303,7 +4303,7 @@ async function runAutoSequence(fudOverride) {
   emails = {}; statuses = {};
 
   // Show progress in send page
-  goTab(3);
+  goTab(4);
   renderContactsPage(); renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
 
   // Show running status in banner
@@ -4495,7 +4495,7 @@ function loadNurtureContacts() {
   const due = getNurtureContacts().filter(([,rec]) => nurtureReadyDue(rec));
   if (due.length === 0) {
     showSendSuccess('No contacts ready to re-engage yet — check back when the wait period passes.');
-    goTab(4); // go to cadence to see status
+    goTab(5); // go to cadence to see status
     return;
   }
   // Load into contacts for new sequence
@@ -4514,7 +4514,7 @@ function loadNurtureContacts() {
   contacts.forEach(c => {
     if (history[c.email]) history[c.email].reEngaging = true;
   });
-  goTab(2);
+  goTab(3);
   renderComposePage();
   showSendSuccess(`${due.length} contact${due.length>1?'s':''} loaded — go to Compose to generate re-engagement emails.`);
 }
@@ -4593,7 +4593,7 @@ function loadSingleNurture(email) {
   }];
   emails = {}; statuses = {};
   if (history[email]) history[email].reEngaging = true;
-  goTab(2);
+  goTab(3);
 }
 
 // ── Cadence ───────────────────────────────────────────────────────────────
