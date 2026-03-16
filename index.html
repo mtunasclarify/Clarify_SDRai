@@ -1189,6 +1189,27 @@ const COMPANY_VERTICALS = {
  qualys:'Cybersecurity',rapid7:'Cybersecurity',fortinet:'Cybersecurity',
  mastek:'IT Services',dxc:'IT Services','dxc technology':'IT Services',
  hexaware:'IT Services',mphasis:'IT Services',ltimindtree:'IT Services',
+  'hewlett packard enterprise':'Cloud & Infrastructure',
+ 'hewlett packard':'Cloud & Infrastructure',
+ 'hp enterprise':'Cloud & Infrastructure',
+ 'trend micro':'Cybersecurity',
+ 'trendmicro':'Cybersecurity',
+ 'ringover':'Cloud Communications',
+ 'ringover north america':'Cloud Communications',
+ 'brandshield':'Cybersecurity',
+ 'quantum':'Cloud & Infrastructure',
+ 'booli':'AI & Data',
+ 'actively ai':'AI & Data',
+ 'sentrama':'Enterprise Software',
+ 'core42':'Cloud & Infrastructure',
+ 'deeper pulse':'AI & Data',
+ 'smartebusiness':'Enterprise Software',
+ 'graitec':'Automation & DevTools',
+ 'bridge advisory partners':'BPO',
+ 'integrella':'BPO',
+ 'e2ip technologies':'Automation & DevTools',
+ 'clientshare':'Enterprise Software',
+ 'thales':'Cybersecurity',
  // ── 1000 Enterprise SaaS companies ────────────────────────────────────
  '15five':'AI & Data',
  '1password':'Cybersecurity',
@@ -3212,13 +3233,13 @@ function handleFile(file) {
 
   if (!apiKey) {
    const noTitle = contacts.filter(c => !c.title).length;
-   const noVertical = contacts.filter(c => !c.vertical || c.vertical === 'Enterprise SaaS').length;
+   const noVertical = contacts.filter(c => !c.vertical || c.vertical === 'Enterprise SaaS' || c.vertical === 'Other').length;
    if ((noTitle > 0 || noVertical > 0) && dropSub)
     dropSub.textContent = `Add your Anthropic API key in Setup to auto-enrich ${noTitle} missing titles and ${noVertical} unknown verticals`;
   }
 
   if (apiKey) {
-   const verticalUnknowns = contacts.filter(c => !c.vertical || c.vertical === 'Enterprise SaaS');
+   const verticalUnknowns = contacts.filter(c => !c.vertical || c.vertical === 'Enterprise SaaS' || c.vertical === 'Other');
    const titleUnknowns = contacts.filter(c => !c.title || c.title.trim() === '');
 
    const totalToEnrich = verticalUnknowns.length + titleUnknowns.length;
