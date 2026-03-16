@@ -850,7 +850,8 @@ let statuses = {}; // contactId -> string
 let history = loadHistory();
 let modalContact = null;
 let generating = false;
-let _autoRunning = false; // guard for runAutoSequence
+let _autoRunning = false;
+let _cancelGeneration = false; // guard for runAutoSequence
 
 let _contactPersonaFilter = ''; // filter: empty=all, sales, marketing, other
 
@@ -4072,23 +4073,36 @@ async function generateAll() {
 
   generating = true;
   const genBtn = document.getElementById('gen-all-btn');
-  if (genBtn) genBtn.classList.add('pulse');
+  if (genBtn) {
+    genBtn.classList.add('pulse');
+    genBtn.onclick = () => {
+      _cancelGeneration = true;
+      genBtn.textContent = 'Cancelling…';
+      genBtn.style.background = 'rgba(239,68,68,0.2)';
+    };
+  }
 
+  _cancelGeneration = false;
   try {
-    const BATCH = 10;
+    const BATCH = 5;
     let done = 0;
 
     for (let i = 0; i < queue.length; i += BATCH) {
+      if (_cancelGeneration) break;
       const batch = queue.slice(i, i + BATCH);
-      // Use allSettled-style wrapper so one failure doesn't kill the whole batch
-      await Promise.all(batch.map((c, i) => new Promise(r => setTimeout(r, i * 300)).then(() => generateOne(c, true)).catch(err => {
+      await Promise.all(batch.map((c, idx) => new Promise(r => setTimeout(r, idx * 800)).then(() => {
+        if (_cancelGeneration) return;
+        return generateOne(c, true);
+      }).catch(err => {
         console.warn('generateOne failed for', c.email, err);
         statuses[c.id] = 'error';
       })));
       done += batch.length;
       renderComposePage(); renderSendPage(); updateTopBar(); renderNav();
-      if (genBtn) genBtn.textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '…';
-      // No inter-batch delay needed
+      if (genBtn) genBtn.textContent = 'Generating ' + Math.min(done, queue.length) + '/' + queue.length + '… (click to cancel)';
+    }
+    if (_cancelGeneration) {
+      console.log('Generation cancelled by user');
     }
   } catch(err) {
     console.error('generateAll error:', err);
@@ -4106,7 +4120,11 @@ async function generateAll() {
 // ── Compose page ────────────────────────────────────────────────────────────
 function renderComposePage() {
   const genBtn = document.getElementById('gen-all-btn');
-  if (genBtn && !generating) genBtn.textContent = contacts.length > 0 ? `Generate All (${contacts.length})` : 'Generate All';
+  if (genBtn && !generating) {
+    genBtn.textContent = contacts.length > 0 ? `Generate All (${contacts.length})` : 'Generate All';
+    genBtn.onclick = generateAll;
+    genBtn.style.background = '';
+  }
   const list = document.getElementById('compose-list');
   if (!list) return;
   if (contacts.length === 0) {
